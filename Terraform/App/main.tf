@@ -1,5 +1,6 @@
 locals {
-  resource_prefix = trimspace(var.resource_prefix) != "" ? trimspace(var.resource_prefix) : "${var.client_slug}-${var.deployment_environment}"
+  resource_prefix     = trimspace(var.resource_prefix) != "" ? trimspace(var.resource_prefix) : "${var.client_slug}-${var.deployment_environment}"
+  website_bucket_name = "${local.resource_prefix}-${data.aws_caller_identity.current.account_id}-website"
 
   default_tags = merge(
     {
@@ -90,10 +91,10 @@ data "aws_iam_policy_document" "website_bucket" {
 }
 
 resource "aws_s3_bucket" "website" {
-  bucket = "${local.resource_prefix}-website"
+  bucket = local.website_bucket_name
 
   tags = {
-    Name = "${local.resource_prefix}-website"
+    Name = local.website_bucket_name
   }
 }
 
