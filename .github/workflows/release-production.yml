@@ -1,0 +1,113 @@
+name: Release Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform_action:
+        description: Choose whether to run a production plan or apply
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate production workflow configuration
+        env:
+          AWS_STAGING_ROLE_TO_ASSUME: ${{ vars.AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN }}
+          AWS_PRODUCTION_ROLE_TO_ASSUME: ${{ vars.AWS_PRODUCTION_DEPLOY_ROLE_ARN }}
+        run: |
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            echo "Production releases must run from the main branch." >&2
+            exit 1
+          fi
+
+          if [[ -z "${AWS_STAGING_ROLE_TO_ASSUME}" ]]; then
+            echo "Set AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN before using this workflow." >&2
+            exit 1
+          fi
+
+          if [[ -z "${AWS_PRODUCTION_ROLE_TO_ASSUME}" ]]; then
+            echo "Set AWS_PRODUCTION_DEPLOY_ROLE_ARN before using this workflow." >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "Frontend/package-lock.json"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN }}
+
+      - name: Confirm staging AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Package production release artifacts
+        env:
+          APP_DEPLOY_ROLE_ARN: ${{ vars.AWS_PRODUCTION_DEPLOY_ROLE_ARN }}
+          APP_ENVIRONMENT: production
+          PRERENDER_SITE_ORIGIN: ${{ vars.PRODUCTION_SITE_ORIGIN }}
+        run: bash scripts/cicd/package_release_artifacts.sh
+
+      - name: Plan or apply production stack
+        env:
+          APP_DEPLOY_ROLE_ARN: ${{ vars.AWS_PRODUCTION_DEPLOY_ROLE_ARN }}
+          APP_ENVIRONMENT: production
+          APP_STACK_DIRECTORY: Terraform/App
+          BACKEND_CONFIG_FILE: backends/production.hcl
+          TFVARS_FILE: environments/production.tfvars
+          TERRAFORM_ACTION: ${{ inputs.terraform_action }}
+          RUN_SITE_RENDERER: "true"
+        run: |
+          if [[ "${TERRAFORM_ACTION}" == "apply" ]]; then
+            export TERRAFORM_AUTO_APPROVE=true
+            export RUN_CLOUDFRONT_INVALIDATION=true
+          else
+            export TERRAFORM_AUTO_APPROVE=false
+            export RUN_CLOUDFRONT_INVALIDATION=false
+            export TERRAFORM_PLAN_OUT=production.tfplan
+          fi
+
+          bash scripts/cicd/deploy_app_stack.sh
+
+      - name: Upload production Terraform plan
+        if: ${{ inputs.terraform_action == 'plan' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-terraform-plan
+          path: Terraform/App/production.tfplan
+          if-no-files-found: error

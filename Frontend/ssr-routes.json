@@ -1,0 +1,19 @@
+{
+  "siteName": "Example Website",
+  "siteDescription": "A simple client website generated from the repeatable deployment template.",
+  "routes": [
+    {
+      "path": "/",
+      "title": "Home"
+    },
+    {
+      "path": "/about",
+      "title": "About"
+    },
+    {
+      "path": "/contact",
+      "title": "Contact"
+    }
+  ],
+  "llmsDescription": "This website contains public company information, service pages, and contact details."
+}

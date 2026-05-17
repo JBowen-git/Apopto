@@ -1,0 +1,83 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate staging workflow configuration
+        env:
+          AWS_ROLE_TO_ASSUME: ${{ vars.AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN }}
+        run: |
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            echo "Staging deploys must run from the main branch." >&2
+            exit 1
+          fi
+
+          if [[ -z "${AWS_ROLE_TO_ASSUME}" ]]; then
+            echo "Set AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN before using this workflow." >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "Frontend/package-lock.json"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN }}
+
+      - name: Confirm staging AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Package staging release artifacts
+        env:
+          APP_ENVIRONMENT: staging
+          PRERENDER_SITE_ORIGIN: ${{ vars.STAGING_SITE_ORIGIN }}
+        run: bash scripts/cicd/package_release_artifacts.sh
+
+      - name: Deploy staging stack
+        env:
+          APP_ENVIRONMENT: staging
+          APP_STACK_DIRECTORY: Terraform/App
+          BACKEND_CONFIG_FILE: backends/staging.hcl
+          TFVARS_FILE: environments/staging.tfvars
+          TERRAFORM_ACTION: apply
+          TERRAFORM_AUTO_APPROVE: "true"
+          RUN_CLOUDFRONT_INVALIDATION: "true"
+          RUN_SITE_RENDERER: "true"
+        run: bash scripts/cicd/deploy_app_stack.sh
