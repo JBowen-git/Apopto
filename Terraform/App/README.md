@@ -1,0 +1,59 @@
+# App Terraform
+
+This root is applied once per environment using the Xavier-style deployment
+pattern:
+
+- `backends/staging.hcl` with `environments/staging.tfvars`
+- `backends/production.hcl` with `environments/production.tfvars`
+
+Each apply creates one complete environment:
+
+- Private S3 website bucket.
+- Terraform-managed frontend/SSR site objects.
+- CloudFront distribution using Origin Access Control.
+- CloudFront Function for prerendered route directory indexes.
+- HTTP API Gateway.
+- `.NET 10` health check Lambda at `GET /api/health`.
+- Node.js site renderer Lambda triggered through SQS after deploys to refresh
+  crawler-visible HTML and SEO files.
+
+Resource names follow:
+
+```text
+{client_slug}-{deployment_environment}-{resource}
+```
+
+## Usage
+
+Bootstrap must run first so the state bucket and GitHub deploy roles exist.
+
+Copy and edit the examples:
+
+```bash
+cp backends/staging.hcl.example backends/staging.hcl
+cp backends/production.hcl.example backends/production.hcl
+cp environments/staging.tfvars.example environments/staging.tfvars
+cp environments/production.tfvars.example environments/production.tfvars
+```
+
+Run staging:
+
+```bash
+terraform init -backend-config=backends/staging.hcl
+terraform apply -var-file=environments/staging.tfvars
+```
+
+Run production:
+
+```bash
+terraform init -reconfigure -backend-config=backends/production.hcl
+terraform apply -var-file=environments/production.tfvars
+```
+
+The Lambda zip files referenced by the selected tfvars file must exist before
+`terraform apply`.
+
+The deployment scripts set `TF_VAR_site_asset_root=.artifacts/site` and
+`TF_VAR_site_renderer_asset_root=.artifacts/site-renderer` after building the
+frontend. Terraform uploads public SSR output to the website root and private
+renderer runtime files under `internal/site-renderer`.

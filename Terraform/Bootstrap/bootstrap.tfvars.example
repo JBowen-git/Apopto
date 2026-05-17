@@ -1,0 +1,11 @@
+client_slug = "example-client"
+aws_region  = "us-east-2"
+
+github_repository     = "owner/repo"
+github_staging_branch = "main"
+
+state_bucket_name = "example-client-terraform-state"
+
+tags = {
+  ManagedBy = "Terraform"
+}
