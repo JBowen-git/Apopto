@@ -351,6 +351,12 @@ resource "aws_cloudfront_distribution" "website" {
     cloudfront_default_certificate = true
   }
 
+  lifecycle {
+    # CloudFront's flat-rate pricing plan attaches and requires a Web ACL.
+    # Leave that association in place when Terraform updates the distribution.
+    ignore_changes = [web_acl_id]
+  }
+
   tags = {
     Name = "${local.resource_prefix}-cloudfront"
   }
