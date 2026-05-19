@@ -280,8 +280,8 @@ resource "aws_cloudfront_distribution" "website" {
   is_ipv6_enabled     = true
   comment             = "CloudFront distribution serving ${local.resource_prefix} frontend and API."
   default_root_object = "index.html"
-  price_class         = var.cloudfront_price_class
-  http_version        = "http2"
+  # CloudFront Free pricing plans reject explicit price class settings.
+  http_version = "http2"
 
   origin {
     origin_id   = local.api_origin_id
