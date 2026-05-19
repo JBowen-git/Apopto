@@ -1,19 +1,47 @@
 {
-  "siteName": "Example Website",
-  "siteDescription": "A simple client website generated from the repeatable deployment template.",
+  "siteName": "Apopto",
+  "siteDescription": "Apopto builds intelligent websites and digital solutions that transform ideas into seamless user experiences.",
   "routes": [
     {
       "path": "/",
-      "title": "Home"
+      "title": "Home",
+      "description": "Programmed to evolve. Designed to impress. Apopto builds intelligent websites and digital solutions."
+    },
+    {
+      "path": "/solutions",
+      "title": "Solutions",
+      "description": "Practical website, SEO, and cloud deployment systems for polished launches."
+    },
+    {
+      "path": "/portfolio",
+      "title": "Portfolio",
+      "description": "Selected Apopto work, launch snapshots, and featured project outcomes."
     },
     {
       "path": "/about",
-      "title": "About"
+      "title": "About",
+      "description": "Learn about Apopto's repeatable path for frontend, backend, and cloud delivery."
+    },
+    {
+      "path": "/insights",
+      "title": "Insights",
+      "description": "Articles and practical notes about websites, ecommerce, SEO, and cloud delivery."
     },
     {
       "path": "/contact",
-      "title": "Contact"
+      "title": "Contact",
+      "description": "Contact Apopto to talk through a website, ecommerce, or cloud launch."
+    },
+    {
+      "path": "/start-a-project",
+      "title": "Start a Project",
+      "description": "Start a project with Apopto by sharing goals, scope, timeline, and launch needs."
+    },
+    {
+      "path": "/error",
+      "title": "Error",
+      "description": "A friendly fallback route for unavailable content or application errors."
     }
   ],
-  "llmsDescription": "This website contains public company information, service pages, and contact details."
+  "llmsDescription": "This website contains public Apopto company information, service pages, project examples, insights, and contact details."
 }

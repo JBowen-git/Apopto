@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Communication placeholder</title>
+  <desc id="desc">Abstract communication icon.</desc>
+  <defs>
+    <radialGradient id="bg" cx="36%" cy="26%" r="78%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="58%" stop-color="#f8fbff"/>
+      <stop offset="100%" stop-color="#eef4ff"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="92" y1="88" x2="420" y2="424" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e30af"/>
+      <stop offset=".68" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="256" fill="url(#bg)"/>
+  <path d="M150 154h116c32 0 58 22 58 50s-26 50-58 50h-44l-54 42 14-42h-32c-32 0-58-22-58-50s26-50 58-50Z" fill="none" stroke="url(#accent)" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+  <path d="M356 226h16c28 0 50 20 50 45s-22 45-50 45h-22l10 34-44-34h-18" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" opacity=".9"/>
+</svg>

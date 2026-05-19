@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Creativity placeholder</title>
+  <desc id="desc">Abstract creativity icon.</desc>
+  <defs>
+    <radialGradient id="bg" cx="34%" cy="24%" r="78%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="58%" stop-color="#f8fbff"/>
+      <stop offset="100%" stop-color="#eef4ff"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="98" y1="80" x2="412" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e30af"/>
+      <stop offset=".68" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="256" fill="url(#bg)"/>
+  <path d="M256 82v52M368 126l-36 38M420 238h-52M360 350l-34-38M144 350l34-38M92 238h52M144 126l36 38" stroke="url(#accent)" stroke-linecap="round" stroke-width="17"/>
+  <path d="M230 188c-22 10-38 32-38 58 0 36 28 64 64 64s64-28 64-64c0-26-16-48-38-58" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-width="16" opacity=".9"/>
+  <path d="M236 352h40" stroke="#1e30af" stroke-linecap="round" stroke-width="16" opacity=".86"/>
+</svg>

@@ -29,3 +29,18 @@ deployment scripts stage public `Frontend/dist` files into
 `Terraform/App/.artifacts/site`, stage the private server bundle and renderer
 manifest into `Terraform/App/.artifacts/site-renderer`, and let Terraform upload
 the changed objects.
+
+Current public routes:
+
+- `/`
+- `/solutions`
+- `/portfolio`
+- `/about`
+- `/insights`
+- `/contact`
+- `/start-a-project`
+- `/error`
+
+Static frontend assets live in `public/assets/` and are served from `/assets/`.
+The homepage uses `/assets/images/homepage-hero-background.png`; reference-only
+design images should stay outside `public/` so they are not deployed.
