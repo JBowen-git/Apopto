@@ -8,6 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FRONTEND_DIR="${FRONTEND_DIR:-Frontend}"
 BACKEND_PROJECT_PATH="${BACKEND_PROJECT_PATH:-Backend}"
 BACKEND_PUBLISH_PROJECT_PATH="${BACKEND_PUBLISH_PROJECT_PATH:-}"
+SHARED_PACKAGE_PATH="${SHARED_PACKAGE_PATH:-Shared}"
 TERRAFORM_VALIDATION_DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/apopto-terraform-validation.XXXXXX")"
 
 cleanup() {
@@ -44,7 +45,21 @@ resolve_backend_publish_project() {
   printf '%s\n' "${project}"
 }
 
+build_shared_package() {
+  local shared_package_dir="${ROOT_DIR}/${SHARED_PACKAGE_PATH}"
+
+  if [ ! -f "${shared_package_dir}/package.json" ]; then
+    echo "Shared package was not found: ${shared_package_dir}/package.json" >&2
+    return 1
+  fi
+
+  npm --prefix "${shared_package_dir}" ci
+  npm --prefix "${shared_package_dir}" run build
+}
+
 bash "${ROOT_DIR}/scripts/cicd/install_terraform.sh" "${TERRAFORM_VERSION:-1.10.5}"
+
+build_shared_package
 
 pushd "${ROOT_DIR}/${FRONTEND_DIR}" >/dev/null
 npm ci

@@ -12,6 +12,7 @@ BACKEND_TYPESCRIPT_PACKAGE_PATH="${BACKEND_TYPESCRIPT_PACKAGE_PATH:-Backend}"
 BACKEND_TYPESCRIPT_ARTIFACT_BASENAME="${BACKEND_TYPESCRIPT_ARTIFACT_BASENAME:-portal-api}"
 PACKAGE_TYPESCRIPT_BACKEND="${PACKAGE_TYPESCRIPT_BACKEND:-true}"
 APP_STACK_DIRECTORY="${APP_STACK_DIRECTORY:-Terraform/App}"
+SHARED_PACKAGE_BUILT=false
 
 source "${ROOT_DIR}/scripts/cicd/aws_runtime.sh"
 
@@ -41,6 +42,24 @@ resolve_backend_publish_project() {
   fi
 
   printf '%s\n' "${project}"
+}
+
+build_shared_package() {
+  local shared_package_dir="${ROOT_DIR}/${SHARED_PACKAGE_PATH}"
+
+  if [ "${SHARED_PACKAGE_BUILT}" = "true" ]; then
+    return 0
+  fi
+
+  if [ ! -f "${shared_package_dir}/package.json" ]; then
+    echo "Shared package was not found: ${shared_package_dir}/package.json" >&2
+    return 1
+  fi
+
+  npm --prefix "${shared_package_dir}" ci
+  npm --prefix "${shared_package_dir}" run build
+
+  SHARED_PACKAGE_BUILT=true
 }
 
 create_deterministic_zip() {
@@ -73,13 +92,7 @@ package_typescript_backend() {
     return 1
   fi
 
-  if [ ! -f "${shared_package_dir}/package.json" ]; then
-    echo "Shared package was not found: ${shared_package_dir}/package.json" >&2
-    return 1
-  fi
-
-  npm --prefix "${shared_package_dir}" ci
-  npm --prefix "${shared_package_dir}" run build
+  build_shared_package
   npm --prefix "${backend_typescript_dir}" ci
   npm --prefix "${backend_typescript_dir}" run build
 
@@ -113,6 +126,7 @@ package_typescript_backend() {
 ensure_aws_region_defaults
 assume_role_if_requested "package"
 export_ssm_parameters_if_requested
+build_shared_package
 
 pushd "${ROOT_DIR}/${FRONTEND_DIR}" >/dev/null
 npm ci
