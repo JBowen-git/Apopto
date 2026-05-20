@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Website design placeholder</title>
+  <desc id="desc">Abstract responsive website design placeholder image.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="960" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fbff"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="162" y1="80" x2="794" y2="466" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e30af"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <path d="M0 430c124-54 228-54 312 0s194 56 330 6 242-40 318 30v74H0Z" fill="#f59e0b" opacity=".16"/>
+  <rect x="112" y="74" width="622" height="392" rx="34" fill="#ffffff" stroke="#f59e0b" stroke-opacity=".35" stroke-width="2"/>
+  <rect x="154" y="116" width="538" height="300" rx="24" fill="url(#screen)"/>
+  <rect x="196" y="166" width="196" height="26" rx="13" fill="#ffffff" opacity=".9"/>
+  <rect x="196" y="220" width="312" height="15" rx="8" fill="#dbeafe" opacity=".8"/>
+  <rect x="196" y="254" width="256" height="15" rx="8" fill="#dbeafe" opacity=".55"/>
+  <rect x="196" y="314" width="124" height="36" rx="18" fill="#f59e0b"/>
+  <rect x="742" y="176" width="112" height="238" rx="26" fill="#ffffff" stroke="#f59e0b" stroke-opacity=".38" stroke-width="2"/>
+  <rect x="772" y="220" width="52" height="10" rx="5" fill="#0f172a" opacity=".72"/>
+  <rect x="768" y="252" width="60" height="84" rx="14" fill="#eef4ff"/>
+  <rect x="772" y="356" width="52" height="10" rx="5" fill="#f59e0b"/>
+</svg>

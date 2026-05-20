@@ -1,5 +1,29 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
-import { Divider, Drawer } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Divider,
+  Drawer,
+  Button as MuiButton,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
+  List,
+  ListItemButton,
+  ListSubheader,
+  MenuItem,
+  Paper,
+  Radio,
+  RadioGroup,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  useMediaQuery,
+} from '@mui/material'
 import { Link, NavLink, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import DiagonalScrollSection from './DiagonalScrollSection'
 import FlyInBox from './FlyInBox'
@@ -12,6 +36,8 @@ const navItems = [
   { to: '/insights', label: 'Insights' },
   { to: '/contact', label: 'Contact' },
 ]
+
+const solutionsAnimationStorageKey = 'apopto-solutions-animation-played'
 
 const solutionProducts = [
   {
@@ -143,88 +169,464 @@ const livePortfolioPreview = {
   url: 'https://ironwallengraving.com',
 }
 
-const insightConcepts = [
-  {
-    id: 'responsive-design',
-    term: 'Responsive Design',
-    summary: 'Layouts that adapt cleanly across phones, tablets, laptops, and large displays.',
-    definition:
-      'Responsive design makes a website feel intentional at every screen size. It uses flexible layouts, fluid media, and breakpoint decisions so content remains readable, actions stay reachable, and the brand still feels polished on smaller screens.',
-    notes: [
-      'Navigation, calls to action, images, and forms should be planned for touch screens from the beginning.',
-      'A responsive site should not simply shrink a desktop layout. It should reorganize around what each visitor needs most.',
-      'Strong responsive design protects first impressions because many visitors will only experience the mobile version.',
+const portfolioQuickLinks = [
+  { label: 'All Work', to: '/portfolio/all-work' },
+  { label: 'Build Breakdowns', to: '/portfolio/build-breakdowns' },
+  { label: 'Concept Builds', to: '/portfolio/concept-builds' },
+  { label: 'Individual Project Pages', to: '/portfolio/individual-project-pages' },
+]
+
+const portfolioDetailPages = {
+  allWork: {
+    eyebrow: 'Portfolio',
+    title: 'All Work',
+    intro:
+      'A broader view of website work, launch pieces, and digital systems shaped around clear goals, polished presentation, and practical next steps.',
+    points: [
+      'Website builds shaped around the business, audience, and next step.',
+      'Responsive layouts designed for strong first impressions on every screen.',
+      'Room for project notes, screenshots, outcomes, and future expansion.',
     ],
-    screenshots: [
-      { src: '/assets/images/portfolio/portfolio-1.png', label: 'Desktop composition' },
-      { src: '/assets/images/portfolio/portfolio-4.png', label: 'Mobile-first section flow' },
+  },
+  buildBreakdowns: {
+    eyebrow: 'Portfolio',
+    title: 'Build Breakdowns',
+    intro:
+      'A deeper look at how a build moves from goal to structure, visual direction, implementation, and launch-ready experience.',
+    points: [
+      'Problem, audience, and project goals framed before design decisions.',
+      'Page structure, content hierarchy, and calls to action tied to the offer.',
+      'Space for before-and-after notes, technical decisions, and launch details.',
+    ],
+  },
+  conceptBuilds: {
+    eyebrow: 'Portfolio',
+    title: 'Concept Builds',
+    intro:
+      'Exploratory builds for layouts, flows, interfaces, and ideas that help shape future websites or systems before they become full projects.',
+    points: [
+      'Visual and interaction concepts used to test direction quickly.',
+      'Landing page, dashboard, and smart form ideas before full implementation.',
+      'A useful space for experiments that can become future client work.',
+    ],
+  },
+  individualProjectPages: {
+    eyebrow: 'Portfolio',
+    title: 'Individual Project Pages',
+    intro:
+      'Dedicated pages for individual projects, with room for project goals, screenshots, decisions, results, and links to live work.',
+    points: [
+      'Project-specific stories with more context than a thumbnail can hold.',
+      'Screenshots, outcomes, and decisions grouped into a focused presentation.',
+      'A path for turning selected builds into polished case-study pages.',
+    ],
+  },
+}
+
+function toArticleId(title) {
+  return title
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
+const insightScreenshots = [
+  { src: '/assets/images/portfolio/portfolio-1.png', label: 'Example website composition' },
+  { src: '/assets/images/portfolio/portfolio-4.png', label: 'Responsive section flow' },
+  { src: '/assets/images/portfolio/portfolio-5.png', label: 'Conversion-focused layout' },
+  { src: '/assets/images/portfolio/portfolio-2.png', label: 'Clear action path' },
+  { src: '/assets/images/portfolio/portfolio-7.png', label: 'Performance-minded visual system' },
+  { src: '/assets/images/portfolio/portfolio-8.png', label: 'Scalable content structure' },
+  { src: '/assets/images/portfolio/portfolio-3.png', label: 'Reusable website pattern' },
+  { src: '/assets/images/portfolio/portfolio-9.png', label: 'Professional site presentation' },
+]
+
+const insightCategories = [
+  {
+    id: 'design',
+    name: 'Design',
+    purpose: 'Design decisions, user experience, and visual clarity.',
+    notes: [
+      'Design choices should support clarity, trust, and easy scanning.',
+      'The best visual systems guide visitors without making the page feel crowded.',
+      'Professional websites feel consistent across layout, typography, imagery, and motion.',
+    ],
+    subcategories: [
+      {
+        name: 'Responsive Design',
+        articles: [
+          'Why Responsive Design Matters',
+          'How Mobile Layouts Shape First Impressions',
+          'What Responsive Breakpoints Do for Website Usability',
+        ],
+      },
+      {
+        name: 'UX',
+        articles: [
+          'How UX Helps Visitors Find the Right Next Step',
+          'What Good Website UX Feels Like for Customers',
+          'Why Simple Navigation Keeps Visitors Moving',
+        ],
+      },
+      {
+        name: 'Visual Hierarchy',
+        articles: [
+          'How Visual Hierarchy Improves Conversions',
+          'Why Section Order Changes How People Read a Page',
+          'How Typography Guides Attention on a Website',
+        ],
+      },
+      {
+        name: 'Accessibility',
+        articles: [
+          'Why Accessible Websites Serve More Customers',
+          'What Website Accessibility Means for Small Businesses',
+          'How Contrast and Labels Improve Everyday Usability',
+        ],
+      },
     ],
   },
   {
-    id: 'conversion-path',
-    term: 'Conversion Path',
-    summary: 'The route a visitor follows from first impression to a useful action.',
-    definition:
-      'A conversion path is the structure that helps visitors understand the offer, trust the business, and know what to do next. It connects messaging, proof, section order, and calls to action into one clear flow.',
+    id: 'conversion',
+    name: 'Conversion',
+    purpose: 'The page decisions that turn visitors into leads and customers.',
     notes: [
-      'Every page should have a primary action, whether that is calling, booking, buying, or sending a project inquiry.',
-      'Strong conversion paths remove friction by answering common questions before the visitor has to ask.',
-      'Visual hierarchy matters because people scan first and read second.',
+      'Every page should make the next action obvious.',
+      'Strong conversion strategy removes friction before a visitor reaches the form.',
+      'Calls to action work best when they match the visitor’s current level of trust.',
     ],
-    screenshots: [
-      { src: '/assets/images/portfolio/portfolio-5.png', label: 'Offer-first landing flow' },
-      { src: '/assets/images/portfolio/portfolio-2.png', label: 'Clear action sections' },
+    subcategories: [
+      {
+        name: 'CTAs',
+        articles: [
+          'Why Your CTA Placement Matters',
+          'How to Write Calls to Action That Feel Natural',
+          'Where Service Websites Should Place Primary CTAs',
+        ],
+      },
+      {
+        name: 'Lead Generation',
+        articles: [
+          'How to Build a Website That Turns Visitors Into Leads',
+          'What Makes a Lead Form Easier to Complete',
+          'How Landing Pages Support Qualified Inquiries',
+        ],
+      },
+      {
+        name: 'Trust Signals',
+        articles: [
+          'How Trust Signals Make a Website Feel Credible',
+          'What Proof Belongs on a Service Business Website',
+          'Why Clear Process Language Builds Trust',
+        ],
+      },
+      {
+        name: 'Contact Pages',
+        articles: [
+          'What Every Service Business Contact Page Needs',
+          'How Contact Pages Reduce Friction for New Leads',
+          'Why Simple Intake Questions Improve Inquiry Quality',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'seo',
+    name: 'SEO',
+    purpose: 'Search structure that helps the right people find the site.',
+    notes: [
+      'Search visibility starts with clean structure, useful metadata, and fast pages.',
+      'Local businesses benefit from pages organized around services, location, and intent.',
+      'Technical SEO is easier to maintain when it is built into the site from the start.',
+    ],
+    subcategories: [
+      {
+        name: 'Technical SEO',
+        articles: [
+          'What Is Technical SEO?',
+          'How Clean Site Structure Supports Search Visibility',
+          'Why Crawlable Pages Matter for Growing Websites',
+        ],
+      },
+      {
+        name: 'On-Page SEO',
+        articles: [
+          'SEO Metadata Explained',
+          'How Headings Help Search Engines Understand a Page',
+          'Why Service Pages Need Clear Search Intent',
+        ],
+      },
+      {
+        name: 'Local SEO',
+        articles: [
+          'How Local Businesses Should Structure Website Pages',
+          'Why Location Pages Help Local Customers Find You',
+          'How Service Area Content Supports Local Search',
+        ],
+      },
+      {
+        name: 'Structured Data',
+        articles: [
+          'What Structured Data Helps Search Engines Understand',
+          'When Small Business Websites Should Use Schema',
+          'How Rich Results Can Improve Search Presentation',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'react',
+    name: 'React',
+    purpose: 'Modern interface patterns for scalable custom websites.',
+    notes: [
+      'React helps build reusable interfaces that can grow with a business.',
+      'Component-based design keeps repeated sections consistent and easier to update.',
+      'Custom React builds can avoid the limitations of one-size-fits-all website builders.',
+    ],
+    subcategories: [
+      {
+        name: 'Components',
+        articles: [
+          'How Component-Based Design Makes Websites Easier to Scale',
+          'Why Reusable Sections Keep Websites Consistent',
+          'How React Components Make Future Updates Easier',
+        ],
+      },
+      {
+        name: 'Web Apps',
+        articles: [
+          'When a Website Should Become a Web App',
+          'What Makes a Web App Different From a Website',
+          'How Custom Web Apps Support Business Workflows',
+        ],
+      },
+      {
+        name: 'Smart Interfaces',
+        articles: [
+          'How Smart Interfaces Make Websites Easier to Use',
+          'Why Interactive Tools Can Improve Customer Decisions',
+          'How Guided Interfaces Reduce Visitor Confusion',
+        ],
+      },
+      {
+        name: 'Scalability',
+        articles: [
+          'Why Apopto Uses React for Scalable Websites',
+          'How Scalable Frontends Support Business Growth',
+          'Why Custom Code Can Outgrow Template Builders',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'aws-hosting',
+    name: 'AWS & Hosting',
+    purpose: 'Infrastructure choices that support speed, security, and reliability.',
+    notes: [
+      'Hosting affects security, reliability, speed, and long-term maintainability.',
+      'Cloud infrastructure can make small business websites more resilient.',
+      'Good hosting choices reduce risk when traffic, content, or features grow.',
+    ],
+    subcategories: [
+      {
+        name: 'Cloud Hosting',
+        articles: [
+          'Why Hosting Choices Matter',
+          'What Cloud Hosting Means for Business Websites',
+          'How Reliable Hosting Protects the Customer Experience',
+        ],
+      },
+      {
+        name: 'CloudFront',
+        articles: [
+          'What Is CloudFront?',
+          'How Content Delivery Networks Speed Up Websites',
+          'Why Edge Caching Helps Visitors Load Pages Faster',
+        ],
+      },
+      {
+        name: 'Security',
+        articles: [
+          'How Secure Website Hosting Works',
+          'Why SSL and HTTPS Matter for Business Trust',
+          'How Hosting Security Reduces Website Risk',
+        ],
+      },
+      {
+        name: 'Deployment',
+        articles: [
+          'What Happens When a Website Goes Live',
+          'How Deployment Pipelines Make Launches More Reliable',
+          'What to Check Before Publishing Website Changes',
+        ],
+      },
     ],
   },
   {
     id: 'performance',
-    term: 'Performance',
-    summary: 'How quickly and smoothly a website loads, responds, and feels.',
-    definition:
-      'Performance is more than a score. It is the lived experience of waiting, scrolling, clicking, and moving through a site. Fast pages feel more trustworthy and make it easier for visitors to stay focused.',
+    name: 'Performance',
+    purpose: 'Speed and loading behavior tied to business outcomes.',
     notes: [
-      'Image sizing, code splitting, caching, and hosting choices all shape how fast the site feels.',
-      'Performance should be considered during design, not patched on at the end.',
-      'A smooth site supports SEO, accessibility, and conversion because visitors are less likely to leave early.',
+      'Fast websites feel more trustworthy and keep visitors engaged.',
+      'Performance supports SEO, accessibility, and conversion at the same time.',
+      'Image optimization and careful loading behavior can make a site feel much smoother.',
     ],
-    screenshots: [
-      { src: '/assets/images/portfolio/portfolio-7.png', label: 'Lightweight visual system' },
-      { src: '/assets/images/portfolio/portfolio-8.png', label: 'Fast-loading content blocks' },
+    subcategories: [
+      {
+        name: 'Page Speed',
+        articles: [
+          'Why Fast Websites Convert Better',
+          'How Slow Load Times Cost Website Leads',
+          'What Makes a Website Feel Fast to Visitors',
+        ],
+      },
+      {
+        name: 'Core Web Vitals',
+        articles: [
+          'What Are Core Web Vitals?',
+          'Why Google Measures Loading and Interaction Quality',
+          'How Layout Shift Affects Visitor Confidence',
+        ],
+      },
+      {
+        name: 'Image Optimization',
+        articles: [
+          'How Image Optimization Improves Website Speed',
+          'What Image Formats Work Best for Modern Websites',
+          'Why Oversized Images Slow Down Conversions',
+        ],
+      },
+      {
+        name: 'Caching',
+        articles: [
+          'How Caching Makes Websites Feel Faster',
+          'What Browser Caching Does for Repeat Visitors',
+          'How CDN Caching Supports High-Traffic Pages',
+        ],
+      },
     ],
   },
   {
-    id: 'scalable-structure',
-    term: 'Scalable Structure',
-    summary: 'A site architecture that can grow without becoming messy or fragile.',
-    definition:
-      'Scalable structure means the website can support new pages, services, campaigns, and content without needing to be rebuilt every time the business changes. The foundation should be organized enough to evolve.',
+    id: 'automation',
+    name: 'Automation',
+    purpose: 'Systems that make forms, leads, and workflows easier to manage.',
     notes: [
-      'Reusable sections help future pages feel consistent without making every page look identical.',
-      'Clear content models make it easier to add new offers, case studies, and resources later.',
-      'A scalable structure saves time because growth does not require rethinking the entire website.',
+      'Forms should collect the right information without overwhelming the visitor.',
+      'Automation can reduce repetitive admin work after a lead submits.',
+      'Dashboards turn inquiries into trackable business activity.',
     ],
-    screenshots: [
-      { src: '/assets/images/portfolio/portfolio-3.png', label: 'Reusable page language' },
-      { src: '/assets/images/portfolio/portfolio-9.png', label: 'Expandable showcase format' },
+    subcategories: [
+      {
+        name: 'Smart Forms',
+        articles: [
+          'What Is a Smart Form?',
+          'How Smart Forms Qualify Leads Faster',
+          'Why Better Form Logic Saves Admin Time',
+        ],
+      },
+      {
+        name: 'CRM Integration',
+        articles: [
+          'How CRM Integration Keeps Leads Organized',
+          'What Happens After a Website Form Is Submitted',
+          'Why Connected Lead Data Improves Follow-Up',
+        ],
+      },
+      {
+        name: 'Dashboards',
+        articles: [
+          'How Dashboards Help Businesses Track Leads',
+          'What a Business Website Dashboard Should Show',
+          'How Lead Visibility Helps Owners Make Better Decisions',
+        ],
+      },
+      {
+        name: 'Workflows',
+        articles: [
+          'How Client Intake Automation Saves Time',
+          'Which Website Workflows Are Worth Automating First',
+          'How Automated Follow-Up Improves Lead Handling',
+        ],
+      },
     ],
   },
   {
-    id: 'trust-signals',
-    term: 'Trust Signals',
-    summary: 'The proof, clarity, and polish that help visitors feel confident.',
-    definition:
-      'Trust signals are the pieces of a website that reduce uncertainty. They can include clear contact paths, proof of work, process language, secure interactions, professional visuals, and straightforward explanations.',
+    id: 'process',
+    name: 'Process',
+    purpose: 'The launch path from first conversation to long-term maintenance.',
     notes: [
-      'Trust is built through consistency: design polish, clear writing, and reliable page behavior all matter.',
-      'Visitors should quickly understand who the business serves, what it offers, and how to take the next step.',
-      'Good trust signals feel natural. They support the page instead of interrupting it.',
+      'A clear process helps clients understand what happens before design and development.',
+      'Preparation reduces delays and makes the first version stronger.',
+      'Transparent workflow language builds trust before a client ever reaches out.',
     ],
-    screenshots: [
-      { src: '/assets/images/portfolio/portfolio-6.png', label: 'Proof-centered presentation' },
-      { src: '/assets/images/portfolio/portfolio-1.png', label: 'Professional first impression' },
+    subcategories: [
+      {
+        name: 'Discovery',
+        articles: [
+          'What Happens Before Development Starts',
+          'What Questions Shape a Strong Website Project',
+          'How Discovery Turns Business Goals Into Page Strategy',
+        ],
+      },
+      {
+        name: 'Design',
+        articles: [
+          'How Apopto Plans Website Design',
+          'What Clients Review During the Design Phase',
+          'How Wireframes Help Clarify a Website Before Build',
+        ],
+      },
+      {
+        name: 'Development',
+        articles: [
+          'How Apopto Builds a Website',
+          'What Happens During Website Development',
+          'How Development Turns Designs Into Working Pages',
+        ],
+      },
+      {
+        name: 'Launch',
+        articles: [
+          'What to Prepare Before Launching a Website',
+          'What Happens During a Website Launch',
+          'How Launch Testing Protects the First Impression',
+        ],
+      },
+      {
+        name: 'Maintenance',
+        articles: [
+          'How Website Maintenance Supports Long-Term Growth',
+          'What to Update After a Website Goes Live',
+          'Why Ongoing Improvements Keep Websites Useful',
+        ],
+      },
     ],
   },
 ]
+
+const insightArticles = insightCategories.flatMap((category, categoryIndex) =>
+  category.subcategories.flatMap((subcategory, subcategoryIndex) =>
+    subcategory.articles.map((title, articleIndex) => {
+      const screenshotIndex = categoryIndex + subcategoryIndex + articleIndex
+
+      return {
+        id: toArticleId(title),
+        term: title,
+        categoryId: category.id,
+        categoryName: category.name,
+        subcategoryName: subcategory.name,
+        summary: category.purpose,
+        definition: `This article sits under ${subcategory.name} inside ${category.name}. It is ready for practical guidance, examples, and client-friendly explanations that connect the concept to better business outcomes.`,
+        notes: category.notes,
+        screenshots: [
+          insightScreenshots[screenshotIndex % insightScreenshots.length],
+          insightScreenshots[(screenshotIndex + 3) % insightScreenshots.length],
+        ],
+      }
+    }),
+  ),
+)
 
 const heroFeatureItems = [
   {
@@ -263,6 +665,75 @@ const aboutPrinciples = [
     image: '/assets/images/about/creativity-placeholder.svg',
   },
 ]
+
+const aboutPicturePlaceholders = [
+  {
+    title: 'About page vertical placeholder',
+    image: '/assets/images/about/about-image-placeholder-1.svg',
+  },
+]
+
+const contactSteps = ['Contact', 'Business', 'Project']
+
+const contactInitialValues = {
+  name: '',
+  email: '',
+  company: '',
+  website: '',
+  phone: '',
+  preferredContact: '',
+  bestTime: '',
+  businessDescription: '',
+  customers: '',
+  region: '',
+  projectGoal: '',
+  problem: '',
+  branding: '',
+  content: '',
+  pageCount: '',
+  needs: [],
+  inspirationSites: '',
+}
+
+const contactRequiredFieldsByStep = [
+  ['name', 'email', 'company', 'preferredContact', 'bestTime'],
+  ['businessDescription', 'customers', 'region', 'projectGoal', 'problem'],
+  ['branding', 'content', 'pageCount'],
+]
+
+const simpleContactInitialValues = {
+  name: '',
+  email: '',
+  company: '',
+  phone: '',
+  preferredContact: '',
+  bestTime: '',
+  message: '',
+}
+
+const simpleContactRequiredFields = [
+  'name',
+  'email',
+  'company',
+  'preferredContact',
+  'bestTime',
+]
+
+const preferredContactOptions = ['Email', 'Phone', 'Text', 'Video call']
+const bestTimeOptions = ['Morning', 'Afternoon', 'Evening', 'Flexible']
+const projectGoalOptions = [
+  'Get more leads',
+  'Sell products online',
+  'Look more professional',
+  'Replace an outdated website',
+  'Automate a manual process',
+  'Build a portal/dashboard',
+  'Improve speed or SEO',
+  'Launch a new brand',
+]
+const projectReadinessOptions = ['Yes', 'No', 'In Progress']
+const pageCountOptions = ['1-3', '4-7', '8-15', '15+']
+const projectNeedOptions = ['Booking', 'Payments', 'Forms', 'Login features', 'Dashboards']
 
 function ApoptoLogoMark() {
   return (
@@ -335,64 +806,149 @@ function HeroFeatureIcon({ type }) {
 
 function InsightsNav() {
   const { pathname } = useLocation()
+  const isMobileInsights = useMediaQuery('(max-width: 980px)')
+  const [isMobileInsightsOpen, setMobileInsightsOpen] = useState(false)
+  const currentArticleId = pathname.startsWith('/insights/')
+    ? pathname.split('/').filter(Boolean).at(-1)
+    : insightArticles[0].id
+  const currentArticle =
+    insightArticles.find((article) => article.id === currentArticleId) ?? insightArticles[0]
+  const [expandedCategory, setExpandedCategory] = useState(currentArticle.categoryId)
+
+  useEffect(() => {
+    setExpandedCategory(currentArticle.categoryId)
+  }, [currentArticle.categoryId])
+
+  useEffect(() => {
+    if (isMobileInsights) {
+      setMobileInsightsOpen(false)
+    }
+  }, [isMobileInsights, pathname])
+
+  const closeMobileInsights = () => {
+    if (isMobileInsights) {
+      setMobileInsightsOpen(false)
+    }
+  }
 
   return (
-    <Drawer
-      className="insights-drawer"
-      slotProps={{
-        paper: {
-          className: 'insights-drawer-paper',
-          sx: {
-            background: '#ffffff',
-            border: 0,
-            borderRight: '1px solid rgba(245, 158, 11, 0.36)',
-            borderRadius: 0,
-            bottom: 0,
-            boxSizing: 'border-box',
-            boxShadow: '18px 0 58px rgba(15, 23, 42, 0.08)',
-            color: '#0f172a',
-            height: 'auto',
-            left: 0,
-            overflow: 'hidden',
-            position: 'absolute',
-            top: 0,
-            width: 'var(--insights-drawer-width)',
+    <>
+      <button
+        aria-controls="insights-drawer-nav"
+        aria-expanded={isMobileInsightsOpen}
+        className={`insights-mobile-toggle${
+          isMobileInsightsOpen ? ' insights-mobile-toggle-open' : ''
+        }`}
+        onClick={() => setMobileInsightsOpen(true)}
+        type="button"
+      >
+        Insights menu
+      </button>
+      <Drawer
+        className="insights-drawer"
+        ModalProps={{ keepMounted: true }}
+        onClose={() => setMobileInsightsOpen(false)}
+        open={isMobileInsights ? isMobileInsightsOpen : true}
+        slotProps={{
+          paper: {
+            className: 'insights-drawer-paper',
+            sx: {
+              background: '#ffffff',
+              border: 0,
+              borderRadius: isMobileInsights ? '0 18px 18px 0' : 0,
+              borderRight: '1px solid rgba(15, 23, 42, 0.14)',
+              bottom: 0,
+              boxSizing: 'border-box',
+              boxShadow:
+                'inset -1px 0 0 rgba(15, 23, 42, 0.06), 18px 0 58px rgba(15, 23, 42, 0.08)',
+              color: '#0f172a',
+              height: isMobileInsights ? '100dvh' : 'auto',
+              left: 0,
+              overflow: 'hidden',
+              position: isMobileInsights ? 'fixed' : 'absolute',
+              top: 0,
+              width: isMobileInsights
+                ? 'min(360px, calc(100vw - 24px))'
+                : 'var(--insights-drawer-width)',
+            },
           },
-        },
-      }}
-      variant="permanent"
-    >
-      <nav className="insights-index" aria-label="Insights articles">
-        <div className="insights-drawer-heading">
-          <span>Insights</span>
-          <strong>Articles</strong>
-        </div>
-        <Divider className="insights-mui-divider" flexItem />
-        {insightConcepts.map((concept, index) => {
-          const isDefaultArticle = pathname === '/insights' && index === 0
+        }}
+        variant={isMobileInsights ? 'temporary' : 'permanent'}
+      >
+        <nav className="insights-index" id="insights-drawer-nav" aria-label="Insights articles">
+          <div className="insights-drawer-heading">
+            <span>Insights</span>
+            <strong>Articles</strong>
+            <button
+              aria-label="Close insights menu"
+              className="insights-drawer-close"
+              onClick={() => setMobileInsightsOpen(false)}
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+          <Divider className="insights-mui-divider" flexItem />
+          {insightCategories.map((category) => (
+            <Accordion
+              className="insights-category-accordion"
+              disableGutters
+              expanded={expandedCategory === category.id}
+              key={category.id}
+              onChange={(_, isExpanded) =>
+                setExpandedCategory(isExpanded ? category.id : false)
+              }
+              square
+            >
+              <AccordionSummary className="insights-category-summary">
+                <span className="insights-summary-main">
+                  <span className="insights-accordion-icon" aria-hidden="true">
+                    ›
+                  </span>
+                  <span className="insights-category-name">{category.name}</span>
+                </span>
+              </AccordionSummary>
+              <AccordionDetails className="insights-category-details">
+                <List className="insights-category-list" disablePadding>
+                  {category.subcategories.map((subcategory) => {
+                    return (
+                      <div className="insights-subcategory-group" key={subcategory.name}>
+                        <ListSubheader
+                          className="insights-subcategory-label"
+                          component="div"
+                          disableSticky
+                        >
+                          {subcategory.name}
+                        </ListSubheader>
+                        <div className="insights-example-article-list">
+                          {subcategory.articles.map((articleTitle) => {
+                            const articleId = toArticleId(articleTitle)
+                            const isSelected = articleId === currentArticle.id
 
-          return (
-            <Fragment key={concept.id}>
-              <NavLink
-                className={({ isActive }) =>
-                  `insights-index-item${
-                    isActive || isDefaultArticle ? ' insights-index-item-active' : ''
-                  }`
-                }
-                to={`/insights/${concept.id}`}
-              >
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{concept.term}</strong>
-                <small>{concept.summary}</small>
-              </NavLink>
-              {index < insightConcepts.length - 1 ? (
-                <Divider className="insights-mui-divider" flexItem />
-              ) : null}
-            </Fragment>
-          )
-        })}
-      </nav>
-    </Drawer>
+                            return (
+                              <ListItemButton
+                                className="insights-example-article"
+                                component={NavLink}
+                                key={articleTitle}
+                                onClick={closeMobileInsights}
+                                selected={isSelected}
+                                to={`/insights/${articleId}`}
+                              >
+                                {articleTitle}
+                              </ListItemButton>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </List>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </nav>
+      </Drawer>
+    </>
   )
 }
 
@@ -592,8 +1148,41 @@ function SolutionPlaceholderImage({ index, title }) {
 }
 
 function Solutions() {
+  const [shouldAnimateSolutions] = useState(() => {
+    if (typeof window === 'undefined') {
+      return true
+    }
+
+    try {
+      return window.sessionStorage.getItem(solutionsAnimationStorageKey) !== 'true'
+    } catch {
+      return true
+    }
+  })
+
+  useEffect(() => {
+    if (!shouldAnimateSolutions || typeof window === 'undefined') {
+      return undefined
+    }
+
+    const animationCompleteTimer = window.setTimeout(() => {
+      try {
+        window.sessionStorage.setItem(solutionsAnimationStorageKey, 'true')
+      } catch {
+        // Ignore storage failures so the page still renders normally.
+      }
+    }, 1800)
+
+    return () => {
+      window.clearTimeout(animationCompleteTimer)
+    }
+  }, [shouldAnimateSolutions])
+
   return (
-    <section className="solutions-page" aria-labelledby="solutions-title">
+    <section
+      className={`solutions-page${shouldAnimateSolutions ? ' solutions-page-animate' : ''}`}
+      aria-labelledby="solutions-title"
+    >
       <div className="solutions-page-header">
         <p className="eyebrow">Solutions</p>
         <h1 id="solutions-title">Three product paths, each built to sell clearly.</h1>
@@ -639,7 +1228,11 @@ function Portfolio() {
         Portfolio
       </h1>
 
-      <div className="portfolio-image-cluster" aria-label="Selected website screenshots">
+      <div
+        className="portfolio-image-cluster"
+        id="portfolio-previews"
+        aria-label="Selected website screenshots"
+      >
         {portfolioProjects.map((project, index) => (
           <PortfolioClusterImage key={project.image} project={project} index={index} />
         ))}
@@ -652,12 +1245,23 @@ function Portfolio() {
         </p>
       </div>
 
-      <section className="portfolio-story-paper" aria-label="Portfolio introduction">
+      <section
+        className="portfolio-story-paper"
+        id="portfolio-approach"
+        aria-label="Portfolio introduction"
+      >
         <div className="portfolio-story-paper-intro">
           <p className="portfolio-project-label">Portfolio approach</p>
           <h2>Websites shaped around the people who use them.</h2>
+          <nav className="portfolio-quick-links" aria-label="Portfolio quick links">
+            {portfolioQuickLinks.map((link) => (
+              <Link key={link.to} to={link.to}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
-        <div className="portfolio-story-paper-body">
+        <div className="portfolio-story-paper-body" id="portfolio-details">
           <p>
             Every project starts with the person on the other side of the screen: what
             they need to understand, what they need to trust, and what action should feel
@@ -699,7 +1303,11 @@ function Portfolio() {
         </div>
       </section>
 
-      <section className="portfolio-live-preview" aria-labelledby="portfolio-live-preview-title">
+      <section
+        className="portfolio-live-preview"
+        id="portfolio-live-site"
+        aria-labelledby="portfolio-live-preview-title"
+      >
         <div className="portfolio-live-preview-copy">
           <p className="portfolio-project-label">Latest live site</p>
           <h2 id="portfolio-live-preview-title">{livePortfolioPreview.title}</h2>
@@ -726,6 +1334,27 @@ function Portfolio() {
           />
         </div>
       </section>
+    </section>
+  )
+}
+
+function PortfolioDetailPage({ page }) {
+  return (
+    <section className="portfolio-detail-page" aria-labelledby="portfolio-detail-title">
+      <div className="portfolio-detail-card">
+        <p className="portfolio-project-label">{page.eyebrow}</p>
+        <h1 id="portfolio-detail-title">{page.title}</h1>
+        <p>{page.intro}</p>
+        <ul>
+          {page.points.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
+        <Link className="portfolio-detail-back" to="/portfolio">
+          Back to Portfolio
+          <span aria-hidden="true">-&gt;</span>
+        </Link>
+      </div>
     </section>
   )
 }
@@ -787,6 +1416,26 @@ function About() {
       style={{ '--about-progress': aboutProgress }}
     >
       <div className="about-layout">
+        <div className="about-principles" aria-label="Apopto principles">
+          {aboutPrinciples.map((principle, index) => {
+            const isGlowing =
+              index === 0 ||
+              (index === 1 && aboutProgress >= 0.5) ||
+              (index === 2 && aboutProgress >= 0.98)
+
+            return (
+              <article
+                className={`about-principle${isGlowing ? ' about-principle-glow' : ''}`}
+                key={principle.title}
+              >
+                <div className="about-principle-circle">
+                  <img src={principle.image} alt={`${principle.title} placeholder`} />
+                </div>
+              </article>
+            )
+          })}
+        </div>
+
         <div className="about-copy">
           <h1>About Apopto</h1>
           <p>
@@ -829,25 +1478,12 @@ function About() {
           </p>
         </div>
 
-        <div className="about-principles" aria-label="Apopto principles">
-          {aboutPrinciples.map((principle, index) => {
-            const isGlowing =
-              index === 0 ||
-              (index === 1 && aboutProgress >= 0.5) ||
-              (index === 2 && aboutProgress >= 0.98)
-
-            return (
-              <article
-                className={`about-principle${isGlowing ? ' about-principle-glow' : ''}`}
-                key={principle.title}
-              >
-                <div className="about-principle-circle">
-                  <img src={principle.image} alt={`${principle.title} placeholder`} />
-                </div>
-                <h2>{principle.title}</h2>
-              </article>
-            )
-          })}
+        <div className="about-picture-placeholders" aria-hidden="true">
+          {aboutPicturePlaceholders.map((placeholder) => (
+            <div className="about-picture-box" key={placeholder.title}>
+              <img src={placeholder.image} alt="" />
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -857,14 +1493,16 @@ function About() {
 function Insights() {
   const { conceptId } = useParams()
   const selectedConcept =
-    insightConcepts.find((concept) => concept.id === conceptId) ?? insightConcepts[0]
+    insightArticles.find((article) => article.id === conceptId) ?? insightArticles[0]
 
   return (
-    <section className="insights-page" aria-label="Website concept dictionary">
+    <section className="insights-page" aria-label="Insights articles">
       <div className="insights-dictionary">
         <article className="insights-panel" key={selectedConcept.id}>
           <div className="insights-panel-copy">
-            <p className="insights-panel-kicker">Selected concept</p>
+            <p className="insights-panel-kicker">
+              {selectedConcept.categoryName} / {selectedConcept.subcategoryName}
+            </p>
             <h2>{selectedConcept.term}</h2>
             <Divider className="insights-mui-divider" flexItem />
             <p>{selectedConcept.definition}</p>
@@ -890,25 +1528,559 @@ function Insights() {
   )
 }
 
+function ProjectIntakeForm({
+  formId = 'project-contact-form',
+  stageClassName = 'contact-form-stage',
+}) {
+  const [activeStep, setActiveStep] = useState(0)
+  const [contactValues, setContactValues] = useState(contactInitialValues)
+  const [attemptedSteps, setAttemptedSteps] = useState({})
+  const [isSubmitted, setSubmitted] = useState(false)
+  const currentRequiredFields = contactRequiredFieldsByStep[activeStep] ?? []
+
+  const updateContactValue = (field) => (event) => {
+    setSubmitted(false)
+    setContactValues((currentValues) => ({
+      ...currentValues,
+      [field]: event.target.value,
+    }))
+  }
+
+  const toggleContactNeed = (need) => (event) => {
+    setContactValues((currentValues) => {
+      const nextNeeds = event.target.checked
+        ? [...currentValues.needs, need]
+        : currentValues.needs.filter((currentNeed) => currentNeed !== need)
+
+      return {
+        ...currentValues,
+        needs: nextNeeds,
+      }
+    })
+  }
+
+  const getFieldError = (field) =>
+    Boolean(attemptedSteps[activeStep] && currentRequiredFields.includes(field) && !contactValues[field])
+
+  const canAdvanceContactStep = () =>
+    currentRequiredFields.every((field) => contactValues[field].trim())
+
+  const goToNextContactStep = () => {
+    setAttemptedSteps((currentSteps) => ({
+      ...currentSteps,
+      [activeStep]: true,
+    }))
+
+    if (!canAdvanceContactStep()) {
+      return
+    }
+
+    setActiveStep((currentStep) => Math.min(currentStep + 1, contactSteps.length - 1))
+  }
+
+  const goToPreviousContactStep = () => {
+    setActiveStep((currentStep) => Math.max(currentStep - 1, 0))
+  }
+
+  const submitContactForm = (event) => {
+    event.preventDefault()
+    setAttemptedSteps((currentSteps) => ({
+      ...currentSteps,
+      [activeStep]: true,
+    }))
+
+    if (!canAdvanceContactStep()) {
+      return
+    }
+
+    setSubmitted(true)
+  }
+
+  return (
+        <div className={stageClassName} id={formId}>
+          <Paper
+            className="contact-form-paper"
+            component="form"
+            elevation={0}
+            onSubmit={submitContactForm}
+          >
+            <div className="contact-form-header">
+              <h2>Project contact form</h2>
+            </div>
+
+            <Stepper activeStep={activeStep} alternativeLabel className="contact-stepper">
+              {contactSteps.map((step) => (
+                <Step key={step}>
+                  <StepLabel>{step}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+
+            {activeStep === 0 ? (
+              <div className="contact-form-grid">
+                <TextField
+                  error={getFieldError('name')}
+                  fullWidth
+                  helperText={getFieldError('name') ? 'Name is required.' : ' '}
+                  label="Name"
+                  onChange={updateContactValue('name')}
+                  required
+                  value={contactValues.name}
+                />
+                <TextField
+                  error={getFieldError('email')}
+                  fullWidth
+                  helperText={getFieldError('email') ? 'Email is required.' : ' '}
+                  label="Email"
+                  onChange={updateContactValue('email')}
+                  required
+                  type="email"
+                  value={contactValues.email}
+                />
+                <TextField
+                  error={getFieldError('company')}
+                  fullWidth
+                  helperText={getFieldError('company') ? 'Company or brand name is required.' : ' '}
+                  label="Company / Brand Name"
+                  onChange={updateContactValue('company')}
+                  required
+                  value={contactValues.company}
+                />
+                <TextField
+                  fullWidth
+                  helperText=" "
+                  label="Current Website URL"
+                  onChange={updateContactValue('website')}
+                  type="url"
+                  value={contactValues.website}
+                />
+                <TextField
+                  fullWidth
+                  helperText=" "
+                  label="Phone Number"
+                  onChange={updateContactValue('phone')}
+                  type="tel"
+                  value={contactValues.phone}
+                />
+                <TextField
+                  error={getFieldError('preferredContact')}
+                  fullWidth
+                  helperText={
+                    getFieldError('preferredContact') ? 'Preferred contact method is required.' : ' '
+                  }
+                  label="Preferred Contact Method"
+                  onChange={updateContactValue('preferredContact')}
+                  required
+                  select
+                  value={contactValues.preferredContact}
+                >
+                  {preferredContactOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  error={getFieldError('bestTime')}
+                  fullWidth
+                  helperText={getFieldError('bestTime') ? 'Best time is required.' : ' '}
+                  label="Best Time to Reach You"
+                  onChange={updateContactValue('bestTime')}
+                  required
+                  select
+                  value={contactValues.bestTime}
+                >
+                  {bestTimeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </div>
+            ) : null}
+
+            {activeStep === 1 ? (
+              <div className="contact-form-grid">
+                <TextField
+                  error={getFieldError('businessDescription')}
+                  fullWidth
+                  helperText={
+                    getFieldError('businessDescription') ? 'Business description is required.' : ' '
+                  }
+                  label="What does your business do?"
+                  onChange={updateContactValue('businessDescription')}
+                  required
+                  value={contactValues.businessDescription}
+                />
+                <TextField
+                  error={getFieldError('customers')}
+                  fullWidth
+                  helperText={getFieldError('customers') ? 'Customer description is required.' : ' '}
+                  label="Who are your customers?"
+                  onChange={updateContactValue('customers')}
+                  required
+                  value={contactValues.customers}
+                />
+                <TextField
+                  error={getFieldError('region')}
+                  fullWidth
+                  helperText={getFieldError('region') ? 'City or region is required.' : ' '}
+                  label="What City / Region do you serve?"
+                  onChange={updateContactValue('region')}
+                  required
+                  value={contactValues.region}
+                />
+                <FormControl
+                  className="contact-choice-group contact-choice-group-wide"
+                  component="fieldset"
+                  error={getFieldError('projectGoal')}
+                  required
+                >
+                  <FormLabel component="legend">What is the main goal of this project?</FormLabel>
+                  <RadioGroup
+                    className="contact-option-grid"
+                    onChange={updateContactValue('projectGoal')}
+                    value={contactValues.projectGoal}
+                  >
+                    {projectGoalOptions.map((option) => (
+                      <FormControlLabel
+                        control={<Radio />}
+                        key={option}
+                        label={option}
+                        value={option}
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  className="contact-field-wide"
+                  error={getFieldError('problem')}
+                  fullWidth
+                  helperText={getFieldError('problem') ? 'Project problem is required.' : ' '}
+                  label="What problem are you trying to solve?"
+                  minRows={6}
+                  multiline
+                  onChange={updateContactValue('problem')}
+                  required
+                  value={contactValues.problem}
+                />
+              </div>
+            ) : null}
+
+            {activeStep === 2 ? (
+              <div className="contact-form-grid">
+                <TextField
+                  error={getFieldError('branding')}
+                  fullWidth
+                  helperText={getFieldError('branding') ? 'Branding status is required.' : ' '}
+                  label="Do you already have branding?"
+                  onChange={updateContactValue('branding')}
+                  required
+                  select
+                  value={contactValues.branding}
+                >
+                  {projectReadinessOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  error={getFieldError('content')}
+                  fullWidth
+                  helperText={getFieldError('content') ? 'Content status is required.' : ' '}
+                  label="Do you have written content?"
+                  onChange={updateContactValue('content')}
+                  required
+                  select
+                  value={contactValues.content}
+                >
+                  {projectReadinessOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  error={getFieldError('pageCount')}
+                  fullWidth
+                  helperText={getFieldError('pageCount') ? 'Page count is required.' : ' '}
+                  label="About how many pages do you need?"
+                  onChange={updateContactValue('pageCount')}
+                  required
+                  select
+                  value={contactValues.pageCount}
+                >
+                  {pageCountOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <FormControl className="contact-choice-group contact-choice-group-wide" component="fieldset">
+                  <FormLabel component="legend">Do you need:</FormLabel>
+                  <FormGroup className="contact-option-grid">
+                    {projectNeedOptions.map((option) => (
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={contactValues.needs.includes(option)}
+                            onChange={toggleContactNeed(option)}
+                          />
+                        }
+                        key={option}
+                        label={option}
+                      />
+                    ))}
+                  </FormGroup>
+                </FormControl>
+                <TextField
+                  className="contact-field-wide"
+                  fullWidth
+                  helperText=" "
+                  label="Are there websites you like?"
+                  onChange={updateContactValue('inspirationSites')}
+                  type="url"
+                  value={contactValues.inspirationSites}
+                />
+              </div>
+            ) : null}
+
+            <div className="contact-form-actions">
+              <MuiButton
+                className="contact-form-action"
+                disabled={activeStep === 0}
+                onClick={goToPreviousContactStep}
+                type="button"
+                variant="outlined"
+              >
+                Back
+              </MuiButton>
+              {activeStep < contactSteps.length - 1 ? (
+                <MuiButton
+                  className="contact-form-action contact-form-action-primary"
+                  onClick={goToNextContactStep}
+                  type="button"
+                  variant="contained"
+                >
+                  Next
+                </MuiButton>
+              ) : (
+                <MuiButton
+                  className="contact-form-action contact-form-action-primary"
+                  type="submit"
+                  variant="contained"
+                >
+                  Submit
+                </MuiButton>
+              )}
+            </div>
+
+            {isSubmitted ? (
+              <p className="contact-form-confirmation">
+                Your project intake is ready for review.
+              </p>
+            ) : null}
+          </Paper>
+        </div>
+  )
+}
+
+function SimpleContactForm() {
+  const [contactValues, setContactValues] = useState(simpleContactInitialValues)
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
+  const [isSubmitted, setSubmitted] = useState(false)
+
+  const updateContactValue = (field) => (event) => {
+    setSubmitted(false)
+    setContactValues((currentValues) => ({
+      ...currentValues,
+      [field]: event.target.value,
+    }))
+  }
+
+  const getFieldError = (field) =>
+    Boolean(hasAttemptedSubmit && simpleContactRequiredFields.includes(field) && !contactValues[field])
+
+  const canSubmitContactForm = () =>
+    simpleContactRequiredFields.every((field) => contactValues[field].trim())
+
+  const submitContactForm = (event) => {
+    event.preventDefault()
+    setHasAttemptedSubmit(true)
+
+    if (!canSubmitContactForm()) {
+      return
+    }
+
+    setSubmitted(true)
+  }
+
+  return (
+    <div className="contact-form-stage" id="contact-form">
+      <Paper
+        className="contact-form-paper contact-form-paper-simple"
+        component="form"
+        elevation={0}
+        onSubmit={submitContactForm}
+      >
+        <div className="contact-form-header">
+          <h2>Start the conversation</h2>
+          <p>Tell me the basics and I will follow up with the right next step.</p>
+        </div>
+
+        <div className="contact-form-grid">
+          <TextField
+            error={getFieldError('name')}
+            fullWidth
+            helperText={getFieldError('name') ? 'Name is required.' : ' '}
+            label="Name"
+            onChange={updateContactValue('name')}
+            required
+            value={contactValues.name}
+          />
+          <TextField
+            error={getFieldError('email')}
+            fullWidth
+            helperText={getFieldError('email') ? 'Email is required.' : ' '}
+            label="Email"
+            onChange={updateContactValue('email')}
+            required
+            type="email"
+            value={contactValues.email}
+          />
+          <TextField
+            error={getFieldError('company')}
+            fullWidth
+            helperText={getFieldError('company') ? 'Company or brand name is required.' : ' '}
+            label="Company / Brand Name"
+            onChange={updateContactValue('company')}
+            required
+            value={contactValues.company}
+          />
+          <TextField
+            fullWidth
+            helperText=" "
+            label="Phone Number"
+            onChange={updateContactValue('phone')}
+            type="tel"
+            value={contactValues.phone}
+          />
+          <TextField
+            error={getFieldError('preferredContact')}
+            fullWidth
+            helperText={
+              getFieldError('preferredContact') ? 'Preferred contact method is required.' : ' '
+            }
+            label="Preferred Contact Method"
+            onChange={updateContactValue('preferredContact')}
+            required
+            select
+            value={contactValues.preferredContact}
+          >
+            {preferredContactOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            error={getFieldError('bestTime')}
+            fullWidth
+            helperText={getFieldError('bestTime') ? 'Best time is required.' : ' '}
+            label="Best Time to Reach You"
+            onChange={updateContactValue('bestTime')}
+            required
+            select
+            value={contactValues.bestTime}
+          >
+            {bestTimeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            className="contact-field-wide"
+            fullWidth
+            helperText=" "
+            label="Message"
+            minRows={5}
+            multiline
+            onChange={updateContactValue('message')}
+            value={contactValues.message}
+          />
+        </div>
+
+        <div className="contact-form-actions">
+          <MuiButton
+            className="contact-form-action contact-form-action-primary"
+            type="submit"
+            variant="contained"
+          >
+            Submit
+          </MuiButton>
+        </div>
+
+        {isSubmitted ? (
+          <p className="contact-form-confirmation">
+            Your contact details are ready for review.
+          </p>
+        ) : null}
+      </Paper>
+    </div>
+  )
+}
+
 function Contact() {
   return (
-    <PageIntro eyebrow="Contact" title="Open the conversation.">
-      <p>
-        Use this page for the direct contact path: a form, booking link, email address,
-        phone number, or whatever intake flow fits the project.
-      </p>
-    </PageIntro>
+    <section className="contact-page" aria-label="Contact">
+      <div className="contact-layout">
+        <div className="contact-slate-bars" aria-hidden="true">
+          <span className="contact-slate-bar contact-slate-bar-1" />
+          <span className="contact-slate-bar contact-slate-bar-2" />
+          <span className="contact-slate-bar contact-slate-bar-3" />
+        </div>
+
+        <aside className="contact-next-panel" aria-label="What happens after contact">
+          <span>After you reach out</span>
+          <h1>What happens next?</h1>
+          <p>
+            Send a message with the basics and I’ll take it from there. Whether you have
+            a quick question, need help with an existing site, or want to explore a future
+            project, I’ll respond with a clear next step.
+          </p>
+          <ul>
+            <li>Review your message and contact preference.</li>
+            <li>Reply with an answer, recommendation, or follow-up question.</li>
+            <li>Direct larger projects to the full project intake form.</li>
+            <li>Keep the conversation focused and easy to start.</li>
+          </ul>
+          <div className="contact-next-cta">
+            <h2>Know Exactly What You Want?</h2>
+            <Link className="button primary contact-next-button" to="/start-a-project">
+              Start a Project
+              <span className="button-arrow" aria-hidden="true">
+                -&gt;
+              </span>
+            </Link>
+          </div>
+        </aside>
+
+        <SimpleContactForm />
+      </div>
+    </section>
   )
 }
 
 function StartAProject() {
   return (
-    <PageIntro eyebrow="Start a Project" title="Tell us what needs to exist.">
-      <p>
-        This route is ready for a project intake form covering goals, budget, timeline,
-        needed integrations, and the launch date the work is aiming toward.
-      </p>
-    </PageIntro>
+    <section className="start-project-page" aria-label="Start a Project">
+      <ProjectIntakeForm
+        formId="project-intake-form"
+        stageClassName="contact-form-stage start-project-form-stage"
+      />
+    </section>
   )
 }
 
@@ -951,6 +2123,22 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/portfolio" element={<Portfolio />} />
+        <Route
+          path="/portfolio/all-work"
+          element={<PortfolioDetailPage page={portfolioDetailPages.allWork} />}
+        />
+        <Route
+          path="/portfolio/build-breakdowns"
+          element={<PortfolioDetailPage page={portfolioDetailPages.buildBreakdowns} />}
+        />
+        <Route
+          path="/portfolio/concept-builds"
+          element={<PortfolioDetailPage page={portfolioDetailPages.conceptBuilds} />}
+        />
+        <Route
+          path="/portfolio/individual-project-pages"
+          element={<PortfolioDetailPage page={portfolioDetailPages.individualProjectPages} />}
+        />
         <Route path="/about" element={<About />} />
         <Route path="/insights" element={<Insights />} />
         <Route path="/insights/:conceptId" element={<Insights />} />
