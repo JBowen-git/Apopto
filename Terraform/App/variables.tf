@@ -49,14 +49,14 @@ variable "frontend_site_origin" {
 }
 
 variable "lambda_handler" {
-  description = "Fully qualified .NET Lambda handler."
+  description = "Lambda handler for the health check function."
   type        = string
 }
 
 variable "lambda_runtime" {
   description = "Lambda runtime for the health check function."
   type        = string
-  default     = "dotnet10"
+  default     = "nodejs22.x"
 }
 
 variable "lambda_zip_path" {

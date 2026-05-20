@@ -18,6 +18,26 @@
       "description": "Selected Apopto work, launch snapshots, and featured project outcomes."
     },
     {
+      "path": "/portfolio/all-work",
+      "title": "All Work",
+      "description": "A broader view of Apopto website work, launch pieces, and digital systems."
+    },
+    {
+      "path": "/portfolio/build-breakdowns",
+      "title": "Build Breakdowns",
+      "description": "A deeper look at project structure, visual direction, implementation, and launch decisions."
+    },
+    {
+      "path": "/portfolio/concept-builds",
+      "title": "Concept Builds",
+      "description": "Exploratory website, dashboard, and smart form concepts for future projects."
+    },
+    {
+      "path": "/portfolio/individual-project-pages",
+      "title": "Individual Project Pages",
+      "description": "Dedicated project pages with goals, screenshots, decisions, results, and live work links."
+    },
+    {
       "path": "/about",
       "title": "About",
       "description": "Learn about Apopto's repeatable path for frontend, backend, and cloud delivery."
@@ -36,6 +56,11 @@
       "path": "/start-a-project",
       "title": "Start a Project",
       "description": "Start a project with Apopto by sharing goals, scope, timeline, and launch needs."
+    },
+    {
+      "path": "/account",
+      "title": "Customer Account",
+      "description": "Customer login and account access for Apopto projects."
     },
     {
       "path": "/error",

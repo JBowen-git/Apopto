@@ -23,7 +23,13 @@ Frontend/node_modules/
 Frontend/dist/
 Frontend/.vite/
 
+# Shared TypeScript package
+Shared/node_modules/
+Shared/dist/
+
 # Backend
+Backend/node_modules/
+Backend/dist/
 Backend/**/bin/
 Backend/**/obj/
 Backend/TestResults/

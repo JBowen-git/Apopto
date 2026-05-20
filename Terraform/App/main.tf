@@ -13,9 +13,6 @@ locals {
 
   website_origin_id = "${local.resource_prefix}-website-s3"
   api_origin_id     = "${local.resource_prefix}-api-gateway"
-  dotnet_environment = (
-    var.deployment_environment == "production" ? "Production" : "Staging"
-  )
 
   site_asset_directory = "${path.module}/${var.site_asset_root}"
   site_asset_files     = fileset(local.site_asset_directory, "**")
@@ -196,8 +193,7 @@ resource "aws_lambda_function" "health" {
 
   environment {
     variables = {
-      ASPNETCORE_ENVIRONMENT = local.dotnet_environment
-      DOTNET_ENVIRONMENT     = local.dotnet_environment
+      APP_ENVIRONMENT = var.deployment_environment
     }
   }
 

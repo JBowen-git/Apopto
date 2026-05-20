@@ -1257,17 +1257,370 @@ a {
     radial-gradient(circle at 88% 18%, rgba(245, 158, 11, 0.08), transparent 28%),
     #f8fbff;
   color: #0f172a;
-  display: flex;
-  justify-content: center;
   min-height: calc(100vh - 96px);
   padding:
     clamp(44px, 6vh, 78px)
-    max(24px, calc((100vw - 1120px) / 2))
+    max(24px, calc((100vw - 1500px) / 2))
     clamp(92px, 12vh, 148px);
 }
 
 .start-project-form-stage {
-  max-width: 920px;
+  width: 100%;
+}
+
+.start-project-wizard {
+  align-items: start;
+  display: grid;
+  gap: clamp(22px, 3vw, 40px);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  margin: 0 auto;
+  width: min(100%, 1500px);
+}
+
+.start-project-sidebar {
+  background: #334155;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 28px;
+  box-shadow:
+    0 28px 78px rgba(15, 23, 42, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  display: grid;
+  gap: 28px;
+  min-height: 720px;
+  padding: clamp(24px, 3vw, 34px);
+  position: sticky;
+  top: 118px;
+}
+
+.start-project-sidebar-heading {
+  display: grid;
+  gap: 12px;
+}
+
+.start-project-sidebar-heading span,
+.start-project-workspace-header span {
+  color: #f59e0b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.start-project-sidebar-heading h1 {
+  font-size: clamp(2rem, 3.6vw, 3.75rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 0.94;
+  margin: 0;
+}
+
+.start-project-sidebar-heading p,
+.start-project-workspace-header p {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.62;
+  margin: 0;
+}
+
+.start-project-step-list {
+  display: grid;
+  gap: 12px;
+}
+
+.start-project-step-button {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  color: #ffffff;
+  cursor: pointer;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 46px minmax(0, 1fr);
+  min-height: 78px;
+  padding: 12px;
+  text-align: left;
+}
+
+.start-project-step-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
+.start-project-step-button.active,
+.start-project-step-button.complete {
+  background: rgba(245, 158, 11, 0.13);
+  border-color: rgba(245, 158, 11, 0.62);
+}
+
+.start-project-step-index {
+  align-items: center;
+  background: #0f172a;
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  border-radius: 12px;
+  color: #fbbf24;
+  display: inline-flex;
+  font-weight: 900;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.start-project-step-button strong,
+.start-project-step-button small {
+  display: block;
+}
+
+.start-project-step-button strong {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.start-project-step-button small {
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.35;
+}
+
+.start-project-progress {
+  align-self: end;
+  display: grid;
+  gap: 12px;
+}
+
+.start-project-progress > div {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.start-project-progress span {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 800;
+}
+
+.start-project-progress strong {
+  color: #fbbf24;
+}
+
+.start-project-progress-track {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  display: block;
+  height: 10px;
+  overflow: hidden;
+}
+
+.start-project-progress-track span {
+  background: #f59e0b;
+  display: block;
+  height: 100%;
+}
+
+.start-project-workspace {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 28px;
+  box-shadow:
+    0 22px 70px rgba(15, 23, 42, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  display: grid;
+  gap: clamp(24px, 3vw, 38px);
+  min-height: 720px;
+  padding: clamp(24px, 3vw, 42px);
+}
+
+.start-project-workspace-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  display: grid;
+  gap: 14px;
+  padding-bottom: clamp(22px, 3vw, 34px);
+}
+
+.start-project-workspace-header h2 {
+  color: #0f172a;
+  font-size: clamp(2rem, 4vw, 4.35rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 0.94;
+  margin: 0;
+  max-width: 900px;
+}
+
+.start-project-workspace-header p {
+  color: #475569;
+  font-size: clamp(1rem, 1.1vw, 1.14rem);
+  max-width: 820px;
+}
+
+.start-project-field-grid {
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-page {
+  background:
+    radial-gradient(circle at 16% 12%, rgba(245, 158, 11, 0.12), transparent 26%),
+    radial-gradient(circle at 88% 18%, rgba(37, 99, 235, 0.1), transparent 28%),
+    #f8fbff;
+  color: #0f172a;
+  min-height: calc(100vh - 96px);
+  padding:
+    clamp(64px, 8vh, 112px)
+    max(24px, calc((100vw - 1120px) / 2))
+    clamp(92px, 12vh, 148px);
+}
+
+.account-card {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 28px;
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  display: grid;
+  gap: 24px;
+  margin: 0 auto;
+  max-width: 980px;
+  padding: clamp(28px, 4vw, 58px);
+}
+
+.account-eyebrow {
+  color: #b45309;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.account-card h1 {
+  color: #0f172a;
+  font-size: clamp(2.4rem, 5vw, 5.6rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 0.92;
+  margin: 0;
+}
+
+.account-status-panel,
+.account-signin-panel,
+.account-dashboard-panel {
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 18px;
+  display: grid;
+  gap: 16px;
+  padding: clamp(20px, 3vw, 32px);
+}
+
+.account-status-panel h2,
+.account-profile h2 {
+  color: #0f172a;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.account-status-panel p,
+.account-signin-panel p,
+.account-profile p {
+  color: #475569;
+  font-size: clamp(1rem, 1.1vw, 1.14rem);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.account-status-panel code {
+  background: #0f172a;
+  border-radius: 8px;
+  color: #ffffff;
+  justify-self: start;
+  padding: 8px 10px;
+}
+
+.account-status-panel-error {
+  border-color: rgba(185, 28, 28, 0.28);
+}
+
+.account-primary-action,
+.account-secondary-action {
+  align-items: center;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 800;
+  gap: 24px;
+  justify-content: center;
+  justify-self: start;
+  min-height: 56px;
+  padding: 0 28px;
+}
+
+.account-primary-action {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.account-secondary-action {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.account-profile {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+}
+
+.account-profile img,
+.account-profile > span {
+  border-radius: 999px;
+  height: 64px;
+  width: 64px;
+}
+
+.account-profile > span {
+  align-items: center;
+  background: #334155;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 1.35rem;
+  font-weight: 800;
+  justify-content: center;
+}
+
+.account-dashboard-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-dashboard-grid div {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+}
+
+.account-dashboard-grid span {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.account-dashboard-grid strong {
+  color: #0f172a;
 }
 
 .contact-layout {
@@ -1535,7 +1888,8 @@ a {
   grid-template-columns: 1fr;
 }
 
-.contact-form-paper .MuiFormLabel-root {
+.contact-form-paper .MuiFormLabel-root,
+.start-project-wizard .MuiFormLabel-root {
   color: #475569;
   font-family: inherit;
   font-weight: 700;
@@ -1544,21 +1898,28 @@ a {
 .contact-form-paper .MuiInputBase-root,
 .contact-form-paper .MuiInputLabel-root,
 .contact-form-paper .MuiFormHelperText-root,
-.contact-form-paper .MuiFormControlLabel-label {
+.contact-form-paper .MuiFormControlLabel-label,
+.start-project-wizard .MuiInputBase-root,
+.start-project-wizard .MuiInputLabel-root,
+.start-project-wizard .MuiFormHelperText-root,
+.start-project-wizard .MuiFormControlLabel-label {
   font-family: inherit;
 }
 
-.contact-form-paper .MuiOutlinedInput-root {
+.contact-form-paper .MuiOutlinedInput-root,
+.start-project-wizard .MuiOutlinedInput-root {
   background: #f8fafc;
   border-radius: 10px;
 }
 
-.contact-form-paper .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+.contact-form-paper .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.start-project-wizard .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
   border-color: #f59e0b;
   border-width: 2px;
 }
 
-.contact-form-paper .MuiInputLabel-root.Mui-focused {
+.contact-form-paper .MuiInputLabel-root.Mui-focused,
+.start-project-wizard .MuiInputLabel-root.Mui-focused {
   color: #b45309;
 }
 
@@ -3025,6 +3386,30 @@ a {
     padding: 54px 20px 112px;
   }
 
+  .start-project-page {
+    padding: 54px 20px 112px;
+  }
+
+  .start-project-wizard {
+    grid-template-columns: 1fr;
+  }
+
+  .start-project-sidebar {
+    min-height: auto;
+    position: relative;
+    top: auto;
+  }
+
+  .start-project-step-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .start-project-step-button {
+    align-content: start;
+    grid-template-columns: 1fr;
+    min-height: 142px;
+  }
+
   .contact-layout {
     gap: 34px;
     grid-template-columns: 1fr;
@@ -3406,6 +3791,42 @@ a {
 
   .contact-page {
     padding: 0;
+  }
+
+  .start-project-page {
+    padding: 0;
+  }
+
+  .start-project-wizard {
+    gap: 0;
+    width: 100%;
+  }
+
+  .start-project-sidebar,
+  .start-project-workspace {
+    border-radius: 0;
+  }
+
+  .start-project-sidebar {
+    padding: 28px 22px;
+  }
+
+  .start-project-step-list {
+    grid-template-columns: 1fr;
+  }
+
+  .start-project-step-button {
+    grid-template-columns: 46px minmax(0, 1fr);
+    min-height: 78px;
+  }
+
+  .start-project-workspace {
+    min-height: auto;
+    padding: 28px 22px;
+  }
+
+  .start-project-field-grid {
+    grid-template-columns: 1fr;
   }
 
   .contact-layout {

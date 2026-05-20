@@ -13,7 +13,7 @@ Each apply creates one complete environment:
 - CloudFront distribution using Origin Access Control.
 - CloudFront Function for prerendered route directory indexes.
 - HTTP API Gateway.
-- `.NET 10` health check Lambda at `GET /api/health`.
+- Node.js health check Lambda at `GET /api/health`.
 - Node.js site renderer Lambda triggered through SQS after deploys to refresh
   crawler-visible HTML and SEO files.
 

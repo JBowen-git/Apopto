@@ -44,3 +44,18 @@ Current public routes:
 Static frontend assets live in `public/assets/` and are served from `/assets/`.
 The homepage uses `/assets/images/homepage-hero-background.png`; reference-only
 design images should stay outside `public/` so they are not deployed.
+
+## Auth0 customer accounts
+
+Auth0 is wired through `src/auth.jsx` and the customer entry route is `/account`.
+Create `Frontend/.env` from `Frontend/.env.example` and set:
+
+```bash
+VITE_AUTH0_DOMAIN=your-tenant.us.auth0.com
+VITE_AUTH0_CLIENT_ID=your-auth0-spa-client-id
+VITE_AUTH0_AUDIENCE=
+```
+
+In the Auth0 application settings, add `/account` as the callback path for local
+and production origins. Add the same origins to the allowed logout URLs and web
+origins.

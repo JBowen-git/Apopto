@@ -1,0 +1,14 @@
+{
+  "name": "apopto",
+  "private": true,
+  "scripts": {
+    "build:backend": "npm --prefix Backend run build",
+    "build:shared": "npm --prefix Shared run build",
+    "test:shared": "npm --prefix Shared run test",
+    "typecheck:backend": "npm --prefix Backend run typecheck",
+    "typecheck:shared": "npm --prefix Shared run typecheck"
+  },
+  "workspaces": [
+    "Shared"
+  ]
+}

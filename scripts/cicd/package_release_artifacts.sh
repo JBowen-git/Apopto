@@ -7,6 +7,10 @@ APP_ENVIRONMENT="${APP_ENVIRONMENT:-staging}"
 FRONTEND_DIR="${FRONTEND_DIR:-Frontend}"
 BACKEND_PROJECT_PATH="${BACKEND_PROJECT_PATH:-Backend}"
 BACKEND_PUBLISH_PROJECT_PATH="${BACKEND_PUBLISH_PROJECT_PATH:-}"
+SHARED_PACKAGE_PATH="${SHARED_PACKAGE_PATH:-Shared}"
+BACKEND_TYPESCRIPT_PACKAGE_PATH="${BACKEND_TYPESCRIPT_PACKAGE_PATH:-Backend}"
+BACKEND_TYPESCRIPT_ARTIFACT_BASENAME="${BACKEND_TYPESCRIPT_ARTIFACT_BASENAME:-portal-api}"
+PACKAGE_TYPESCRIPT_BACKEND="${PACKAGE_TYPESCRIPT_BACKEND:-true}"
 APP_STACK_DIRECTORY="${APP_STACK_DIRECTORY:-Terraform/App}"
 
 source "${ROOT_DIR}/scripts/cicd/aws_runtime.sh"
@@ -37,6 +41,73 @@ resolve_backend_publish_project() {
   fi
 
   printf '%s\n' "${project}"
+}
+
+create_deterministic_zip() {
+  local source_dir="$1"
+  local output_zip="$2"
+
+  mkdir -p "$(dirname "${output_zip}")"
+  rm -f "${output_zip}"
+
+  (
+    cd "${source_dir}"
+    find . -exec touch -t 198001010000.00 {} +
+    find . -type f | LC_ALL=C sort | sed 's#^\./##' | zip -X -q "${output_zip}" -@
+  )
+}
+
+package_typescript_backend() {
+  local backend_typescript_dir="${ROOT_DIR}/${BACKEND_TYPESCRIPT_PACKAGE_PATH}"
+  local shared_package_dir="${ROOT_DIR}/${SHARED_PACKAGE_PATH}"
+  local node_publish_dir="$1"
+  local node_zip_path="$2"
+
+  if [ "${PACKAGE_TYPESCRIPT_BACKEND}" != "true" ]; then
+    echo "Skipping TypeScript backend packaging because PACKAGE_TYPESCRIPT_BACKEND=${PACKAGE_TYPESCRIPT_BACKEND}."
+    return 0
+  fi
+
+  if [ ! -f "${backend_typescript_dir}/package.json" ]; then
+    echo "TypeScript backend package was not found: ${backend_typescript_dir}/package.json" >&2
+    return 1
+  fi
+
+  if [ ! -f "${shared_package_dir}/package.json" ]; then
+    echo "Shared package was not found: ${shared_package_dir}/package.json" >&2
+    return 1
+  fi
+
+  npm --prefix "${shared_package_dir}" ci
+  npm --prefix "${shared_package_dir}" run build
+  npm --prefix "${backend_typescript_dir}" ci
+  npm --prefix "${backend_typescript_dir}" run build
+
+  rm -rf "${node_publish_dir}" "${node_zip_path}"
+  mkdir -p "${node_publish_dir}/node_modules/@apopto"
+
+  cp -R "${backend_typescript_dir}/dist/." "${node_publish_dir}/"
+
+  printf '%s\n' \
+    '{' \
+    '  "name": "@apopto/backend-lambda-artifact",' \
+    '  "private": true,' \
+    '  "type": "module",' \
+    '  "main": "./handlers/health.js"' \
+    '}' >"${node_publish_dir}/package.json"
+
+  mkdir -p "${node_publish_dir}/node_modules/@apopto/shared"
+  cp "${shared_package_dir}/package.json" "${node_publish_dir}/node_modules/@apopto/shared/package.json"
+  cp -R "${shared_package_dir}/dist" "${node_publish_dir}/node_modules/@apopto/shared/dist"
+
+  if [ ! -d "${shared_package_dir}/node_modules/zod" ]; then
+    echo "Shared runtime dependency was not found: ${shared_package_dir}/node_modules/zod" >&2
+    return 1
+  fi
+
+  cp -R "${shared_package_dir}/node_modules/zod" "${node_publish_dir}/node_modules/zod"
+
+  create_deterministic_zip "${node_publish_dir}" "${node_zip_path}"
 }
 
 ensure_aws_region_defaults
@@ -76,6 +147,8 @@ fi
 
 publish_dir="${ROOT_DIR}/Backend/artifacts/${APP_ENVIRONMENT}/publish"
 zip_path="${ROOT_DIR}/Backend/artifacts/${APP_ENVIRONMENT}-backend.zip"
+typescript_publish_dir="${ROOT_DIR}/Backend/artifacts/${APP_ENVIRONMENT}/${BACKEND_TYPESCRIPT_ARTIFACT_BASENAME}"
+typescript_zip_path="${ROOT_DIR}/Backend/artifacts/${APP_ENVIRONMENT}-${BACKEND_TYPESCRIPT_ARTIFACT_BASENAME}.zip"
 renderer_zip_dir="${ROOT_DIR}/${APP_STACK_DIRECTORY}/lambda_packages"
 renderer_zip_path="${renderer_zip_dir}/site-renderer.zip"
 
@@ -95,6 +168,8 @@ dotnet publish "${backend_publish_project}" \
   zip -qr "${zip_path}" .
 )
 
+package_typescript_backend "${typescript_publish_dir}" "${typescript_zip_path}"
+
 mkdir -p "${renderer_zip_dir}"
 rm -f "${renderer_zip_path}"
 (
@@ -103,3 +178,8 @@ rm -f "${renderer_zip_path}"
 )
 
 echo "Packaged ${APP_ENVIRONMENT} frontend and Lambda artifacts."
+echo ".NET backend Lambda artifact: ${zip_path}"
+if [ "${PACKAGE_TYPESCRIPT_BACKEND}" = "true" ]; then
+  echo "TypeScript backend Lambda artifact: ${typescript_zip_path}"
+fi
+echo "Site renderer Lambda artifact: ${renderer_zip_path}"
