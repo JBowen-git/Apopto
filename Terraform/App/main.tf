@@ -221,7 +221,7 @@ resource "aws_lambda_function" "health" {
 resource "aws_lambda_function" "auth_placeholder" {
   function_name    = "${local.resource_prefix}-auth-placeholder"
   description      = "${local.resource_prefix} protected Auth0 placeholder Lambda."
-  role             = aws_iam_role.health_lambda.arn
+  role             = aws_iam_role.identity_intake_lambda.arn
   handler          = "handlers/identityIntake.handler"
   runtime          = var.lambda_runtime
   filename         = var.lambda_zip_path
@@ -232,13 +232,15 @@ resource "aws_lambda_function" "auth_placeholder" {
   environment {
     variables = {
       APP_ENVIRONMENT      = var.deployment_environment
+      CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
       PORTAL_HANDLER_GROUP = "identityIntake"
     }
   }
 
   depends_on = [
     aws_cloudwatch_log_group.auth_placeholder_lambda,
-    aws_iam_role_policy_attachment.health_lambda_basic,
+    aws_iam_role_policy.identity_intake_dynamodb,
+    aws_iam_role_policy_attachment.identity_intake_lambda_basic,
   ]
 
   tags = {
