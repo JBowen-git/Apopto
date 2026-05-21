@@ -1,11 +1,20 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, Navigate } from 'react-router-dom'
+import { bootstrapPortalContext } from '../api/portalBootstrap'
+import { useApiClient } from '../api/useApiClient'
 import { useApoptoAuth } from '../auth.jsx'
 
 export default function AuthCallback() {
   const { error, isAuthenticated, isConfigured, isLoading } = useApoptoAuth()
+  const apiClient = useApiClient()
+  const bootstrapQuery = useQuery({
+    enabled: isConfigured && !isLoading && isAuthenticated,
+    queryKey: ['me'],
+    queryFn: () => bootstrapPortalContext(apiClient),
+  })
 
-  if (isConfigured && !isLoading && isAuthenticated) {
-    return <Navigate replace to="/account" />
+  if (bootstrapQuery.isSuccess) {
+    return <Navigate replace to="/dashboard" />
   }
 
   return (
@@ -29,10 +38,17 @@ export default function AuthCallback() {
           </div>
         ) : null}
 
-        {isConfigured && error ? (
+        {isConfigured && !isLoading && isAuthenticated && bootstrapQuery.isLoading ? (
+          <div className="account-status-panel">
+            <h2>Preparing your dashboard.</h2>
+            <p>Your portal access is being connected.</p>
+          </div>
+        ) : null}
+
+        {isConfigured && (error || bootstrapQuery.isError) ? (
           <div className="account-status-panel account-status-panel-error">
             <h2>Authentication needs attention.</h2>
-            <p>{error.message}</p>
+            <p>{error?.message ?? bootstrapQuery.error?.message ?? 'Your portal access could not be prepared.'}</p>
             <Link className="button secondary" to="/account">
               Return to account
             </Link>

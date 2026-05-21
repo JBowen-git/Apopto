@@ -1,17 +1,16 @@
-import { MeResponseSchema, type MeResponse } from '@apopto/shared';
+import { DashboardResponseSchema, type DashboardResponse } from '@apopto/shared';
 import { useQuery } from '@tanstack/react-query';
+import { bootstrapPortalContext } from '../api/portalBootstrap';
 import { useApiClient } from '../api/useApiClient';
 import ErrorState from '../components/app/ErrorState';
 import LoadingState from '../components/app/LoadingState';
+import DashboardLifecycleModules from '../components/dashboard/DashboardLifecycleModules';
+import ClientProfileCard from '../components/dashboard/ClientProfileCard';
+import DashboardNextSteps from '../components/dashboard/DashboardNextSteps';
+import { formatPortalChoice } from '../components/dashboard/dashboardFormatters';
+import IntakeSummaryCard from '../components/dashboard/IntakeSummaryCard';
 
-function formatStatus(status: string) {
-  return status
-    .split('_')
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ');
-}
-
-function enabledFeatureLabels(featureFlags: MeResponse['featureFlags']) {
+function enabledFeatureLabels(featureFlags: DashboardResponse['featureFlags']) {
   return [
     featureFlags.canEditIntake ? 'Intake editing' : null,
     featureFlags.canSendMessages ? 'Messages' : null,
@@ -24,12 +23,16 @@ function enabledFeatureLabels(featureFlags: MeResponse['featureFlags']) {
 
 export default function Dashboard() {
   const apiClient = useApiClient();
-  const meQuery = useQuery({
-    queryKey: ['me'],
-    queryFn: async () => MeResponseSchema.parse(await apiClient.get('/api/me')),
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: async () => {
+      await bootstrapPortalContext(apiClient);
+
+      return DashboardResponseSchema.parse(await apiClient.get('/api/dashboard'));
+    },
   });
 
-  if (meQuery.isLoading) {
+  if (dashboardQuery.isLoading) {
     return (
       <LoadingState
         message="Loading your client portal context."
@@ -38,18 +41,18 @@ export default function Dashboard() {
     );
   }
 
-  if (meQuery.isError) {
+  if (dashboardQuery.isError) {
     return (
       <ErrorState
-        error={meQuery.error}
+        error={dashboardQuery.error}
         title="Dashboard could not load."
       />
     );
   }
 
-  const me = meQuery.data;
+  const dashboard = dashboardQuery.data;
 
-  if (!me) {
+  if (!dashboard) {
     return (
       <ErrorState
         message="The dashboard response was empty. Please refresh and try again."
@@ -58,7 +61,7 @@ export default function Dashboard() {
     );
   }
 
-  const enabledFeatures = enabledFeatureLabels(me.featureFlags);
+  const enabledFeatures = enabledFeatureLabels(dashboard.featureFlags);
 
   return (
     <section className="account-page dashboard-page" aria-labelledby="dashboard-title">
@@ -66,22 +69,38 @@ export default function Dashboard() {
         <p className="account-eyebrow">Client portal</p>
         <div className="dashboard-heading">
           <h1 id="dashboard-title">Dashboard</h1>
-          <span className="dashboard-status-pill">{formatStatus(me.client.status)}</span>
+          <span className="dashboard-status-pill">{formatPortalChoice(dashboard.client.status)}</span>
         </div>
+
+        <DashboardNextSteps
+          nextSteps={dashboard.nextSteps}
+          status={dashboard.client.status}
+        />
 
         <div className="dashboard-summary-grid">
           <section className="account-status-panel dashboard-summary-panel">
             <span className="dashboard-panel-label">Signed in as</span>
-            <h2>{me.user.name ?? 'Customer account'}</h2>
-            <p>{me.user.email ?? me.user.auth0Sub}</p>
+            <h2>{dashboard.user.name ?? 'Customer account'}</h2>
+            <p>{dashboard.user.email ?? dashboard.user.auth0Sub}</p>
           </section>
 
           <section className="account-status-panel dashboard-summary-panel">
             <span className="dashboard-panel-label">Client</span>
-            <h2>{me.client.businessName || 'New Client'}</h2>
-            <p>{formatStatus(me.membership.role)} · {formatStatus(me.membership.status)}</p>
+            <h2>{dashboard.client.businessName || 'New Client'}</h2>
+            <p>{formatPortalChoice(dashboard.membership.role)} · {formatPortalChoice(dashboard.membership.status)}</p>
           </section>
         </div>
+
+        <ClientProfileCard
+          client={dashboard.client}
+          intake={dashboard.intake}
+        />
+
+        <IntakeSummaryCard
+          intake={dashboard.intake}
+        />
+
+        <DashboardLifecycleModules dashboard={dashboard} />
 
         <section className="account-status-panel dashboard-summary-panel">
           <span className="dashboard-panel-label">Available now</span>

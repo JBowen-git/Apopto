@@ -77,13 +77,13 @@ describe('feature flag engine', () => {
     }
   });
 
-  it('sets admin access only for internal admin membership roles', () => {
+  it('sets admin access only when the caller has an active internal admin record', () => {
     expect(featureFlagsForClientStatus('active', {
-      membershipRole: 'client_owner',
+      isInternalAdmin: false,
     }).canAccessAdmin).toBe(false);
 
     expect(featureFlagsForClientStatus('active', {
-      membershipRole: 'internal_admin',
+      isInternalAdmin: true,
     })).toMatchObject({
       canAccessAdmin: true,
       canUploadFiles: true,

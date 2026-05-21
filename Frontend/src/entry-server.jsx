@@ -1,6 +1,6 @@
 import { StaticRouter } from 'react-router'
 import { renderToString } from 'react-dom/server'
-import App from './App.jsx'
+import ServerApp from './ServerApp.jsx'
 import { ApoptoAuthProvider } from './auth.jsx'
 import AppQueryProvider from './providers/AppQueryProvider'
 
@@ -10,7 +10,7 @@ export async function render(url) {
     <ApoptoAuthProvider>
       <AppQueryProvider>
         <StaticRouter location={`${requestUrl.pathname}${requestUrl.search}`}>
-          <App />
+          <ServerApp />
         </StaticRouter>
       </AppQueryProvider>
     </ApoptoAuthProvider>,

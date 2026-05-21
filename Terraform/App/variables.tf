@@ -80,57 +80,68 @@ variable "auth0_audience" {
 }
 
 variable "auth0_placeholder_route_scopes" {
-  description = "Scopes accepted by the protected Auth0 placeholder route. API Gateway authorizes when any listed scope is present."
+  description = "Deprecated API Gateway route scopes for the protected Auth0 placeholder route. Leave empty when using Auth0 permissions claims and Lambda-side scope checks."
   type        = list(string)
-  default     = ["read:me"]
+  default     = []
 
   validation {
-    condition     = length(var.auth0_placeholder_route_scopes) > 0 && alltrue([for scope in var.auth0_placeholder_route_scopes : length(trimspace(scope)) > 0])
-    error_message = "auth0_placeholder_route_scopes must contain at least one non-empty scope."
+    condition     = alltrue([for scope in var.auth0_placeholder_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_placeholder_route_scopes must contain only non-empty scopes."
   }
 }
 
 variable "auth0_me_route_scopes" {
-  description = "Scopes accepted by the authenticated /api/me bootstrap route. API Gateway authorizes when any listed scope is present."
+  description = "Deprecated API Gateway route scopes for /api/me. Leave empty when using Auth0 permissions claims and Lambda-side scope checks."
   type        = list(string)
-  default     = ["read:me"]
+  default     = []
 
   validation {
-    condition     = length(var.auth0_me_route_scopes) > 0 && alltrue([for scope in var.auth0_me_route_scopes : length(trimspace(scope)) > 0])
-    error_message = "auth0_me_route_scopes must contain at least one non-empty scope."
+    condition     = alltrue([for scope in var.auth0_me_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_me_route_scopes must contain only non-empty scopes."
+  }
+}
+
+variable "auth0_dashboard_route_scopes" {
+  description = "Deprecated API Gateway route scopes for GET /api/dashboard. Leave empty when using Auth0 permissions claims and Lambda-side scope checks."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for scope in var.auth0_dashboard_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_dashboard_route_scopes must contain only non-empty scopes."
   }
 }
 
 variable "auth0_intake_read_route_scopes" {
-  description = "Scopes accepted by the authenticated GET /api/intake route. API Gateway authorizes when any listed scope is present."
+  description = "Deprecated API Gateway route scopes for GET /api/intake. Leave empty when using Auth0 permissions claims and Lambda-side scope checks."
   type        = list(string)
-  default     = ["read:client"]
+  default     = []
 
   validation {
-    condition     = length(var.auth0_intake_read_route_scopes) > 0 && alltrue([for scope in var.auth0_intake_read_route_scopes : length(trimspace(scope)) > 0])
-    error_message = "auth0_intake_read_route_scopes must contain at least one non-empty scope."
+    condition     = alltrue([for scope in var.auth0_intake_read_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_intake_read_route_scopes must contain only non-empty scopes."
   }
 }
 
 variable "auth0_intake_write_route_scopes" {
-  description = "Scopes accepted by the authenticated PUT /api/intake route. API Gateway authorizes when any listed scope is present."
+  description = "Deprecated API Gateway route scopes for PUT /api/intake. Leave empty when using Auth0 permissions claims and Lambda-side scope checks."
   type        = list(string)
-  default     = ["write:intake"]
+  default     = []
 
   validation {
-    condition     = length(var.auth0_intake_write_route_scopes) > 0 && alltrue([for scope in var.auth0_intake_write_route_scopes : length(trimspace(scope)) > 0])
-    error_message = "auth0_intake_write_route_scopes must contain at least one non-empty scope."
+    condition     = alltrue([for scope in var.auth0_intake_write_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_intake_write_route_scopes must contain only non-empty scopes."
   }
 }
 
 variable "auth0_client_profile_write_route_scopes" {
-  description = "Scopes accepted by the authenticated PATCH /api/client/profile route. API Gateway authorizes when any listed scope is present."
+  description = "Deprecated API Gateway route scopes for PATCH /api/client/profile. Leave empty when using Auth0 permissions claims and Lambda-side scope checks."
   type        = list(string)
-  default     = ["write:client"]
+  default     = []
 
   validation {
-    condition     = length(var.auth0_client_profile_write_route_scopes) > 0 && alltrue([for scope in var.auth0_client_profile_write_route_scopes : length(trimspace(scope)) > 0])
-    error_message = "auth0_client_profile_write_route_scopes must contain at least one non-empty scope."
+    condition     = alltrue([for scope in var.auth0_client_profile_write_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_client_profile_write_route_scopes must contain only non-empty scopes."
   }
 }
 
@@ -205,13 +216,20 @@ variable "cloudfront_price_class" {
 variable "cors_allowed_headers" {
   description = "CORS headers allowed by S3 and API Gateway."
   type        = list(string)
-  default     = ["*"]
+  default = [
+    "Authorization",
+    "Content-Type",
+    "X-Amz-Date",
+    "X-Amz-Security-Token",
+    "X-Api-Key",
+    "X-Requested-With",
+  ]
 }
 
 variable "cors_allowed_methods" {
   description = "CORS methods allowed by S3 and API Gateway."
   type        = list(string)
-  default     = ["GET", "HEAD", "POST", "PUT"]
+  default     = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
 }
 
 variable "cors_allowed_origins" {

@@ -46,10 +46,11 @@ Backend/src/handlers/billing.ts
 Backend/src/handlers/admin.ts
 ```
 
-They are not wired to Terraform yet. If invoked directly, they return a safe
-`501 not_implemented` response and list the routes owned by that handler group.
-They do not perform auth, DynamoDB access, S3 access, Stripe calls, SES calls,
-or message handling.
+The admin handler is wired for `GET /api/admin/clients` as of Phase 29. The
+remaining future handler groups and admin routes are not wired to Terraform yet.
+If invoked directly, unimplemented routes return a safe `501 not_implemented`
+response and list the routes owned by that handler group. They do not perform
+S3 access, Stripe calls, SES calls, or message handling.
 
 Phase 11 wires only `GET /api/_auth-placeholder` to the `identityIntake`
 placeholder handler behind the Auth0 JWT authorizer. It is intentionally not a

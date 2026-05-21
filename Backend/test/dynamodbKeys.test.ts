@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  adminProfileKey,
   auditKey,
+  clientByStatusGsiKey,
   clientProfileKey,
   currentIntakeKey,
   fileByIdGsiKey,
   fileByProjectGsiKey,
   fileKey,
   invoiceKey,
+  internalAdminKey,
   membershipByUserGsiKey,
   membershipKey,
   messageByClientGsiKey,
@@ -32,9 +33,9 @@ describe('DynamoDB key builders', () => {
       SK: 'PROFILE#',
     });
 
-    expect(adminProfileKey('auth0|admin')).toEqual({
-      PK: 'ADMIN#auth0|admin',
-      SK: 'PROFILE#',
+    expect(internalAdminKey('auth0|admin')).toEqual({
+      PK: 'USER#auth0|admin',
+      SK: 'INTERNAL_ADMIN#',
     });
 
     expect(membershipKey('client_123', 'auth0|abc')).toEqual({
@@ -45,6 +46,11 @@ describe('DynamoDB key builders', () => {
     expect(membershipByUserGsiKey('auth0|abc', 'client_123')).toEqual({
       GSI1PK: 'USER#auth0|abc',
       GSI1SK: 'CLIENT#client_123',
+    });
+
+    expect(clientByStatusGsiKey('lead', createdAt, 'client_123')).toEqual({
+      GSI1PK: 'CLIENT_STATUS#lead',
+      GSI1SK: `CLIENT#${createdAt}#client_123`,
     });
   });
 

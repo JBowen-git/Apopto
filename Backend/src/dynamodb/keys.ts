@@ -27,15 +27,19 @@ function requireKeyPart(name: string, value: string) {
 
 export const pk = {
   client: (clientId: string) => `CLIENT#${requireKeyPart('clientId', clientId)}`,
+  clientStatus: (status: string) => `CLIENT_STATUS#${requireKeyPart('status', status)}`,
   user: (auth0Sub: string) => `USER#${requireKeyPart('auth0Sub', auth0Sub)}`,
   thread: (threadId: string) => `THREAD#${requireKeyPart('threadId', threadId)}`,
-  admin: (auth0Sub: string) => `ADMIN#${requireKeyPart('auth0Sub', auth0Sub)}`,
   project: (projectId: string) => `PROJECT#${requireKeyPart('projectId', projectId)}`,
   file: (fileId: string) => `FILE#${requireKeyPart('fileId', fileId)}`,
 } as const;
 
 export const sk = {
   profile: () => 'PROFILE#',
+  internalAdmin: () => 'INTERNAL_ADMIN#',
+  clientStatus: (createdAt: string, clientId: string) => (
+    `CLIENT#${requireKeyPart('createdAt', createdAt)}#${requireKeyPart('clientId', clientId)}`
+  ),
   user: (auth0Sub: string) => `USER#${requireKeyPart('auth0Sub', auth0Sub)}`,
   client: (clientId: string) => `CLIENT#${requireKeyPart('clientId', clientId)}`,
   currentIntake: () => 'INTAKE#CURRENT',
@@ -71,10 +75,10 @@ export function userProfileKey(auth0Sub: string): PortalTableKey {
   };
 }
 
-export function adminProfileKey(auth0Sub: string): PortalTableKey {
+export function internalAdminKey(auth0Sub: string): PortalTableKey {
   return {
-    PK: pk.admin(auth0Sub),
-    SK: sk.profile(),
+    PK: pk.user(auth0Sub),
+    SK: sk.internalAdmin(),
   };
 }
 
@@ -89,6 +93,17 @@ export function membershipByUserGsiKey(auth0Sub: string, clientId: string): Port
   return {
     GSI1PK: pk.user(auth0Sub),
     GSI1SK: sk.client(clientId),
+  };
+}
+
+export function clientByStatusGsiKey(
+  status: string,
+  createdAt: string,
+  clientId: string,
+): PortalGsi1Key {
+  return {
+    GSI1PK: pk.clientStatus(status),
+    GSI1SK: sk.clientStatus(createdAt, clientId),
   };
 }
 

@@ -14,6 +14,7 @@ import {
 import {
   buildAuditEventItem,
   buildCurrentIntakeItem,
+  clientByStatusGsiKey,
   clientProfileKey,
   currentIntakeKey,
   type AuditEventItem,
@@ -315,20 +316,30 @@ export async function updateCurrentIntake({
   ];
 
   if (client.status === 'lead') {
+    const nextStatusIndex = clientByStatusGsiKey(
+      'intake_submitted',
+      client.createdAt,
+      client.clientId,
+    );
+
     writes.push({
       action: 'update',
       key: clientProfileKey(client.clientId),
       conditionExpression: '#status = :lead',
       expressionAttributeNames: {
+        '#gsi1pk': 'GSI1PK',
+        '#gsi1sk': 'GSI1SK',
         '#status': 'status',
         '#updatedAt': 'updatedAt',
       },
       expressionAttributeValues: {
+        ':gsi1pk': nextStatusIndex.GSI1PK,
+        ':gsi1sk': nextStatusIndex.GSI1SK,
         ':lead': 'lead',
         ':status': 'intake_submitted',
         ':updatedAt': timestamp,
       },
-      updateExpression: 'SET #status = :status, #updatedAt = :updatedAt',
+      updateExpression: 'SET #status = :status, #updatedAt = :updatedAt, #gsi1pk = :gsi1pk, #gsi1sk = :gsi1sk',
     });
   }
 

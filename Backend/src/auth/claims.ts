@@ -57,7 +57,34 @@ function normalizeScopesFromClaim(scopeClaim: unknown) {
     .filter((scope) => scope.length > 0);
 }
 
+function normalizeDelimitedStringList(value: string) {
+  return value
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .split(/[\s,]+/)
+    .map((entry) => entry.trim().replace(/^['"]/, '').replace(/['"]$/, ''))
+    .filter((entry) => entry.length > 0);
+}
+
 function normalizeStringArray(value: unknown) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return [];
+    }
+
+    if (trimmed.startsWith('[')) {
+      try {
+        return normalizeStringArray(JSON.parse(trimmed) as unknown);
+      } catch {
+        return normalizeDelimitedStringList(trimmed);
+      }
+    }
+
+    return normalizeDelimitedStringList(trimmed);
+  }
+
   if (!Array.isArray(value)) {
     return [];
   }

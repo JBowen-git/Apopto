@@ -90,7 +90,8 @@ admin:files
 
 Do not request admin scopes globally in the frontend. Admin scopes should be
 requested only when admin flows exist and backend authorization also checks the
-internal admin record in DynamoDB.
+internal admin record in DynamoDB. See `internal-admin-seeding.md` for the
+`INTERNAL_ADMIN` item model and seed command.
 
 ## Scope Rule
 

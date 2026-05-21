@@ -49,10 +49,6 @@ export type GetOrBootstrapMeInput = {
 
 const conditionalCreateExpression = 'attribute_not_exists(PK) AND attribute_not_exists(SK)';
 
-function hasUsableEmail(claims: Pick<Auth0Claims, 'email'>) {
-  return Boolean(claims.email?.trim());
-}
-
 function isConditionalWriteConflict(error: unknown) {
   const errorName = (error as { name?: string }).name;
 
@@ -159,8 +155,8 @@ function buildBootstrapItems({
     items.unshift(buildUserProfileItem({
       auth0Sub,
       createdAt,
-      email: claims.email?.trim() ?? '',
       lastLoginAt: createdAt,
+      ...(claims.email ? { email: claims.email } : {}),
       ...(claims.name ? { name: claims.name } : {}),
     }));
   }
@@ -181,15 +177,6 @@ async function createBootstrapContext({
   now: () => string;
   repository: MeBootstrapRepository;
 }): Promise<MeBootstrapResult | null> {
-  if (!existingUser && !hasUsableEmail(claims)) {
-    return {
-      ok: false,
-      statusCode: 422,
-      error: 'email_claim_required',
-      message: 'The access token must include an email claim before a client portal profile can be created.',
-    };
-  }
-
   try {
     await repository.transactPutItems(buildBootstrapItems({
       auth0Sub: claims.sub,

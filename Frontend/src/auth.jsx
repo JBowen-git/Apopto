@@ -20,6 +20,18 @@ const clientAuthScopes = [
   'read:billing',
 ].join(' ')
 
+function auth0AuthorizationParams() {
+  const authorizationParams = {
+    scope: clientAuthScopes,
+  }
+
+  if (auth0Audience) {
+    authorizationParams.audience = auth0Audience
+  }
+
+  return authorizationParams
+}
+
 const ApoptoAuthContext = createContext({
   error: undefined,
   isAuthenticated: false,
@@ -42,9 +54,13 @@ function Auth0Bridge({ children }) {
     user,
   } = useAuth0()
 
-  const login = (returnTo = '/account') =>
+  const login = (returnTo = '/dashboard') =>
     loginWithRedirect({
       appState: { returnTo },
+      authorizationParams: {
+        ...auth0AuthorizationParams(),
+        redirect_uri: `${window.location.origin}/callback`,
+      },
     })
 
   const logoutAccount = () =>
@@ -64,7 +80,9 @@ function Auth0Bridge({ children }) {
         login,
         logout: logoutAccount,
         user,
-        getAccessToken: getAccessTokenSilently,
+        getAccessToken: () => getAccessTokenSilently({
+          authorizationParams: auth0AuthorizationParams(),
+        }),
       }}
     >
       {children}
@@ -95,12 +113,8 @@ export function ApoptoAuthProvider({ children }) {
   }
 
   const authorizationParams = {
+    ...auth0AuthorizationParams(),
     redirect_uri: `${window.location.origin}/callback`,
-    scope: clientAuthScopes,
-  }
-
-  if (auth0Audience) {
-    authorizationParams.audience = auth0Audience
   }
 
   return (
@@ -109,7 +123,7 @@ export function ApoptoAuthProvider({ children }) {
       clientId={auth0ClientId}
       domain={auth0Domain}
       onRedirectCallback={(appState) => {
-        window.history.replaceState({}, document.title, appState?.returnTo ?? '/account')
+        window.history.replaceState({}, document.title, appState?.returnTo ?? '/dashboard')
       }}
     >
       <Auth0Bridge>{children}</Auth0Bridge>

@@ -23,7 +23,6 @@ export const projectStatuses = [
 export const membershipRoles = [
   'client_owner',
   'client_member',
-  'internal_admin',
 ] as const;
 
 export const fileCategories = [

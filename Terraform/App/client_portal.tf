@@ -137,3 +137,48 @@ resource "aws_iam_role_policy" "identity_intake_dynamodb" {
   role   = aws_iam_role.identity_intake_lambda.id
   policy = data.aws_iam_policy_document.identity_intake_dynamodb.json
 }
+
+resource "aws_iam_role" "admin_lambda" {
+  name               = "${local.resource_prefix}-admin-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-admin-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "admin_lambda_basic" {
+  role       = aws_iam_role.admin_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "admin_dynamodb" {
+  statement {
+    sid    = "ReadClientPortalAdminRecords"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:TransactWriteItems",
+    ]
+
+    resources = [aws_dynamodb_table.client_portal.arn]
+  }
+
+  statement {
+    sid    = "QueryClientStatusIndex"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:Query",
+    ]
+
+    resources = local.client_portal_table_index_arns
+  }
+}
+
+resource "aws_iam_role_policy" "admin_dynamodb" {
+  name   = "${local.resource_prefix}-admin-dynamodb"
+  role   = aws_iam_role.admin_lambda.id
+  policy = data.aws_iam_policy_document.admin_dynamodb.json
+}

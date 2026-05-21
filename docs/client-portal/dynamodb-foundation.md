@@ -44,6 +44,18 @@ GSI2
   projection ALL
 ```
 
+Phase 29 uses `GSI1` for the admin client status index:
+
+```text
+CLIENT item
+  GSI1PK = CLIENT_STATUS#{status}
+  GSI1SK = CLIENT#{createdAt}#{clientId}
+```
+
+`GET /api/admin/clients?status=lead` queries the matching `GSI1` partition.
+When no status filter is supplied, the backend queries each known status
+partition and merges the bounded results. It does not scan the table.
+
 ## Destroy Protection
 
 The table uses DynamoDB deletion protection.

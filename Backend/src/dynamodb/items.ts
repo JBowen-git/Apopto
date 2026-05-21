@@ -12,12 +12,14 @@ import type {
 
 import {
   auditKey,
+  clientByStatusGsiKey,
   clientProfileKey,
   currentIntakeKey,
   fileByIdGsiKey,
   fileByProjectGsiKey,
   fileKey,
   invoiceKey,
+  internalAdminKey,
   membershipByUserGsiKey,
   membershipKey,
   messageByClientGsiKey,
@@ -40,7 +42,8 @@ export type EntityType =
   | 'THREAD'
   | 'MESSAGE'
   | 'INVOICE'
-  | 'AUDIT';
+  | 'AUDIT'
+  | 'INTERNAL_ADMIN';
 
 export type IsoDateTime = string;
 export type IsoDate = string;
@@ -50,7 +53,7 @@ type Timestamps = {
   updatedAt: IsoDateTime;
 };
 
-export type ClientProfileItem = PortalTableKey & Timestamps & {
+export type ClientProfileItem = PortalTableKey & PortalGsi1Key & Timestamps & {
   type: 'CLIENT';
   clientId: string;
   businessName: string;
@@ -66,13 +69,14 @@ export type ClientProfileItem = PortalTableKey & Timestamps & {
 export type UserProfileItem = PortalTableKey & {
   type: 'USER';
   auth0Sub: string;
-  email: string;
+  email?: string;
   name?: string;
   createdAt: IsoDateTime;
   lastLoginAt: IsoDateTime;
 };
 
 export type MembershipStatus = 'active' | 'invited' | 'removed';
+export type InternalAdminStatus = 'active' | 'disabled';
 
 export type MembershipItem = PortalTableKey & PortalGsi1Key & Timestamps & {
   type: 'MEMBERSHIP';
@@ -166,6 +170,17 @@ export type AuditEventItem = PortalTableKey & {
   createdAt: IsoDateTime;
 };
 
+export type InternalAdminItem = PortalTableKey & Timestamps & {
+  type: 'INTERNAL_ADMIN';
+  auth0Sub: string;
+  status: InternalAdminStatus;
+  createdBy: string;
+  email?: string;
+  name?: string;
+  notes?: string;
+  updatedBy?: string;
+};
+
 export type PortalTableItem =
   | ClientProfileItem
   | UserProfileItem
@@ -176,14 +191,16 @@ export type PortalTableItem =
   | ThreadItem
   | MessageItem
   | InvoiceItem
-  | AuditEventItem;
+  | AuditEventItem
+  | InternalAdminItem;
 
 export type BuildClientProfileItemInput =
-  Omit<ClientProfileItem, keyof PortalTableKey | 'type'>;
+  Omit<ClientProfileItem, keyof PortalTableKey | keyof PortalGsi1Key | 'type'>;
 
 export function buildClientProfileItem(input: BuildClientProfileItemInput): ClientProfileItem {
   return {
     ...clientProfileKey(input.clientId),
+    ...clientByStatusGsiKey(input.status, input.createdAt, input.clientId),
     type: 'CLIENT',
     ...input,
   };
@@ -288,6 +305,17 @@ export function buildAuditEventItem(input: BuildAuditEventItemInput): AuditEvent
   return {
     ...auditKey(input.clientId, input.createdAt, input.eventId),
     type: 'AUDIT',
+    ...input,
+  };
+}
+
+export type BuildInternalAdminItemInput =
+  Omit<InternalAdminItem, keyof PortalTableKey | 'type'>;
+
+export function buildInternalAdminItem(input: BuildInternalAdminItemInput): InternalAdminItem {
+  return {
+    ...internalAdminKey(input.auth0Sub),
+    type: 'INTERNAL_ADMIN',
     ...input,
   };
 }

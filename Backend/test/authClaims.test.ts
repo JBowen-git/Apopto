@@ -57,6 +57,23 @@ describe('Auth0 claim parsing', () => {
     });
   });
 
+  it('normalizes permissions when API Gateway provides array claims as strings', () => {
+    expect(parseAuth0Claims(eventWithJwt({
+      permissions: '["read:me","write:intake"]',
+      sub: 'auth0|json-array',
+    })).scopes).toEqual(['read:me', 'write:intake']);
+
+    expect(parseAuth0Claims(eventWithJwt({
+      permissions: '[read:me, read:client]',
+      sub: 'auth0|bracket-list',
+    })).scopes).toEqual(['read:me', 'read:client']);
+
+    expect(parseAuth0Claims(eventWithJwt({
+      permissions: 'read:me,write:intake read:client',
+      sub: 'auth0|string-list',
+    })).scopes).toEqual(['read:me', 'write:intake', 'read:client']);
+  });
+
   it('checks individual, any, all, and missing scopes', () => {
     const claims = parseAuth0Claims(eventWithJwt({
       scope: 'read:me write:intake read:files',

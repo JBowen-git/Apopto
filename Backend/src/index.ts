@@ -1,5 +1,10 @@
+export * from './admin/index.js';
 export * from './auth/index.js';
-export { handler as adminHandler } from './handlers/admin.js';
+export {
+  createAdminHandler,
+  handler as adminHandler,
+  type AdminHandlerDependencies,
+} from './handlers/admin.js';
 export { handler as billingHandler } from './handlers/billing.js';
 export { handler as filesHandler } from './handlers/files.js';
 export { handler as healthHandler } from './handlers/health.js';

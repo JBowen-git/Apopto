@@ -117,9 +117,11 @@ function fakeRepository(initialItems: PortalTableItem[] = []) {
 function apiEvent({
   claims,
   routeKey = 'GET /api/me',
+  scopes = ['read:me'],
 }: {
   claims?: Record<string, unknown>;
   routeKey?: string;
+  scopes?: string[];
 } = {}) {
   return {
     body: JSON.stringify({ clientId: 'client_from_frontend_should_be_ignored' }),
@@ -138,7 +140,7 @@ function apiEvent({
         ? {
           jwt: {
             claims,
-            scopes: ['read:me'],
+            scopes,
           },
         }
         : undefined,
@@ -212,6 +214,40 @@ describe('GET /api/me handler', () => {
       .not.toContain('client_from_frontend_should_be_ignored');
   });
 
+  it('bootstraps a first-time Auth0 user even when the API access token omits email', async () => {
+    const repository = fakeRepository();
+    const handler = createIdentityIntakeHandler({
+      repository,
+      now: () => now,
+      newClientId: () => 'client_server_generated',
+    });
+
+    const response = await handler(apiEvent({
+      claims: {
+        sub: auth0Sub,
+        permissions: ['read:me'],
+      },
+      scopes: [],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body).toMatchObject({
+      user: {
+        auth0Sub,
+      },
+      client: {
+        clientId: 'client_server_generated',
+        status: 'lead',
+      },
+    });
+    expect(body.user).not.toHaveProperty('email');
+    expect(repository.itemsByKey.get(itemKey(userProfileKey(auth0Sub)))).toMatchObject({
+      type: 'USER',
+      auth0Sub,
+    });
+  });
+
   it('returns existing client context for returning users without writing bootstrap records', async () => {
     const repository = fakeRepository([
       userItem(),
@@ -254,6 +290,84 @@ describe('GET /api/me handler', () => {
     });
     expect(repository.transactPutItems).not.toHaveBeenCalled();
     expect(newClientId).not.toHaveBeenCalled();
+  });
+
+  it('accepts Auth0 permissions when API Gateway route scopes are absent', async () => {
+    const repository = fakeRepository();
+    const handler = createIdentityIntakeHandler({
+      repository,
+      now: () => now,
+      newClientId: () => 'client_server_generated',
+    });
+
+    const response = await handler(apiEvent({
+      claims: {
+        sub: auth0Sub,
+        email: 'owner@example.com',
+        permissions: ['read:me'],
+      },
+      scopes: [],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body.client).toMatchObject({
+      clientId: 'client_server_generated',
+      status: 'lead',
+    });
+  });
+
+  it('accepts Auth0 permissions when API Gateway stringifies array claims', async () => {
+    const repository = fakeRepository();
+    const handler = createIdentityIntakeHandler({
+      repository,
+      now: () => now,
+      newClientId: () => 'client_server_generated',
+    });
+
+    const response = await handler(apiEvent({
+      claims: {
+        sub: auth0Sub,
+        email: 'owner@example.com',
+        permissions: '["read:me"]',
+      },
+      scopes: [],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body.client).toMatchObject({
+      clientId: 'client_server_generated',
+      status: 'lead',
+    });
+  });
+
+  it('rejects /api/me when the token has no matching route permission', async () => {
+    const repository = fakeRepository();
+    const handler = createIdentityIntakeHandler({
+      repository,
+      now: () => now,
+      newClientId: () => 'client_server_generated',
+    });
+
+    const response = await handler(apiEvent({
+      claims: {
+        sub: auth0Sub,
+        email: 'owner@example.com',
+      },
+      scopes: [],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(403);
+    expect(body).toMatchObject({
+      error: 'insufficient_scope',
+      details: {
+        missingScopes: ['read:me'],
+      },
+      requestId,
+    });
+    expect(repository.transactPutItems).not.toHaveBeenCalled();
   });
 
   it('repairs an existing user with no memberships by creating a lead client and owner membership', async () => {

@@ -6,6 +6,7 @@ import {
   buildCurrentIntakeItem,
   buildMembershipItem,
   buildUserProfileItem,
+  clientByStatusGsiKey,
   clientProfileKey,
   createIdentityIntakeHandler,
   currentIntakeKey,
@@ -332,6 +333,7 @@ describe('identity intake handler', () => {
       version: 1,
     });
     expect(savedClient).toMatchObject({
+      ...clientByStatusGsiKey('intake_submitted', createdAt, clientId),
       type: 'CLIENT',
       status: 'intake_submitted',
     });

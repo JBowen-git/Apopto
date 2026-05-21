@@ -2,11 +2,10 @@ import {
   FeatureFlagsSchema,
   type ClientStatus,
   type FeatureFlags,
-  type MembershipRole,
 } from '@apopto/shared';
 
 type FeatureFlagOptions = {
-  membershipRole?: MembershipRole;
+  isInternalAdmin?: boolean;
 };
 
 const disabledFeatureFlags: FeatureFlags = {
@@ -58,7 +57,7 @@ export function featureFlagsForClientStatus(
 ): FeatureFlags {
   return FeatureFlagsSchema.parse({
     ...disabledFeatureFlags,
-    canAccessAdmin: options.membershipRole === 'internal_admin',
+    canAccessAdmin: options.isInternalAdmin === true,
     canEditIntake: intakeStatuses.has(status),
     canSendMessages: messageStatuses.has(status),
     canUploadFiles: uploadStatuses.has(status),

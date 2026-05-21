@@ -1,7 +1,8 @@
 # DynamoDB IAM and Environment Wiring
 
 Phase 14 wires DynamoDB table access into the currently deployed portal handler
-group without adding repository code or new business routes.
+group without adding repository code or new business routes. Phase 29 adds a
+separate admin Lambda role for the admin client index endpoint.
 
 ## Wired Handler Group
 
@@ -57,12 +58,34 @@ Allowed index action:
 dynamodb:Query
 ```
 
-No `dynamodb:*`, S3, SES, Stripe, or admin-only permissions are granted in this
-phase.
+No `dynamodb:*`, S3, SES, or Stripe permissions are granted.
+
+## Admin Client Index IAM
+
+Phase 29 wires:
+
+```text
+GET /api/admin/clients
+```
+
+to the `admin` handler group. That Lambda receives the same
+`CLIENT_PORTAL_TABLE`, `PORTAL_HANDLER_GROUP=admin`, and `APP_ENVIRONMENT`
+environment variables.
+
+Its IAM policy is read-only for this phase:
+
+```text
+dynamodb:GetItem on the table
+dynamodb:Query on GSI1/GSI2
+```
+
+The handler uses `GetItem` to verify the caller's `INTERNAL_ADMIN` record and
+`Query` on `GSI1` to list clients by status. It does not receive
+`PutItem`, `UpdateItem`, `TransactWriteItems`, or `Scan`.
 
 ## Deferred Handler Groups
 
-The `files`, `messages`, `billing`, and `admin` TypeScript handler skeletons
-remain unwired to Terraform routes in this phase. Their DynamoDB access should
-be added when those Lambda resources/routes are introduced so each group can
-receive only the actions it needs.
+The `files`, `messages`, and `billing` TypeScript handler skeletons remain
+unwired to Terraform routes in this phase. Their DynamoDB access should be added
+when those Lambda resources/routes are introduced so each group can receive only
+the actions it needs.

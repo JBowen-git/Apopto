@@ -1,62 +1,46 @@
-import { Route, Routes } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import Layout from './components/layout/Layout.jsx'
-import { portfolioDetailPages } from './data/portfolio.js'
-import About from './pages/About.jsx'
-import AuthCallback from './pages/AuthCallback.jsx'
-import Contact from './pages/Contact.jsx'
-import CustomerAccount from './pages/CustomerAccount.jsx'
-import Dashboard from './pages/Dashboard'
-import ErrorPage from './pages/ErrorPage.jsx'
-import Home from './pages/Home.jsx'
-import Insights from './pages/Insights.jsx'
-import NotFound from './pages/NotFound.jsx'
-import Portfolio from './pages/Portfolio.jsx'
-import PortfolioDetailPage from './pages/PortfolioDetailPage.jsx'
-import Solutions from './pages/Solutions.jsx'
-import StartAProject from './pages/StartAProject.jsx'
-import ProtectedRoute from './components/routing/ProtectedRoute'
+import RouteLoadingFallback from './components/routing/RouteLoadingFallback.jsx'
+import AppRoutes from './routes/AppRoutes.jsx'
+
+const About = lazy(() => import('./pages/About.jsx'))
+const AuthCallback = lazy(() => import('./pages/AuthCallback.jsx'))
+const Contact = lazy(() => import('./pages/Contact.jsx'))
+const CustomerAccount = lazy(() => import('./pages/CustomerAccount.jsx'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ErrorPage = lazy(() => import('./pages/ErrorPage.jsx'))
+const Home = lazy(() => import('./pages/Home.jsx'))
+const Insights = lazy(() => import('./pages/Insights.jsx'))
+const Intake = lazy(() => import('./pages/Intake'))
+const NotFound = lazy(() => import('./pages/NotFound.jsx'))
+const Portfolio = lazy(() => import('./pages/Portfolio.jsx'))
+const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage.jsx'))
+const Solutions = lazy(() => import('./pages/Solutions.jsx'))
+const StartAProject = lazy(() => import('./pages/StartAProject.jsx'))
+
+const pages = {
+  About,
+  AuthCallback,
+  Contact,
+  CustomerAccount,
+  Dashboard,
+  ErrorPage,
+  Home,
+  Insights,
+  Intake,
+  NotFound,
+  Portfolio,
+  PortfolioDetailPage,
+  Solutions,
+  StartAProject,
+}
 
 export default function App() {
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/solutions" element={<Solutions />} />
-        <Route path="/portfolio" element={<Portfolio />} />
-        <Route
-          path="/portfolio/all-work"
-          element={<PortfolioDetailPage page={portfolioDetailPages.allWork} />}
-        />
-        <Route
-          path="/portfolio/build-breakdowns"
-          element={<PortfolioDetailPage page={portfolioDetailPages.buildBreakdowns} />}
-        />
-        <Route
-          path="/portfolio/concept-builds"
-          element={<PortfolioDetailPage page={portfolioDetailPages.conceptBuilds} />}
-        />
-        <Route
-          path="/portfolio/individual-project-pages"
-          element={<PortfolioDetailPage page={portfolioDetailPages.individualProjectPages} />}
-        />
-        <Route path="/about" element={<About />} />
-        <Route path="/insights" element={<Insights />} />
-        <Route path="/insights/:conceptId" element={<Insights />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/start-a-project" element={<StartAProject />} />
-        <Route path="/callback" element={<AuthCallback />} />
-        <Route
-          path="/dashboard"
-          element={(
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          )}
-        />
-        <Route path="/account" element={<CustomerAccount />} />
-        <Route path="/error" element={<ErrorPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <AppRoutes pages={pages} />
+      </Suspense>
     </Layout>
   )
 }

@@ -5,6 +5,7 @@ import {
   buildClientProfileItem,
   buildCurrentIntakeItem,
   buildFileMetadataItem,
+  buildInternalAdminItem,
   buildInvoiceItem,
   buildMembershipItem,
   buildMessageItem,
@@ -52,6 +53,8 @@ describe('DynamoDB item builders', () => {
       status: 'lead',
       updatedAt,
     })).toEqual({
+      GSI1PK: 'CLIENT_STATUS#lead',
+      GSI1SK: `CLIENT#${createdAt}#client_123`,
       PK: 'CLIENT#client_123',
       SK: 'PROFILE#',
       businessName: 'North Star Remodeling',
@@ -94,6 +97,27 @@ describe('DynamoDB item builders', () => {
       role: 'client_owner',
       status: 'active',
       type: 'MEMBERSHIP',
+      updatedAt,
+    });
+
+    expect(buildInternalAdminItem({
+      auth0Sub: 'auth0|admin',
+      createdAt,
+      createdBy: 'manual_seed',
+      email: 'admin@example.com',
+      name: 'Admin User',
+      status: 'active',
+      updatedAt,
+    })).toEqual({
+      PK: 'USER#auth0|admin',
+      SK: 'INTERNAL_ADMIN#',
+      auth0Sub: 'auth0|admin',
+      createdAt,
+      createdBy: 'manual_seed',
+      email: 'admin@example.com',
+      name: 'Admin User',
+      status: 'active',
+      type: 'INTERNAL_ADMIN',
       updatedAt,
     });
 

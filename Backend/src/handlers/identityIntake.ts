@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2, Context } from 'aws-lambda';
 
-import { AuthClaimError, parseAuth0Claims } from '../auth/index.js';
+import { AuthClaimError, missingScopes, parseAuth0Claims, type Auth0Claims } from '../auth/index.js';
 import {
   createDynamoDocumentClient,
   createPortalRepository,
@@ -16,16 +16,19 @@ import {
   type ApiGatewayLikeResponse,
 } from '../shared/response.js';
 import {
+  getDashboard,
   getOrBootstrapMe,
   getCurrentIntake,
   updateClientProfile,
   updateCurrentIntake,
+  type DashboardApiFailure,
+  type DashboardRepository,
   type IntakeRepository,
   type IntakeApiFailure,
   type MeBootstrapRepository,
 } from '../tenant/index.js';
 
-type IdentityIntakeRepository = MeBootstrapRepository & IntakeRepository;
+type IdentityIntakeRepository = MeBootstrapRepository & IntakeRepository & DashboardRepository;
 
 export type IdentityIntakeHandlerDependencies = {
   repository?: IdentityIntakeRepository;
@@ -35,6 +38,13 @@ export type IdentityIntakeHandlerDependencies = {
 };
 
 const notImplementedHandler = createNotImplementedHandler('identityIntake', identityIntakeRoutes);
+const routeScopes: Record<string, string[]> = {
+  'GET /api/me': ['read:me'],
+  'GET /api/dashboard': ['read:client'],
+  'GET /api/intake': ['read:client'],
+  'PUT /api/intake': ['write:intake'],
+  'PATCH /api/client/profile': ['write:client'],
+};
 
 function getRouteKey(event: APIGatewayProxyEventV2) {
   if (event.routeKey && event.routeKey !== '$default') {
@@ -63,12 +73,39 @@ function parseJsonBody(event: APIGatewayProxyEventV2) {
   return JSON.parse(body) as unknown;
 }
 
-function failureResponse(result: IntakeApiFailure, requestId: string | undefined) {
+function failureResponse(
+  result: IntakeApiFailure | DashboardApiFailure,
+  requestId: string | undefined,
+) {
   return errorResponse(
     result.statusCode,
     result.error,
     result.message,
     result.details,
+    { requestId },
+  );
+}
+
+function scopeFailureResponse(
+  routeKey: string,
+  claims: Auth0Claims,
+  requestId: string | undefined,
+) {
+  const requiredScopes = routeScopes[routeKey] ?? [];
+  const missing = missingScopes(claims, requiredScopes);
+
+  if (missing.length === 0) {
+    return null;
+  }
+
+  return errorResponse(
+    403,
+    'insufficient_scope',
+    'The access token does not include the permissions required for this route.',
+    {
+      missingScopes: missing,
+      requiredScopes,
+    },
     { requestId },
   );
 }
@@ -86,6 +123,7 @@ export function createIdentityIntakeHandler(
 
     if (![
       'GET /api/me',
+      'GET /api/dashboard',
       'GET /api/intake',
       'PUT /api/intake',
       'PATCH /api/client/profile',
@@ -95,6 +133,24 @@ export function createIdentityIntakeHandler(
 
     try {
       const claims = parseAuth0Claims(event);
+      const routeScopeFailure = scopeFailureResponse(routeKey, claims, requestId);
+
+      if (routeScopeFailure) {
+        return routeScopeFailure;
+      }
+
+      if (routeKey === 'GET /api/dashboard') {
+        const result = await getDashboard({
+          auth0Sub: claims.sub,
+          repository,
+        });
+
+        if (!result.ok) {
+          return failureResponse(result, requestId);
+        }
+
+        return jsonResponse(200, result.response, { requestId });
+      }
 
       if (routeKey === 'GET /api/intake') {
         const result = await getCurrentIntake({

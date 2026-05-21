@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AdminClientListQuerySchema,
+  AdminClientListResponseSchema,
   ApiErrorResponseSchema,
   ClientStatusSchema,
   FeatureFlagsSchema,
@@ -48,6 +50,7 @@ describe('core status schemas', () => {
     expect(ClientStatusSchema.safeParse('new')).toMatchObject({ success: false });
     expect(ProjectStatusSchema.safeParse('complete')).toMatchObject({ success: false });
     expect(MembershipRoleSchema.safeParse('owner')).toMatchObject({ success: false });
+    expect(MembershipRoleSchema.safeParse('internal_admin')).toMatchObject({ success: false });
     expect(FileCategorySchema.safeParse('passwords')).toMatchObject({ success: false });
     expect(UploadStatusSchema.safeParse('processing')).toMatchObject({ success: false });
     expect(InvoiceStatusSchema.safeParse('refunded')).toMatchObject({ success: false });
@@ -102,5 +105,35 @@ describe('feature flags and response schemas', () => {
 
     expect(ApiErrorResponseSchema.parse(error)).toEqual(error);
     expect(ApiErrorResponseSchema.safeParse({ error: '' })).toMatchObject({ success: false });
+  });
+
+  it('validates admin client list filters and responses', () => {
+    expect(AdminClientListQuerySchema.parse({
+      limit: '25',
+      status: 'lead',
+    })).toEqual({
+      limit: 25,
+      status: 'lead',
+    });
+
+    const response = {
+      clients: [
+        {
+          businessName: 'North Star Remodeling',
+          clientId: 'client_123',
+          createdAt: '2026-05-21T10:15:30.000Z',
+          primaryContactUserId: 'auth0|abc',
+          status: 'lead',
+          updatedAt: '2026-05-21T10:20:30.000Z',
+        },
+      ],
+      count: 1,
+      filters: {
+        limit: 25,
+        status: 'lead',
+      },
+    };
+
+    expect(AdminClientListResponseSchema.parse(response)).toEqual(response);
   });
 });

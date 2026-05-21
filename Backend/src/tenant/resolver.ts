@@ -174,9 +174,7 @@ export async function resolveClientContext({
       user,
       membership,
       client,
-      featureFlags: featureFlagsForClientStatus(client.status, {
-        membershipRole: membership.role,
-      }),
+      featureFlags: featureFlagsForClientStatus(client.status),
     },
   };
 }

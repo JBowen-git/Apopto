@@ -1,7 +1,21 @@
+import { useQuery } from '@tanstack/react-query'
+import { Navigate } from 'react-router-dom'
+import { bootstrapPortalContext } from '../api/portalBootstrap'
+import { useApiClient } from '../api/useApiClient'
 import { useApoptoAuth } from '../auth.jsx'
 
 export default function CustomerAccount() {
   const { error, isAuthenticated, isConfigured, isLoading, login, logout, user } = useApoptoAuth()
+  const apiClient = useApiClient()
+  const bootstrapQuery = useQuery({
+    enabled: isConfigured && !isLoading && isAuthenticated,
+    queryKey: ['me'],
+    queryFn: () => bootstrapPortalContext(apiClient),
+  })
+
+  if (bootstrapQuery.isSuccess) {
+    return <Navigate replace to="/dashboard" />
+  }
 
   return (
     <section className="account-page" aria-labelledby="account-title">
@@ -16,7 +30,7 @@ export default function CustomerAccount() {
               Add the Auth0 domain and client ID to the frontend environment, then this
               page becomes the customer login entry point.
             </p>
-            <code>Frontend/.env</code>
+            <code>Frontend/.env.local</code>
           </div>
         ) : null}
 
@@ -40,14 +54,31 @@ export default function CustomerAccount() {
               Sign in to access customer tools as they come online: project status,
               intake details, files, approvals, and account-specific updates.
             </p>
-            <button className="account-primary-action" onClick={() => login('/account')} type="button">
+            <button className="account-primary-action" onClick={() => login('/dashboard')} type="button">
               Sign in or create account
               <span aria-hidden="true">-&gt;</span>
             </button>
           </div>
         ) : null}
 
-        {isConfigured && !isLoading && isAuthenticated ? (
+        {isConfigured && !isLoading && isAuthenticated && bootstrapQuery.isLoading ? (
+          <div className="account-status-panel">
+            <h2>Preparing your dashboard.</h2>
+            <p>Your customer portal account is being connected.</p>
+          </div>
+        ) : null}
+
+        {isConfigured && !isLoading && isAuthenticated && bootstrapQuery.isError ? (
+          <div className="account-status-panel account-status-panel-error">
+            <h2>Portal access needs attention.</h2>
+            <p>{bootstrapQuery.error?.message ?? 'Your dashboard could not be prepared.'}</p>
+            <button className="account-secondary-action" onClick={logout} type="button">
+              Sign out
+            </button>
+          </div>
+        ) : null}
+
+        {isConfigured && !isLoading && isAuthenticated && !bootstrapQuery.isLoading && !bootstrapQuery.isError ? (
           <div className="account-dashboard-panel">
             <div className="account-profile">
               {user?.picture ? <img src={user.picture} alt="" /> : <span>{user?.name?.[0] ?? 'A'}</span>}

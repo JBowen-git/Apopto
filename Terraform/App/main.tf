@@ -191,6 +191,15 @@ resource "aws_cloudwatch_log_group" "auth_placeholder_lambda" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "admin_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-admin"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-admin-logs"
+  }
+}
+
 resource "aws_lambda_function" "health" {
   function_name    = "${local.resource_prefix}-health"
   description      = "${local.resource_prefix} health check Lambda."
@@ -248,6 +257,36 @@ resource "aws_lambda_function" "auth_placeholder" {
   }
 }
 
+resource "aws_lambda_function" "admin" {
+  function_name    = "${local.resource_prefix}-admin"
+  description      = "${local.resource_prefix} internal admin API Lambda."
+  role             = aws_iam_role.admin_lambda.arn
+  handler          = "handlers/admin.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = {
+      APP_ENVIRONMENT      = var.deployment_environment
+      CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
+      PORTAL_HANDLER_GROUP = "admin"
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.admin_lambda,
+    aws_iam_role_policy.admin_dynamodb,
+    aws_iam_role_policy_attachment.admin_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-admin"
+  }
+}
+
 resource "aws_apigatewayv2_api" "app" {
   name          = "${local.resource_prefix}-api"
   protocol_type = "HTTP"
@@ -291,6 +330,13 @@ resource "aws_apigatewayv2_integration" "auth_placeholder" {
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_integration" "admin" {
+  api_id                 = aws_apigatewayv2_api.app.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.admin.invoke_arn
+  payload_format_version = "2.0"
+}
+
 resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.app.id
   route_key = "GET /api/health"
@@ -312,6 +358,15 @@ resource "aws_apigatewayv2_route" "me" {
   authorization_type   = "JWT"
   authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
   route_key            = "GET /api/me"
+  target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
+}
+
+resource "aws_apigatewayv2_route" "dashboard" {
+  api_id               = aws_apigatewayv2_api.app.id
+  authorization_scopes = var.auth0_dashboard_route_scopes
+  authorization_type   = "JWT"
+  authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
+  route_key            = "GET /api/dashboard"
   target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
 }
 
@@ -342,6 +397,38 @@ resource "aws_apigatewayv2_route" "client_profile_patch" {
   target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
 }
 
+resource "aws_apigatewayv2_route" "admin_clients_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/admin/clients"
+  target             = "integrations/${aws_apigatewayv2_integration.admin.id}"
+}
+
+resource "aws_apigatewayv2_route" "admin_client_detail_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/admin/clients/{clientId}"
+  target             = "integrations/${aws_apigatewayv2_integration.admin.id}"
+}
+
+resource "aws_apigatewayv2_route" "admin_client_status_patch" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "PATCH /api/admin/clients/{clientId}/status"
+  target             = "integrations/${aws_apigatewayv2_integration.admin.id}"
+}
+
+resource "aws_apigatewayv2_route" "admin_client_project_post" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "POST /api/admin/clients/{clientId}/projects"
+  target             = "integrations/${aws_apigatewayv2_integration.admin.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.app.id
   name        = "$default"
@@ -364,6 +451,14 @@ resource "aws_lambda_permission" "allow_api_gateway_auth_placeholder" {
   statement_id  = "AllowExecutionFromApiGatewayAuthPlaceholder"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.auth_placeholder.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_admin" {
+  statement_id  = "AllowExecutionFromApiGatewayAdmin"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.admin.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }

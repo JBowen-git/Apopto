@@ -96,7 +96,17 @@ async function parseResponseBody(response: Response): Promise<ParsedResponseBody
   }
 
   try {
-    return JSON.parse(text) as ParsedResponseBody;
+    const parsed = JSON.parse(text) as ParsedResponseBody;
+
+    if (typeof parsed === 'string') {
+      try {
+        return JSON.parse(parsed) as ParsedResponseBody;
+      } catch {
+        return parsed;
+      }
+    }
+
+    return parsed;
   } catch {
     return text;
   }
