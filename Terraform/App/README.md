@@ -58,6 +58,10 @@ The Lambda zip files referenced by the selected tfvars file must exist before
 `auth0_domain` and `auth0_audience` must be configured before relying on
 protected routes. See `../../docs/client-portal/auth0-setup.md`.
 
+The `/api/*` CloudFront behavior uses a dedicated origin request policy for
+Auth0 and CORS headers. See
+`../../docs/client-portal/cloudfront-api-hardening.md`.
+
 The deployment scripts set `TF_VAR_site_asset_root=.artifacts/site` and
 `TF_VAR_site_renderer_asset_root=.artifacts/site-renderer` after building the
 frontend. Terraform uploads public SSR output to the website root and private

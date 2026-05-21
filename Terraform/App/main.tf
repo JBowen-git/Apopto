@@ -49,10 +49,6 @@ data "aws_cloudfront_cache_policy" "caching_disabled" {
   name = "Managed-CachingDisabled"
 }
 
-data "aws_cloudfront_origin_request_policy" "all_viewer_except_host_header" {
-  name = "Managed-AllViewerExceptHostHeader"
-}
-
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
     effect  = "Allow"
@@ -346,6 +342,32 @@ resource "aws_cloudfront_function" "site_directory_index" {
   code    = file("${path.module}/functions/site-directory-index.js")
 }
 
+resource "aws_cloudfront_origin_request_policy" "api" {
+  name    = "${local.resource_prefix}-api-origin-request"
+  comment = "Forwards Auth0 and browser CORS API headers to API Gateway without forwarding Host."
+
+  cookies_config {
+    cookie_behavior = "none"
+  }
+
+  headers_config {
+    header_behavior = "whitelist"
+
+    headers {
+      items = [
+        "Access-Control-Request-Headers",
+        "Access-Control-Request-Method",
+        "Authorization",
+        "Origin",
+      ]
+    }
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+
 resource "aws_cloudfront_distribution" "website" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -394,7 +416,7 @@ resource "aws_cloudfront_distribution" "website" {
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods           = ["GET", "HEAD", "OPTIONS"]
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host_header.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
     compress                 = true
   }
 

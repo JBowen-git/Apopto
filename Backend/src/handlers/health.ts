@@ -12,8 +12,6 @@ export async function handler(_event: APIGatewayProxyEventV2, context: Context) 
     environment: process.env.APP_ENVIRONMENT ?? 'unknown',
     requestId: context.awsRequestId,
     shared: getSharedPackageStatus(),
-  }, {
-    'cache-control': 'no-store',
   });
 }
 

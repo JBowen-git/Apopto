@@ -52,6 +52,10 @@ That route uses the `identityIntake` placeholder Lambda handler and returns
 authorizer wiring visible and reviewable before real protected routes are
 implemented.
 
+CloudFront forwards the `Authorization` header and browser CORS preflight
+headers for `/api/*`. See `cloudfront-api-hardening.md` for the API behavior
+contract.
+
 ## Auth0 API
 
 In Auth0, create an API whose Identifier exactly matches:

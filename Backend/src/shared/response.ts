@@ -5,6 +5,7 @@ export type ApiGatewayLikeResponse = APIGatewayProxyResultV2;
 
 const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
+  'cache-control': 'no-store',
 };
 
 export function jsonResponse(
