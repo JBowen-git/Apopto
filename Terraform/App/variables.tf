@@ -90,6 +90,17 @@ variable "auth0_placeholder_route_scopes" {
   }
 }
 
+variable "auth0_me_route_scopes" {
+  description = "Scopes accepted by the authenticated /api/me bootstrap route. API Gateway authorizes when any listed scope is present."
+  type        = list(string)
+  default     = ["read:me"]
+
+  validation {
+    condition     = length(var.auth0_me_route_scopes) > 0 && alltrue([for scope in var.auth0_me_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_me_route_scopes must contain at least one non-empty scope."
+  }
+}
+
 variable "lambda_handler" {
   description = "Lambda handler for the health check function."
   type        = string

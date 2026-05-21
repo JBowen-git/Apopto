@@ -43,7 +43,7 @@ export const identityIntakeRoutes = [
     path: '/api/me',
     owner: 'identityIntake',
     operation: 'getMe',
-    phase: 16,
+    phase: 18,
   },
   {
     method: 'GET',

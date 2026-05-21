@@ -306,6 +306,15 @@ resource "aws_apigatewayv2_route" "auth_placeholder" {
   target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
 }
 
+resource "aws_apigatewayv2_route" "me" {
+  api_id               = aws_apigatewayv2_api.app.id
+  authorization_scopes = var.auth0_me_route_scopes
+  authorization_type   = "JWT"
+  authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
+  route_key            = "GET /api/me"
+  target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.app.id
   name        = "$default"

@@ -7,14 +7,18 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@apopto/shared": "file:../Shared"
+    "@apopto/shared": "file:../Shared",
+    "@aws-sdk/client-dynamodb": "^3.1051.0",
+    "@aws-sdk/lib-dynamodb": "^3.1051.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
     "@types/node": "^25.9.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.7"
   }
 }

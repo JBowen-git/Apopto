@@ -113,6 +113,7 @@ data "aws_iam_policy_document" "identity_intake_dynamodb" {
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:Query",
+      "dynamodb:TransactWriteItems",
       "dynamodb:UpdateItem",
     ]
 
