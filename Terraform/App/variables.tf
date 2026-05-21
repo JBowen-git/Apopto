@@ -24,6 +24,17 @@ variable "resource_prefix" {
   default     = ""
 }
 
+variable "client_portal_table_allow_destroy" {
+  description = "Explicit non-production opt-in that disables DynamoDB deletion protection for the ClientPortal table. Production ignores this escape hatch and stays protected."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = var.client_portal_table_allow_destroy == false || var.deployment_environment != "production"
+    error_message = "client_portal_table_allow_destroy cannot be true for production."
+  }
+}
+
 variable "aws_region" {
   description = "AWS region for regional application resources."
   type        = string

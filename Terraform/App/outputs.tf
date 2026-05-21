@@ -18,6 +18,16 @@ output "api_endpoint" {
   value       = aws_apigatewayv2_api.app.api_endpoint
 }
 
+output "client_portal_table_name" {
+  description = "DynamoDB single-table foundation for client portal data."
+  value       = aws_dynamodb_table.client_portal.name
+}
+
+output "client_portal_table_arn" {
+  description = "ARN of the DynamoDB ClientPortal table."
+  value       = aws_dynamodb_table.client_portal.arn
+}
+
 output "health_check_url" {
   description = "CloudFront health check URL."
   value       = "https://${aws_cloudfront_distribution.website.domain_name}/api/health"
