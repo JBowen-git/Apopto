@@ -28,6 +28,21 @@ output "client_portal_table_arn" {
   value       = aws_dynamodb_table.client_portal.arn
 }
 
+output "client_portal_upload_bucket_name" {
+  description = "Private S3 bucket for future client portal file uploads."
+  value       = aws_s3_bucket.client_portal_uploads.bucket
+}
+
+output "client_portal_upload_bucket_arn" {
+  description = "ARN of the private S3 bucket for future client portal file uploads."
+  value       = aws_s3_bucket.client_portal_uploads.arn
+}
+
+output "client_portal_files_lambda_function_name" {
+  description = "Files handler Lambda function name."
+  value       = aws_lambda_function.files.function_name
+}
+
 output "health_check_url" {
   description = "CloudFront health check URL."
   value       = "https://${aws_cloudfront_distribution.website.domain_name}/api/health"

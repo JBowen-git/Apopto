@@ -1,5 +1,6 @@
 import { DashboardResponseSchema, type DashboardResponse } from '@apopto/shared';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { bootstrapPortalContext } from '../api/portalBootstrap';
 import { useApiClient } from '../api/useApiClient';
 import ErrorState from '../components/app/ErrorState';
@@ -113,6 +114,11 @@ export default function Dashboard() {
           ) : (
             <p>Your portal is active. More tools will appear here as your project moves forward.</p>
           )}
+          {dashboard.featureFlags.canAccessAdmin ? (
+            <Link className="account-secondary-action dashboard-card-link" to="/admin/clients">
+              Open admin clients
+            </Link>
+          ) : null}
         </section>
       </div>
     </section>

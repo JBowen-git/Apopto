@@ -35,6 +35,59 @@ variable "client_portal_table_allow_destroy" {
   }
 }
 
+variable "client_portal_upload_bucket_name" {
+  description = "Optional exact name for the private client portal upload bucket. Defaults to client-portal-uploads-{environment}-{account}."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = trimspace(var.client_portal_upload_bucket_name) == "" || can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", trimspace(var.client_portal_upload_bucket_name)))
+    error_message = "client_portal_upload_bucket_name must be empty or a valid S3 bucket name."
+  }
+}
+
+variable "client_portal_upload_bucket_cors_allowed_origins" {
+  description = "Optional browser origins allowed to call the private upload bucket directly. Defaults to cors_allowed_origins plus frontend_site_origin when set."
+  type        = list(string)
+  default     = []
+}
+
+variable "client_portal_upload_bucket_cors_allowed_methods" {
+  description = "CORS methods allowed by the private upload bucket for future presigned upload/download flows."
+  type        = list(string)
+  default     = ["GET", "HEAD", "PUT"]
+
+  validation {
+    condition = alltrue([
+      for method in var.client_portal_upload_bucket_cors_allowed_methods :
+      contains(["DELETE", "GET", "HEAD", "POST", "PUT"], method)
+    ])
+    error_message = "client_portal_upload_bucket_cors_allowed_methods can contain only methods supported by S3 bucket CORS: DELETE, GET, HEAD, POST, and PUT."
+  }
+}
+
+variable "client_portal_upload_incomplete_multipart_days" {
+  description = "Number of days before S3 aborts incomplete multipart uploads in the client portal upload bucket."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.client_portal_upload_incomplete_multipart_days >= 1 && var.client_portal_upload_incomplete_multipart_days <= 30
+    error_message = "client_portal_upload_incomplete_multipart_days must be between 1 and 30."
+  }
+}
+
+variable "client_portal_max_upload_bytes" {
+  description = "Maximum single file upload size exposed to the files Lambda as MAX_UPLOAD_BYTES."
+  type        = number
+  default     = 52428800
+
+  validation {
+    condition     = var.client_portal_max_upload_bytes >= 1048576 && var.client_portal_max_upload_bytes <= 524288000
+    error_message = "client_portal_max_upload_bytes must be between 1 MB and 500 MB."
+  }
+}
+
 variable "aws_region" {
   description = "AWS region for regional application resources."
   type        = string

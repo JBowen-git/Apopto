@@ -1,5 +1,7 @@
 import Layout from './components/layout/Layout.jsx'
 import About from './pages/About.jsx'
+import AdminClientDetail from './pages/AdminClientDetail'
+import AdminClients from './pages/AdminClients'
 import AuthCallback from './pages/AuthCallback.jsx'
 import Contact from './pages/Contact.jsx'
 import CustomerAccount from './pages/CustomerAccount.jsx'
@@ -17,6 +19,8 @@ import AppRoutes from './routes/AppRoutes.jsx'
 
 const pages = {
   About,
+  AdminClientDetail,
+  AdminClients,
   AuthCallback,
   Contact,
   CustomerAccount,

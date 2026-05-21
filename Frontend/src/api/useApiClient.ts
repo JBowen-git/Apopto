@@ -3,13 +3,21 @@ import { useApoptoAuth } from '../auth.jsx';
 import { createApiClient } from './client';
 
 type AuthContextWithToken = {
-  getAccessToken?: () => Promise<string | undefined>;
+  getAccessToken?: (extraScopes?: readonly string[]) => Promise<string | undefined>;
 };
 
-export function useApiClient() {
+type UseApiClientOptions = {
+  scopes?: readonly string[];
+};
+
+const emptyScopes: readonly string[] = [];
+
+export function useApiClient({ scopes = [] }: UseApiClientOptions = {}) {
   const { getAccessToken } = useApoptoAuth() as AuthContextWithToken;
+  const requestedScopes = scopes.length > 0 ? scopes : emptyScopes;
+  const scopeKey = scopes.join(' ');
 
   return useMemo(() => createApiClient({
-    getAccessToken,
-  }), [getAccessToken]);
+    getAccessToken: async () => getAccessToken?.(requestedScopes),
+  }), [getAccessToken, requestedScopes, scopeKey]);
 }

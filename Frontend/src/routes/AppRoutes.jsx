@@ -5,6 +5,8 @@ import { portfolioDetailPages } from '../data/portfolio.js'
 export default function AppRoutes({ pages }) {
   const {
     About,
+    AdminClientDetail,
+    AdminClients,
     AuthCallback,
     Contact,
     CustomerAccount,
@@ -60,6 +62,22 @@ export default function AppRoutes({ pages }) {
         element={(
           <ProtectedRoute>
             <Intake />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/clients"
+        element={(
+          <ProtectedRoute>
+            <AdminClients />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/admin/clients/:clientId"
+        element={(
+          <ProtectedRoute>
+            <AdminClientDetail />
           </ProtectedRoute>
         )}
       />

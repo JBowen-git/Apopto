@@ -4,6 +4,8 @@ import RouteLoadingFallback from './components/routing/RouteLoadingFallback.jsx'
 import AppRoutes from './routes/AppRoutes.jsx'
 
 const About = lazy(() => import('./pages/About.jsx'))
+const AdminClientDetail = lazy(() => import('./pages/AdminClientDetail'))
+const AdminClients = lazy(() => import('./pages/AdminClients'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback.jsx'))
 const Contact = lazy(() => import('./pages/Contact.jsx'))
 const CustomerAccount = lazy(() => import('./pages/CustomerAccount.jsx'))
@@ -20,6 +22,8 @@ const StartAProject = lazy(() => import('./pages/StartAProject.jsx'))
 
 const pages = {
   About,
+  AdminClientDetail,
+  AdminClients,
   AuthCallback,
   Contact,
   CustomerAccount,

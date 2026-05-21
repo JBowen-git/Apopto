@@ -5,7 +5,7 @@ const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN ?? ''
 const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID ?? ''
 const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE ?? ''
 const hasAuth0Config = Boolean(auth0Domain && auth0ClientId)
-const clientAuthScopes = [
+const clientAuthScopeList = [
   'openid',
   'profile',
   'email',
@@ -18,11 +18,15 @@ const clientAuthScopes = [
   'read:messages',
   'write:messages',
   'read:billing',
-].join(' ')
+]
 
-function auth0AuthorizationParams() {
+function authScope(extraScopes = []) {
+  return [...new Set([...clientAuthScopeList, ...extraScopes])].join(' ')
+}
+
+function auth0AuthorizationParams(extraScopes = []) {
   const authorizationParams = {
-    scope: clientAuthScopes,
+    scope: authScope(extraScopes),
   }
 
   if (auth0Audience) {
@@ -80,8 +84,8 @@ function Auth0Bridge({ children }) {
         login,
         logout: logoutAccount,
         user,
-        getAccessToken: () => getAccessTokenSilently({
-          authorizationParams: auth0AuthorizationParams(),
+        getAccessToken: (extraScopes = []) => getAccessTokenSilently({
+          authorizationParams: auth0AuthorizationParams(extraScopes),
         }),
       }}
     >

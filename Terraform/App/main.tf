@@ -200,6 +200,15 @@ resource "aws_cloudwatch_log_group" "admin_lambda" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "files_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-files"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-files-logs"
+  }
+}
+
 resource "aws_lambda_function" "health" {
   function_name    = "${local.resource_prefix}-health"
   description      = "${local.resource_prefix} health check Lambda."
@@ -284,6 +293,37 @@ resource "aws_lambda_function" "admin" {
 
   tags = {
     Name = "${local.resource_prefix}-admin"
+  }
+}
+
+resource "aws_lambda_function" "files" {
+  function_name    = "${local.resource_prefix}-files"
+  description      = "${local.resource_prefix} client portal files API Lambda."
+  role             = aws_iam_role.files_lambda.arn
+  handler          = "handlers/files.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = {
+      APP_ENVIRONMENT      = var.deployment_environment
+      MAX_UPLOAD_BYTES     = tostring(var.client_portal_max_upload_bytes)
+      PORTAL_HANDLER_GROUP = "files"
+      UPLOAD_BUCKET        = aws_s3_bucket.client_portal_uploads.bucket
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.files_lambda,
+    aws_iam_role_policy.files_s3,
+    aws_iam_role_policy_attachment.files_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-files"
   }
 }
 

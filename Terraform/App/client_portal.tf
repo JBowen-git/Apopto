@@ -3,6 +3,16 @@ locals {
   client_portal_table_deletion_protection_enabled = (
     var.deployment_environment == "production" || !var.client_portal_table_allow_destroy
   )
+  client_portal_upload_bucket_name = (
+    trimspace(var.client_portal_upload_bucket_name) != ""
+    ? trimspace(var.client_portal_upload_bucket_name)
+    : "client-portal-uploads-${var.deployment_environment}-${data.aws_caller_identity.current.account_id}"
+  )
+  client_portal_upload_bucket_cors_allowed_origins = (
+    length(var.client_portal_upload_bucket_cors_allowed_origins) > 0
+    ? var.client_portal_upload_bucket_cors_allowed_origins
+    : distinct(compact(concat(var.cors_allowed_origins, [trimspace(var.frontend_site_origin)])))
+  )
   client_portal_table_index_arns = [
     "${aws_dynamodb_table.client_portal.arn}/index/GSI1",
     "${aws_dynamodb_table.client_portal.arn}/index/GSI2",
@@ -181,4 +191,142 @@ resource "aws_iam_role_policy" "admin_dynamodb" {
   name   = "${local.resource_prefix}-admin-dynamodb"
   role   = aws_iam_role.admin_lambda.id
   policy = data.aws_iam_policy_document.admin_dynamodb.json
+}
+
+resource "aws_iam_role" "files_lambda" {
+  name               = "${local.resource_prefix}-files-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-files-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "files_lambda_basic" {
+  role       = aws_iam_role.files_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "files_s3" {
+  statement {
+    sid    = "ReadWriteClientPortalUploadObjects"
+    effect = "Allow"
+
+    actions = [
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObject",
+    ]
+
+    resources = ["${aws_s3_bucket.client_portal_uploads.arn}/clients/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "files_s3" {
+  name   = "${local.resource_prefix}-files-s3"
+  role   = aws_iam_role.files_lambda.id
+  policy = data.aws_iam_policy_document.files_s3.json
+}
+
+resource "aws_s3_bucket" "client_portal_uploads" {
+  bucket        = local.client_portal_upload_bucket_name
+  force_destroy = false
+
+  tags = {
+    Name = local.client_portal_upload_bucket_name
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+
+  rule {
+    id     = "abort-incomplete-multipart-uploads"
+    status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = var.client_portal_upload_incomplete_multipart_days
+    }
+  }
+}
+
+resource "aws_s3_bucket_cors_configuration" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+
+  cors_rule {
+    allowed_headers = var.cors_allowed_headers
+    allowed_methods = var.client_portal_upload_bucket_cors_allowed_methods
+    allowed_origins = local.client_portal_upload_bucket_cors_allowed_origins
+    expose_headers  = var.cors_expose_headers
+    max_age_seconds = var.cors_max_age
+  }
+}
+
+data "aws_iam_policy_document" "client_portal_uploads_bucket" {
+  statement {
+    sid    = "DenyInsecureTransport"
+    effect = "Deny"
+
+    actions = ["s3:*"]
+
+    resources = [
+      aws_s3_bucket.client_portal_uploads.arn,
+      "${aws_s3_bucket.client_portal_uploads.arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "client_portal_uploads" {
+  bucket = aws_s3_bucket.client_portal_uploads.id
+  policy = data.aws_iam_policy_document.client_portal_uploads_bucket.json
 }
