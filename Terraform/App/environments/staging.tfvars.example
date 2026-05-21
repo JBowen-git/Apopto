@@ -9,6 +9,9 @@ site_renderer_lambda_zip_path = "lambda_packages/site-renderer.zip"
 
 frontend_site_origin = "https://replace-with-staging-cloudfront-or-domain"
 
+auth0_domain   = "replace-with-staging-auth0-domain"
+auth0_audience = "https://replace-with-staging-api-audience"
+
 cors_allowed_origins = [
   "http://localhost:5173",
   "https://replace-with-staging-cloudfront-or-domain",

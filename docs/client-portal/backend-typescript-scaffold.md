@@ -15,6 +15,8 @@ Backend/
   tsconfig.json          Strict NodeNext TypeScript build config
   src/
     handlers/health.ts   Minimal Node.js /api/health handler
+    handlers/*.ts        Future grouped API handler skeletons
+    router/              Route ownership and safe placeholder routing
     shared/              Utility skeletons for later portal handlers
 ```
 
@@ -35,6 +37,11 @@ src/shared/ids.ts
 The `src/handlers/health.ts` handler calls that helper so the backend build and
 packaged Lambda artifact prove shared schemas are available from the backend
 package.
+
+Phase 10 adds future handler group skeletons for identity/intake, files,
+messages, billing, and admin. Those handlers are not wired to Terraform yet and
+return safe `501 not_implemented` responses if invoked directly. Route
+ownership is documented in `docs/client-portal/api-routing.md`.
 
 ## Build Commands
 

@@ -9,6 +9,9 @@ site_renderer_lambda_zip_path = "lambda_packages/site-renderer.zip"
 
 frontend_site_origin = ""
 
+auth0_domain   = "replace-with-production-auth0-domain"
+auth0_audience = "https://replace-with-production-api-audience"
+
 cors_allowed_origins = [
   "http://localhost:5173",
 ]

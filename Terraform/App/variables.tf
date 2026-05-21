@@ -48,6 +48,37 @@ variable "frontend_site_origin" {
   default     = ""
 }
 
+variable "auth0_domain" {
+  description = "Auth0 tenant domain without protocol, for example tenant.us.auth0.com. This is not a secret."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9][A-Za-z0-9.-]+[A-Za-z0-9]$", trimspace(var.auth0_domain))) && !startswith(trimspace(var.auth0_domain), "http://") && !startswith(trimspace(var.auth0_domain), "https://")
+    error_message = "auth0_domain must be a domain name without http:// or https://."
+  }
+}
+
+variable "auth0_audience" {
+  description = "Auth0 API identifier/audience expected in access tokens. This is not a secret."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.auth0_audience)) > 0
+    error_message = "auth0_audience must not be empty."
+  }
+}
+
+variable "auth0_placeholder_route_scopes" {
+  description = "Scopes accepted by the protected Auth0 placeholder route. API Gateway authorizes when any listed scope is present."
+  type        = list(string)
+  default     = ["read:me"]
+
+  validation {
+    condition     = length(var.auth0_placeholder_route_scopes) > 0 && alltrue([for scope in var.auth0_placeholder_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_placeholder_route_scopes must contain at least one non-empty scope."
+  }
+}
+
 variable "lambda_handler" {
   description = "Lambda handler for the health check function."
   type        = string

@@ -13,6 +13,8 @@ locals {
 
   website_origin_id = "${local.resource_prefix}-website-s3"
   api_origin_id     = "${local.resource_prefix}-api-gateway"
+  auth0_domain      = trimspace(var.auth0_domain)
+  auth0_issuer      = "https://${local.auth0_domain}/"
 
   site_asset_directory = "${path.module}/${var.site_asset_root}"
   site_asset_files     = fileset(local.site_asset_directory, "**")
@@ -180,6 +182,15 @@ resource "aws_cloudwatch_log_group" "health_lambda" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "auth_placeholder_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-auth-placeholder"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-auth-placeholder-logs"
+  }
+}
+
 resource "aws_lambda_function" "health" {
   function_name    = "${local.resource_prefix}-health"
   description      = "${local.resource_prefix} health check Lambda."
@@ -207,6 +218,34 @@ resource "aws_lambda_function" "health" {
   }
 }
 
+resource "aws_lambda_function" "auth_placeholder" {
+  function_name    = "${local.resource_prefix}-auth-placeholder"
+  description      = "${local.resource_prefix} protected Auth0 placeholder Lambda."
+  role             = aws_iam_role.health_lambda.arn
+  handler          = "handlers/identityIntake.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = {
+      APP_ENVIRONMENT      = var.deployment_environment
+      PORTAL_HANDLER_GROUP = "identityIntake"
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.auth_placeholder_lambda,
+    aws_iam_role_policy_attachment.health_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-auth-placeholder"
+  }
+}
+
 resource "aws_apigatewayv2_api" "app" {
   name          = "${local.resource_prefix}-api"
   protocol_type = "HTTP"
@@ -224,6 +263,18 @@ resource "aws_apigatewayv2_api" "app" {
   }
 }
 
+resource "aws_apigatewayv2_authorizer" "auth0" {
+  api_id           = aws_apigatewayv2_api.app.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${local.resource_prefix}-auth0-jwt"
+
+  jwt_configuration {
+    audience = [var.auth0_audience]
+    issuer   = local.auth0_issuer
+  }
+}
+
 resource "aws_apigatewayv2_integration" "health" {
   api_id                 = aws_apigatewayv2_api.app.id
   integration_type       = "AWS_PROXY"
@@ -231,10 +282,26 @@ resource "aws_apigatewayv2_integration" "health" {
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_integration" "auth_placeholder" {
+  api_id                 = aws_apigatewayv2_api.app.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.auth_placeholder.invoke_arn
+  payload_format_version = "2.0"
+}
+
 resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.app.id
   route_key = "GET /api/health"
   target    = "integrations/${aws_apigatewayv2_integration.health.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_placeholder" {
+  api_id               = aws_apigatewayv2_api.app.id
+  authorization_scopes = var.auth0_placeholder_route_scopes
+  authorization_type   = "JWT"
+  authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
+  route_key            = "GET /api/_auth-placeholder"
+  target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
@@ -251,6 +318,14 @@ resource "aws_lambda_permission" "allow_api_gateway_health" {
   statement_id  = "AllowExecutionFromApiGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.health.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_auth_placeholder" {
+  statement_id  = "AllowExecutionFromApiGatewayAuthPlaceholder"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.auth_placeholder.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }

@@ -14,6 +14,8 @@ Each apply creates one complete environment:
 - CloudFront Function for prerendered route directory indexes.
 - HTTP API Gateway.
 - Node.js health check Lambda at `GET /api/health`.
+- Auth0 JWT authorizer with a protected placeholder route at
+  `GET /api/_auth-placeholder`.
 - Node.js site renderer Lambda triggered through SQS after deploys to refresh
   crawler-visible HTML and SEO files.
 
@@ -52,6 +54,9 @@ terraform apply -var-file=environments/production.tfvars
 
 The Lambda zip files referenced by the selected tfvars file must exist before
 `terraform apply`.
+
+`auth0_domain` and `auth0_audience` must be configured before relying on
+protected routes. See `../../docs/client-portal/auth0-setup.md`.
 
 The deployment scripts set `TF_VAR_site_asset_root=.artifacts/site` and
 `TF_VAR_site_renderer_asset_root=.artifacts/site-renderer` after building the
