@@ -227,9 +227,23 @@ variable "cors_allowed_headers" {
 }
 
 variable "cors_allowed_methods" {
-  description = "CORS methods allowed by S3 and API Gateway."
+  description = "CORS methods allowed by API Gateway."
   type        = list(string)
   default     = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+}
+
+variable "website_bucket_cors_allowed_methods" {
+  description = "CORS methods allowed by the website S3 bucket. S3 does not support PATCH or OPTIONS in bucket CORS rules."
+  type        = list(string)
+  default     = ["GET", "HEAD"]
+
+  validation {
+    condition = alltrue([
+      for method in var.website_bucket_cors_allowed_methods :
+      contains(["DELETE", "GET", "HEAD", "POST", "PUT"], method)
+    ])
+    error_message = "website_bucket_cors_allowed_methods can contain only methods supported by S3 bucket CORS: DELETE, GET, HEAD, POST, and PUT."
+  }
 }
 
 variable "cors_allowed_origins" {
