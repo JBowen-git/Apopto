@@ -315,6 +315,33 @@ resource "aws_apigatewayv2_route" "me" {
   target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
 }
 
+resource "aws_apigatewayv2_route" "intake_get" {
+  api_id               = aws_apigatewayv2_api.app.id
+  authorization_scopes = var.auth0_intake_read_route_scopes
+  authorization_type   = "JWT"
+  authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
+  route_key            = "GET /api/intake"
+  target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
+}
+
+resource "aws_apigatewayv2_route" "intake_put" {
+  api_id               = aws_apigatewayv2_api.app.id
+  authorization_scopes = var.auth0_intake_write_route_scopes
+  authorization_type   = "JWT"
+  authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
+  route_key            = "PUT /api/intake"
+  target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
+}
+
+resource "aws_apigatewayv2_route" "client_profile_patch" {
+  api_id               = aws_apigatewayv2_api.app.id
+  authorization_scopes = var.auth0_client_profile_write_route_scopes
+  authorization_type   = "JWT"
+  authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
+  route_key            = "PATCH /api/client/profile"
+  target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.app.id
   name        = "$default"

@@ -2,8 +2,10 @@ import { Route, Routes } from 'react-router-dom'
 import Layout from './components/layout/Layout.jsx'
 import { portfolioDetailPages } from './data/portfolio.js'
 import About from './pages/About.jsx'
+import AuthCallback from './pages/AuthCallback.jsx'
 import Contact from './pages/Contact.jsx'
 import CustomerAccount from './pages/CustomerAccount.jsx'
+import Dashboard from './pages/Dashboard'
 import ErrorPage from './pages/ErrorPage.jsx'
 import Home from './pages/Home.jsx'
 import Insights from './pages/Insights.jsx'
@@ -12,6 +14,7 @@ import Portfolio from './pages/Portfolio.jsx'
 import PortfolioDetailPage from './pages/PortfolioDetailPage.jsx'
 import Solutions from './pages/Solutions.jsx'
 import StartAProject from './pages/StartAProject.jsx'
+import ProtectedRoute from './components/routing/ProtectedRoute'
 
 export default function App() {
   return (
@@ -41,6 +44,15 @@ export default function App() {
         <Route path="/insights/:conceptId" element={<Insights />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/start-a-project" element={<StartAProject />} />
+        <Route path="/callback" element={<AuthCallback />} />
+        <Route
+          path="/dashboard"
+          element={(
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          )}
+        />
         <Route path="/account" element={<CustomerAccount />} />
         <Route path="/error" element={<ErrorPage />} />
         <Route path="*" element={<NotFound />} />

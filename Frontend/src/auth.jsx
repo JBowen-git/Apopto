@@ -5,6 +5,20 @@ const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN ?? ''
 const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID ?? ''
 const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE ?? ''
 const hasAuth0Config = Boolean(auth0Domain && auth0ClientId)
+const clientAuthScopes = [
+  'openid',
+  'profile',
+  'email',
+  'read:me',
+  'write:intake',
+  'read:client',
+  'write:client',
+  'read:files',
+  'write:files',
+  'read:messages',
+  'write:messages',
+  'read:billing',
+].join(' ')
 
 const ApoptoAuthContext = createContext({
   error: undefined,
@@ -14,10 +28,19 @@ const ApoptoAuthContext = createContext({
   login: () => {},
   logout: () => {},
   user: undefined,
+  getAccessToken: async () => undefined,
 })
 
 function Auth0Bridge({ children }) {
-  const { error, isAuthenticated, isLoading, loginWithRedirect, logout, user } = useAuth0()
+  const {
+    error,
+    getAccessTokenSilently,
+    isAuthenticated,
+    isLoading,
+    loginWithRedirect,
+    logout,
+    user,
+  } = useAuth0()
 
   const login = (returnTo = '/account') =>
     loginWithRedirect({
@@ -41,6 +64,7 @@ function Auth0Bridge({ children }) {
         login,
         logout: logoutAccount,
         user,
+        getAccessToken: getAccessTokenSilently,
       }}
     >
       {children}
@@ -62,6 +86,7 @@ export function ApoptoAuthProvider({ children }) {
           login: () => {},
           logout: () => {},
           user: undefined,
+          getAccessToken: async () => undefined,
         }}
       >
         {children}
@@ -70,7 +95,8 @@ export function ApoptoAuthProvider({ children }) {
   }
 
   const authorizationParams = {
-    redirect_uri: `${window.location.origin}/account`,
+    redirect_uri: `${window.location.origin}/callback`,
+    scope: clientAuthScopes,
   }
 
   if (auth0Audience) {
@@ -83,7 +109,7 @@ export function ApoptoAuthProvider({ children }) {
       clientId={auth0ClientId}
       domain={auth0Domain}
       onRedirectCallback={(appState) => {
-        window.history.replaceState({}, document.title, appState?.returnTo ?? window.location.pathname)
+        window.history.replaceState({}, document.title, appState?.returnTo ?? '/account')
       }}
     >
       <Auth0Bridge>{children}</Auth0Bridge>

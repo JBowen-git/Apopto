@@ -56,6 +56,11 @@ export type ClientProfileItem = PortalTableKey & Timestamps & {
   businessName: string;
   status: ClientStatus;
   primaryContactUserId: string;
+  contactEmail?: string;
+  contactName?: string;
+  industry?: string;
+  phone?: string;
+  website?: string;
 };
 
 export type UserProfileItem = PortalTableKey & {

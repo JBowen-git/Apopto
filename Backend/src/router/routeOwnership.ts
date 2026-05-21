@@ -71,7 +71,7 @@ export const identityIntakeRoutes = [
     path: '/api/client/profile',
     owner: 'identityIntake',
     operation: 'updateClientProfile',
-    phase: 25,
+    phase: 23,
   },
 ] as const satisfies readonly ApiRouteDefinition[];
 

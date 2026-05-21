@@ -13,6 +13,7 @@ import {
   type MembershipItem,
   type PortalTableItem,
   type TransactPutItem,
+  type TransactWriteItem,
   type UserProfileItem,
 } from '../src/index.js';
 
@@ -93,6 +94,15 @@ function fakeRepository(initialItems: PortalTableItem[] = []) {
       }
 
       for (const entry of entries) {
+        itemsByKey.set(itemKey(entry.item), entry.item);
+      }
+    }),
+    transactWriteItems: vi.fn(async (entries: TransactWriteItem[]) => {
+      for (const entry of entries) {
+        if (entry.action === 'update') {
+          continue;
+        }
+
         itemsByKey.set(itemKey(entry.item), entry.item);
       }
     }),

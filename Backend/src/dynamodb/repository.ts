@@ -29,6 +29,15 @@ export type TransactPutItem<TItem extends PortalTableItem = PortalTableItem> =
     item: TItem;
   };
 
+export type TransactUpdateItem = WriteCondition & {
+  key: PortalTableKey;
+  updateExpression: string;
+};
+
+export type TransactWriteItem<TItem extends PortalTableItem = PortalTableItem> =
+  | (TransactPutItem<TItem> & { action?: 'put' })
+  | (TransactUpdateItem & { action: 'update' });
+
 export type UpdateItemOptions = WriteCondition & {
   updateExpression: string;
   returnValues?: UpdateCommandInput['ReturnValues'];
@@ -161,6 +170,47 @@ export function createPortalRepository({ tableName, client }: PortalRepositoryCo
           ExpressionAttributeValues: entry.expressionAttributeValues,
         },
       }));
+
+      await client.send(new TransactWriteCommand({
+        TransactItems: transactItems,
+      }));
+    },
+
+    async transactWriteItems<TItem extends PortalTableItem>(
+      items: TransactWriteItem<TItem>[],
+    ): Promise<void> {
+      if (items.length === 0) {
+        return;
+      }
+
+      if (items.length > 100) {
+        throw new Error('transactWriteItems accepts at most 100 items per request.');
+      }
+
+      const transactItems: TransactWriteCommandInput['TransactItems'] = items.map((entry) => {
+        if (entry.action === 'update') {
+          return {
+            Update: {
+              TableName: tableName,
+              Key: entry.key,
+              UpdateExpression: entry.updateExpression,
+              ConditionExpression: entry.conditionExpression,
+              ExpressionAttributeNames: entry.expressionAttributeNames,
+              ExpressionAttributeValues: entry.expressionAttributeValues,
+            },
+          };
+        }
+
+        return {
+          Put: {
+            TableName: tableName,
+            Item: entry.item,
+            ConditionExpression: entry.conditionExpression,
+            ExpressionAttributeNames: entry.expressionAttributeNames,
+            ExpressionAttributeValues: entry.expressionAttributeValues,
+          },
+        };
+      });
 
       await client.send(new TransactWriteCommand({
         TransactItems: transactItems,

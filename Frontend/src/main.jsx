@@ -4,7 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { ApoptoAuthProvider } from './auth.jsx'
 import './index.css'
-import { verifySharedPackageImport } from './sharedPackageSmoke.js'
+import AppQueryProvider from './providers/AppQueryProvider'
+import { verifySharedPackageImport } from './sharedPackageSmoke'
 
 verifySharedPackageImport()
 
@@ -17,9 +18,11 @@ if (!rootElement) {
 const app = (
   <StrictMode>
     <ApoptoAuthProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <AppQueryProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AppQueryProvider>
     </ApoptoAuthProvider>
   </StrictMode>
 )

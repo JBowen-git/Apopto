@@ -101,6 +101,39 @@ variable "auth0_me_route_scopes" {
   }
 }
 
+variable "auth0_intake_read_route_scopes" {
+  description = "Scopes accepted by the authenticated GET /api/intake route. API Gateway authorizes when any listed scope is present."
+  type        = list(string)
+  default     = ["read:client"]
+
+  validation {
+    condition     = length(var.auth0_intake_read_route_scopes) > 0 && alltrue([for scope in var.auth0_intake_read_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_intake_read_route_scopes must contain at least one non-empty scope."
+  }
+}
+
+variable "auth0_intake_write_route_scopes" {
+  description = "Scopes accepted by the authenticated PUT /api/intake route. API Gateway authorizes when any listed scope is present."
+  type        = list(string)
+  default     = ["write:intake"]
+
+  validation {
+    condition     = length(var.auth0_intake_write_route_scopes) > 0 && alltrue([for scope in var.auth0_intake_write_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_intake_write_route_scopes must contain at least one non-empty scope."
+  }
+}
+
+variable "auth0_client_profile_write_route_scopes" {
+  description = "Scopes accepted by the authenticated PATCH /api/client/profile route. API Gateway authorizes when any listed scope is present."
+  type        = list(string)
+  default     = ["write:client"]
+
+  validation {
+    condition     = length(var.auth0_client_profile_write_route_scopes) > 0 && alltrue([for scope in var.auth0_client_profile_write_route_scopes : length(trimspace(scope)) > 0])
+    error_message = "auth0_client_profile_write_route_scopes must contain at least one non-empty scope."
+  }
+}
+
 variable "lambda_handler" {
   description = "Lambda handler for the health check function."
   type        = string

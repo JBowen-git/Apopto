@@ -58,6 +58,11 @@
       "description": "Start a project with Apopto by sharing goals, scope, timeline, and launch needs."
     },
     {
+      "path": "/callback",
+      "title": "Callback",
+      "description": "Auth0 sign-in callback route for Apopto customer accounts."
+    },
+    {
       "path": "/account",
       "title": "Customer Account",
       "description": "Customer login and account access for Apopto projects."
