@@ -195,6 +195,42 @@ data "aws_iam_policy_document" "app_deploy" {
 
     resources = ["*"]
   }
+
+  statement {
+    sid    = "ListDynamoDBTablesForTerraform"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:DescribeLimits",
+      "dynamodb:ListTables",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ManageClientPortalDynamoDBTables"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:CreateTable",
+      "dynamodb:DeleteTable",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:DescribeTable",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:ListTagsOfResource",
+      "dynamodb:TagResource",
+      "dynamodb:UntagResource",
+      "dynamodb:UpdateContinuousBackups",
+      "dynamodb:UpdateTable",
+      "dynamodb:UpdateTimeToLive",
+    ]
+
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:*:table/ClientPortal-*",
+      "arn:aws:dynamodb:${var.aws_region}:*:table/ClientPortal-*/index/*",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "app_deploy" {
