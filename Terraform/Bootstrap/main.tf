@@ -151,6 +151,8 @@ data "aws_iam_policy_document" "app_deploy" {
       "arn:aws:s3:::${local.state_bucket_name}/*",
       "arn:aws:s3:::${var.client_slug}-*",
       "arn:aws:s3:::${var.client_slug}-*/*",
+      "arn:aws:s3:::client-portal-uploads-*",
+      "arn:aws:s3:::client-portal-uploads-*/*",
     ]
   }
 
