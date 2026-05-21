@@ -32,10 +32,11 @@ methods.
 
 ## Forwarded Request Data
 
-Terraform defines a dedicated origin request policy:
+CloudFront's Free pricing plan rejects custom origin request policies, so
+Terraform uses the AWS-managed policy:
 
 ```text
-aws_cloudfront_origin_request_policy.api
+Managed-AllViewerExceptHostHeader
 ```
 
 It forwards:
@@ -46,11 +47,15 @@ Origin
 Access-Control-Request-Headers
 Access-Control-Request-Method
 all query strings
+all viewer cookies
 ```
 
-It does not forward cookies, and it does not forward the viewer `Host` header.
-Avoid forwarding `Host` to API Gateway unless a later phase explicitly changes
-the origin strategy.
+It does not forward the viewer `Host` header, which keeps the API Gateway
+origin compatible with CloudFront. Cookies are broader than the custom policy
+would have allowed, but API responses are still protected by the managed
+`CachingDisabled` cache policy and backend `Cache-Control: no-store` defaults.
+Do not rely on cookies for portal authentication; the API should continue to use
+Auth0 bearer tokens.
 
 ## Backend Response Defaults
 
@@ -69,7 +74,6 @@ authorization errors, and private API responses should keep `no-store`.
 For Phase 12, expected Terraform changes include:
 
 ```text
-create aws_cloudfront_origin_request_policy.api
 update aws_cloudfront_distribution.website /api/* origin_request_policy_id
 ```
 
