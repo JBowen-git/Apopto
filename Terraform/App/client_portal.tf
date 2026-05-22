@@ -265,6 +265,52 @@ resource "aws_iam_role_policy" "files_dynamodb" {
   policy = data.aws_iam_policy_document.files_dynamodb.json
 }
 
+resource "aws_iam_role" "messages_lambda" {
+  name               = "${local.resource_prefix}-messages-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-messages-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "messages_lambda_basic" {
+  role       = aws_iam_role.messages_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "messages_dynamodb" {
+  statement {
+    sid    = "ReadWriteMessages"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:TransactWriteItems",
+    ]
+
+    resources = [aws_dynamodb_table.client_portal.arn]
+  }
+
+  statement {
+    sid    = "QueryTenantAndThreadIndexes"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:Query",
+    ]
+
+    resources = local.client_portal_table_index_arns
+  }
+}
+
+resource "aws_iam_role_policy" "messages_dynamodb" {
+  name   = "${local.resource_prefix}-messages-dynamodb"
+  role   = aws_iam_role.messages_lambda.id
+  policy = data.aws_iam_policy_document.messages_dynamodb.json
+}
+
 resource "aws_iam_role" "file_scan_result_lambda" {
   name               = "${local.resource_prefix}-file-scan-result-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json

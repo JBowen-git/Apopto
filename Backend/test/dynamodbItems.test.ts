@@ -212,6 +212,8 @@ describe('DynamoDB item builders', () => {
       threadId: 'thread_123',
       updatedAt,
     })).toMatchObject({
+      GSI2PK: 'THREAD#thread_123',
+      GSI2SK: 'CLIENT#client_123',
       PK: 'CLIENT#client_123',
       SK: `THREAD#${updatedAt}#thread_123`,
       type: 'THREAD',

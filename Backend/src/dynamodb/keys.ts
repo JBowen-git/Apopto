@@ -149,6 +149,13 @@ export function threadKey(clientId: string, updatedAt: string, threadId: string)
   };
 }
 
+export function threadByIdGsiKey(threadId: string, clientId: string): PortalGsi2Key {
+  return {
+    GSI2PK: pk.thread(threadId),
+    GSI2SK: pk.client(clientId),
+  };
+}
+
 export function messageKey(threadId: string, createdAt: string, messageId: string): PortalTableKey {
   return {
     PK: pk.thread(threadId),

@@ -7,9 +7,12 @@ import Contact from './pages/Contact.jsx'
 import CustomerAccount from './pages/CustomerAccount.jsx'
 import Dashboard from './pages/Dashboard'
 import ErrorPage from './pages/ErrorPage.jsx'
+import Files from './pages/Files'
 import Home from './pages/Home.jsx'
 import Insights from './pages/Insights.jsx'
 import Intake from './pages/Intake'
+import MessageThread from './pages/MessageThread'
+import Messages from './pages/Messages'
 import NotFound from './pages/NotFound.jsx'
 import Portfolio from './pages/Portfolio.jsx'
 import PortfolioDetailPage from './pages/PortfolioDetailPage.jsx'
@@ -26,9 +29,12 @@ const pages = {
   CustomerAccount,
   Dashboard,
   ErrorPage,
+  Files,
   Home,
   Insights,
   Intake,
+  MessageThread,
+  Messages,
   NotFound,
   Portfolio,
   PortfolioDetailPage,

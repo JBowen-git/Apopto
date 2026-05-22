@@ -34,9 +34,14 @@ export type TransactUpdateItem = WriteCondition & {
   updateExpression: string;
 };
 
+export type TransactDeleteItem = WriteCondition & {
+  key: PortalTableKey;
+};
+
 export type TransactWriteItem<TItem extends PortalTableItem = PortalTableItem> =
   | (TransactPutItem<TItem> & { action?: 'put' })
-  | (TransactUpdateItem & { action: 'update' });
+  | (TransactUpdateItem & { action: 'update' })
+  | (TransactDeleteItem & { action: 'delete' });
 
 export type UpdateItemOptions = WriteCondition & {
   updateExpression: string;
@@ -188,6 +193,18 @@ export function createPortalRepository({ tableName, client }: PortalRepositoryCo
       }
 
       const transactItems: TransactWriteCommandInput['TransactItems'] = items.map((entry) => {
+        if (entry.action === 'delete') {
+          return {
+            Delete: {
+              TableName: tableName,
+              Key: entry.key,
+              ConditionExpression: entry.conditionExpression,
+              ExpressionAttributeNames: entry.expressionAttributeNames,
+              ExpressionAttributeValues: entry.expressionAttributeValues,
+            },
+          };
+        }
+
         if (entry.action === 'update') {
           return {
             Update: {

@@ -22,7 +22,12 @@ export {
   handler as identityIntakeHandler,
   type IdentityIntakeHandlerDependencies,
 } from './handlers/identityIntake.js';
-export { handler as messagesHandler } from './handlers/messages.js';
+export {
+  createMessagesHandler,
+  handler as messagesHandler,
+  type MessagesHandlerDependencies,
+} from './handlers/messages.js';
+export * from './messages/index.js';
 export * from './dynamodb/index.js';
 export * from './router/notImplemented.js';
 export * from './router/routeOwnership.js';

@@ -12,9 +12,12 @@ export default function AppRoutes({ pages }) {
     CustomerAccount,
     Dashboard,
     ErrorPage,
+    Files,
     Home,
     Insights,
     Intake,
+    MessageThread,
+    Messages,
     NotFound,
     Portfolio,
     PortfolioDetailPage,
@@ -62,6 +65,30 @@ export default function AppRoutes({ pages }) {
         element={(
           <ProtectedRoute>
             <Intake />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/files"
+        element={(
+          <ProtectedRoute>
+            <Files />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/messages"
+        element={(
+          <ProtectedRoute>
+            <Messages />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/messages/:threadId"
+        element={(
+          <ProtectedRoute>
+            <MessageThread />
           </ProtectedRoute>
         )}
       />

@@ -1,4 +1,5 @@
 import type { DashboardResponse } from '@apopto/shared';
+import { Link } from 'react-router-dom';
 import { formatDateTime, formatPortalChoice } from './dashboardFormatters';
 
 type DashboardLifecycleModulesProps = {
@@ -38,19 +39,23 @@ export default function DashboardLifecycleModules({
       title: 'Projects',
     } : null,
     featureFlags.canUploadFiles ? {
-      copy: 'File uploads are enabled for this lifecycle, with the full upload workflow coming in a later phase.',
+      badge: 'Available',
+      copy: 'Upload project assets directly to private S3 storage and review files that are ready for download.',
       count: moduleCountLabel(recentFiles.length, 'file'),
+      href: '/files',
       id: 'files',
       items: recentFiles.map((file) => ({
         label: file.originalFilename,
-        meta: formatPortalChoice(file.category),
+        meta: formatPortalChoice(file.uploadStatus),
       })),
       limit: sliceLimits.files,
       title: 'Files',
     } : null,
     featureFlags.canSendMessages ? {
-      copy: 'Message threads will appear here after the messaging module is built.',
+      badge: 'Available',
+      copy: 'Open protected project conversations and keep decisions tied to this client record.',
       count: moduleCountLabel(recentThreads.length, 'thread'),
+      href: '/messages',
       id: 'messages',
       items: recentThreads.map((thread) => ({
         label: thread.subject,
@@ -97,7 +102,7 @@ export default function DashboardLifecycleModules({
               <span className="dashboard-panel-label">{module.count}</span>
               <h2>{module.title}</h2>
             </div>
-            <span className="dashboard-module-pill">Next phase</span>
+            <span className="dashboard-module-pill">{module.badge ?? 'Next phase'}</span>
           </div>
           <p>{module.copy}</p>
           {module.items.length > 0 ? (
@@ -112,6 +117,11 @@ export default function DashboardLifecycleModules({
           ) : (
             <div className="dashboard-empty-module">No records in this slice yet.</div>
           )}
+          {module.href ? (
+            <Link className="account-secondary-action dashboard-card-link" to={module.href}>
+              Open {module.title.toLowerCase()}
+            </Link>
+          ) : null}
         </article>
       ))}
     </section>

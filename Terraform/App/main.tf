@@ -209,6 +209,15 @@ resource "aws_cloudwatch_log_group" "files_lambda" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "messages_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-messages"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-messages-logs"
+  }
+}
+
 resource "aws_cloudwatch_log_group" "file_scan_result_lambda" {
   name              = "/aws/lambda/${local.resource_prefix}-file-scan-result"
   retention_in_days = var.lambda_log_retention_days
@@ -338,6 +347,36 @@ resource "aws_lambda_function" "files" {
   }
 }
 
+resource "aws_lambda_function" "messages" {
+  function_name    = "${local.resource_prefix}-messages"
+  description      = "${local.resource_prefix} client portal messages API Lambda."
+  role             = aws_iam_role.messages_lambda.arn
+  handler          = "handlers/messages.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = {
+      APP_ENVIRONMENT      = var.deployment_environment
+      CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
+      PORTAL_HANDLER_GROUP = "messages"
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.messages_lambda,
+    aws_iam_role_policy.messages_dynamodb,
+    aws_iam_role_policy_attachment.messages_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-messages"
+  }
+}
+
 resource "aws_lambda_function" "file_scan_result" {
   function_name    = "${local.resource_prefix}-file-scan-result"
   description      = "${local.resource_prefix} GuardDuty S3 malware scan result processor."
@@ -464,6 +503,13 @@ resource "aws_apigatewayv2_integration" "files" {
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_integration" "messages" {
+  api_id                 = aws_apigatewayv2_api.app.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.messages.invoke_arn
+  payload_format_version = "2.0"
+}
+
 resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.app.id
   route_key = "GET /api/health"
@@ -564,6 +610,38 @@ resource "aws_apigatewayv2_route" "files_delete" {
   target             = "integrations/${aws_apigatewayv2_integration.files.id}"
 }
 
+resource "aws_apigatewayv2_route" "threads_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/threads"
+  target             = "integrations/${aws_apigatewayv2_integration.messages.id}"
+}
+
+resource "aws_apigatewayv2_route" "threads_post" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "POST /api/threads"
+  target             = "integrations/${aws_apigatewayv2_integration.messages.id}"
+}
+
+resource "aws_apigatewayv2_route" "thread_messages_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/threads/{threadId}/messages"
+  target             = "integrations/${aws_apigatewayv2_integration.messages.id}"
+}
+
+resource "aws_apigatewayv2_route" "thread_messages_post" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "POST /api/threads/{threadId}/messages"
+  target             = "integrations/${aws_apigatewayv2_integration.messages.id}"
+}
+
 resource "aws_apigatewayv2_route" "admin_clients_get" {
   api_id             = aws_apigatewayv2_api.app.id
   authorization_type = "JWT"
@@ -634,6 +712,14 @@ resource "aws_lambda_permission" "allow_api_gateway_files" {
   statement_id  = "AllowExecutionFromApiGatewayFiles"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.files.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_messages" {
+  statement_id  = "AllowExecutionFromApiGatewayMessages"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.messages.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }

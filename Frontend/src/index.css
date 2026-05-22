@@ -1883,6 +1883,384 @@ a {
   font-weight: 700;
 }
 
+.files-shell {
+  max-width: 1180px;
+}
+
+.files-page-lede {
+  color: #475569;
+  font-size: clamp(1rem, 1.1vw, 1.14rem);
+  line-height: 1.65;
+  margin: 14px 0 0;
+  max-width: 680px;
+}
+
+.files-layout {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(280px, 0.88fr) minmax(0, 1.12fr);
+}
+
+.files-guidance-panel,
+.files-upload-panel,
+.files-list-panel,
+.files-unavailable-panel {
+  align-content: start;
+}
+
+.files-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 14px;
+  color: #92400e;
+  display: grid;
+  gap: 6px;
+  line-height: 1.55;
+  padding: 14px 16px;
+}
+
+.files-warning strong {
+  color: #78350f;
+}
+
+.files-guidance-list {
+  color: #475569;
+  display: grid;
+  gap: 11px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.files-upload-form {
+  display: grid;
+  gap: 16px;
+}
+
+.files-dropzone {
+  background: #ffffff;
+  border: 1px dashed rgba(37, 99, 235, 0.34);
+  border-radius: 16px;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+}
+
+.files-dropzone input {
+  inline-size: 100%;
+}
+
+.files-dropzone span {
+  color: #0f172a;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.files-dropzone small {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.files-form-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.files-upload-panel .MuiInputBase-root,
+.files-upload-panel .MuiInputLabel-root,
+.files-upload-panel .MuiFormHelperText-root {
+  font-family: inherit;
+}
+
+.files-upload-panel .MuiOutlinedInput-root {
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+.files-upload-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #f59e0b;
+  border-width: 2px;
+}
+
+.files-upload-panel .MuiInputLabel-root.Mui-focused {
+  color: #b45309;
+}
+
+.files-upload-button.MuiButton-root,
+.files-file-actions .MuiButton-contained {
+  background: #2563eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 800;
+  min-height: 44px;
+  text-transform: none;
+}
+
+.files-file-actions .MuiButton-outlined {
+  border-color: rgba(15, 23, 42, 0.24);
+  border-radius: 8px;
+  color: #0f172a;
+  font-family: inherit;
+  font-weight: 800;
+  min-height: 44px;
+  text-transform: none;
+}
+
+.files-upload-status {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 12px;
+  color: #1d4ed8;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+.files-list {
+  display: grid;
+  gap: 12px;
+}
+
+.files-file-card {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 18px;
+}
+
+.files-file-main {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.files-file-main h3 {
+  color: #0f172a;
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.files-file-meta {
+  color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+  font-weight: 700;
+  gap: 8px 12px;
+}
+
+.files-file-meta span:not(:last-child)::after {
+  color: rgba(100, 116, 139, 0.58);
+  content: "/";
+  margin-left: 12px;
+}
+
+.files-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: end;
+}
+
+.files-status-pill {
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  justify-self: start;
+  padding: 7px 10px;
+}
+
+.files-status-pill-ready {
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.26);
+  color: #166534;
+}
+
+.files-status-pill-pending {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: #1d4ed8;
+}
+
+.files-status-pill-review {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #92400e;
+}
+
+.files-status-pill-blocked {
+  background: rgba(185, 28, 28, 0.1);
+  border: 1px solid rgba(185, 28, 28, 0.24);
+  color: #991b1b;
+}
+
+.messages-shell {
+  max-width: 1180px;
+}
+
+.messages-page-lede {
+  color: #475569;
+  font-size: clamp(1rem, 1.1vw, 1.14rem);
+  line-height: 1.65;
+  margin: 14px 0 0;
+  max-width: 720px;
+}
+
+.messages-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+}
+
+.messages-layout-thread {
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+}
+
+.messages-thread-list-panel,
+.messages-new-thread-panel,
+.messages-thread-panel,
+.messages-unavailable-panel {
+  align-content: start;
+}
+
+.messages-thread-list {
+  display: grid;
+  gap: 10px;
+}
+
+.messages-thread-link {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  color: inherit;
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+  text-decoration: none;
+}
+
+.messages-thread-link:hover,
+.messages-thread-link:focus-visible,
+.messages-thread-link.active {
+  border-color: rgba(245, 158, 11, 0.42);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  outline: none;
+}
+
+.messages-thread-link strong {
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.messages-thread-link span {
+  color: #475569;
+  line-height: 1.5;
+}
+
+.messages-thread-link small {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.messages-compose-form,
+.messages-reply-form {
+  display: grid;
+  gap: 16px;
+}
+
+.messages-new-thread-panel .MuiInputBase-root,
+.messages-new-thread-panel .MuiInputLabel-root,
+.messages-new-thread-panel .MuiFormHelperText-root,
+.messages-thread-panel .MuiInputBase-root,
+.messages-thread-panel .MuiInputLabel-root,
+.messages-thread-panel .MuiFormHelperText-root {
+  font-family: inherit;
+}
+
+.messages-new-thread-panel .MuiOutlinedInput-root,
+.messages-thread-panel .MuiOutlinedInput-root {
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+.messages-new-thread-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.messages-thread-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #f59e0b;
+  border-width: 2px;
+}
+
+.messages-new-thread-panel .MuiInputLabel-root.Mui-focused,
+.messages-thread-panel .MuiInputLabel-root.Mui-focused {
+  color: #b45309;
+}
+
+.messages-action-button.MuiButton-root {
+  background: #2563eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 800;
+  justify-self: start;
+  min-height: 46px;
+  padding-inline: 22px;
+  text-transform: none;
+}
+
+.messages-message-list {
+  display: grid;
+  gap: 12px;
+}
+
+.messages-message-card {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.messages-message-card-admin {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.messages-message-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+}
+
+.messages-message-meta strong {
+  color: #0f172a;
+}
+
+.messages-message-meta span {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.messages-message-body {
+  color: #334155;
+  line-height: 1.7;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .admin-shell {
   max-width: 1180px;
 }
@@ -4896,12 +5274,21 @@ a {
   .dashboard-feature-list,
   .dashboard-module-grid,
   .dashboard-detail-list,
-  .dashboard-profile-form .start-project-field-grid {
+  .dashboard-profile-form .start-project-field-grid,
+  .files-layout,
+  .files-form-grid,
+  .files-file-card,
+  .messages-layout,
+  .messages-layout-thread {
     grid-template-columns: 1fr;
   }
 
   .dashboard-section-heading-row {
     display: grid;
+  }
+
+  .files-file-actions {
+    justify-content: start;
   }
 }
 

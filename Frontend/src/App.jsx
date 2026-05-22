@@ -11,9 +11,12 @@ const Contact = lazy(() => import('./pages/Contact.jsx'))
 const CustomerAccount = lazy(() => import('./pages/CustomerAccount.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const ErrorPage = lazy(() => import('./pages/ErrorPage.jsx'))
+const Files = lazy(() => import('./pages/Files'))
 const Home = lazy(() => import('./pages/Home.jsx'))
 const Insights = lazy(() => import('./pages/Insights.jsx'))
 const Intake = lazy(() => import('./pages/Intake'))
+const MessageThread = lazy(() => import('./pages/MessageThread'))
+const Messages = lazy(() => import('./pages/Messages'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 const Portfolio = lazy(() => import('./pages/Portfolio.jsx'))
 const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage.jsx'))
@@ -29,9 +32,12 @@ const pages = {
   CustomerAccount,
   Dashboard,
   ErrorPage,
+  Files,
   Home,
   Insights,
   Intake,
+  MessageThread,
+  Messages,
   NotFound,
   Portfolio,
   PortfolioDetailPage,

@@ -27,6 +27,7 @@ import {
   messageByClientGsiKey,
   messageKey,
   projectKey,
+  threadByIdGsiKey,
   threadKey,
   userProfileKey,
   type PortalGsi1Key,
@@ -129,7 +130,7 @@ export type FileMetadataItem = PortalTableKey & Partial<PortalGsi1Key> & PortalG
   uploadedBy: string;
 };
 
-export type ThreadItem = PortalTableKey & Timestamps & {
+export type ThreadItem = PortalTableKey & PortalGsi2Key & Timestamps & {
   type: 'THREAD';
   clientId: string;
   threadId: string;
@@ -274,11 +275,12 @@ export function buildFileMetadataItem(input: BuildFileMetadataItemInput): FileMe
 }
 
 export type BuildThreadItemInput =
-  Omit<ThreadItem, keyof PortalTableKey | 'type'>;
+  Omit<ThreadItem, keyof PortalTableKey | keyof PortalGsi2Key | 'type'>;
 
 export function buildThreadItem(input: BuildThreadItemInput): ThreadItem {
   return {
     ...threadKey(input.clientId, input.updatedAt, input.threadId),
+    ...threadByIdGsiKey(input.threadId, input.clientId),
     type: 'THREAD',
     ...input,
   };

@@ -43,6 +43,11 @@ output "client_portal_files_lambda_function_name" {
   value       = aws_lambda_function.files.function_name
 }
 
+output "client_portal_messages_lambda_function_name" {
+  description = "Messages handler Lambda function name."
+  value       = aws_lambda_function.messages.function_name
+}
+
 output "client_portal_file_scan_result_lambda_function_name" {
   description = "GuardDuty malware scan-result Lambda function name."
   value       = aws_lambda_function.file_scan_result.function_name

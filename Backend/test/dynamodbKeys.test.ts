@@ -15,6 +15,7 @@ import {
   messageByClientGsiKey,
   messageKey,
   projectKey,
+  threadByIdGsiKey,
   threadKey,
   userProfileKey,
 } from '../src/dynamodb/index.js';
@@ -105,6 +106,11 @@ describe('DynamoDB key builders', () => {
     expect(messageByClientGsiKey('client_123', createdAt, 'message_123')).toEqual({
       GSI1PK: 'CLIENT#client_123',
       GSI1SK: `MESSAGE#${createdAt}#message_123`,
+    });
+
+    expect(threadByIdGsiKey('thread_123', 'client_123')).toEqual({
+      GSI2PK: 'THREAD#thread_123',
+      GSI2SK: 'CLIENT#client_123',
     });
   });
 
