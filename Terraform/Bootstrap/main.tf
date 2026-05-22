@@ -176,6 +176,7 @@ data "aws_iam_policy_document" "app_deploy" {
       "guardduty:DeleteMalwareProtectionPlan",
       "guardduty:GetMalwareProtectionPlan",
       "guardduty:ListMalwareProtectionPlans",
+      "guardduty:ListTagsForResource",
       "guardduty:TagResource",
       "guardduty:UntagResource",
       "guardduty:UpdateMalwareProtectionPlan",
