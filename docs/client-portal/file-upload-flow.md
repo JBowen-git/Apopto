@@ -69,8 +69,24 @@ The files handler role receives only:
 
 AWS authorizes `HeadObject` through `s3:GetObject`, so there is no separate `s3:HeadObject` IAM action.
 
+Phase 34.5 adds the GuardDuty malware-scanning workflow. Future browser uploads must land only in:
+
+```text
+quarantine/{clientId}/{fileId}/{safeFilename}
+```
+
+GuardDuty scans the `quarantine/` prefix and the scan-result Lambda promotes objects to:
+
+```text
+clean/{clientId}/{fileId}/{safeFilename}
+infected/{clientId}/{fileId}/{safeFilename}
+```
+
+For the detailed workflow, see `docs/client-portal/guardduty-file-scanning.md`.
+
 Later upload phases should:
 
 - Generate short-lived presigned PUT and GET URLs server-side.
 - Store file metadata in DynamoDB, not object bodies.
+- Issue download URLs only for files with `scanStatus=clean` and `uploadStatus=available`.
 - Keep client tenant resolution server-side and never trust a frontend `clientId`.

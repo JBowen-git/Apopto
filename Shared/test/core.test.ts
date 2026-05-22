@@ -6,12 +6,16 @@ import {
   ClientStatusSchema,
   FeatureFlagsSchema,
   FileCategorySchema,
+  FileScanStatusSchema,
+  FileStoragePrefixSchema,
   InvoiceStatusSchema,
   MeResponseSchema,
   MembershipRoleSchema,
   ProjectStatusSchema,
   UploadStatusSchema,
   clientStatuses,
+  fileScanStatuses,
+  fileStoragePrefixes,
   fileCategories,
   invoiceStatuses,
   membershipRoles,
@@ -41,6 +45,14 @@ describe('core status schemas', () => {
       expect(UploadStatusSchema.parse(status)).toBe(status);
     }
 
+    for (const status of fileScanStatuses) {
+      expect(FileScanStatusSchema.parse(status)).toBe(status);
+    }
+
+    for (const prefix of fileStoragePrefixes) {
+      expect(FileStoragePrefixSchema.parse(prefix)).toBe(prefix);
+    }
+
     for (const status of invoiceStatuses) {
       expect(InvoiceStatusSchema.parse(status)).toBe(status);
     }
@@ -53,6 +65,8 @@ describe('core status schemas', () => {
     expect(MembershipRoleSchema.safeParse('internal_admin')).toMatchObject({ success: false });
     expect(FileCategorySchema.safeParse('passwords')).toMatchObject({ success: false });
     expect(UploadStatusSchema.safeParse('processing')).toMatchObject({ success: false });
+    expect(FileScanStatusSchema.safeParse('malicious')).toMatchObject({ success: false });
+    expect(FileStoragePrefixSchema.safeParse('uploads')).toMatchObject({ success: false });
     expect(InvoiceStatusSchema.safeParse('refunded')).toMatchObject({ success: false });
   });
 });

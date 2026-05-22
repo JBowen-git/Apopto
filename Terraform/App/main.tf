@@ -209,6 +209,15 @@ resource "aws_cloudwatch_log_group" "files_lambda" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "file_scan_result_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-file-scan-result"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-file-scan-result-logs"
+  }
+}
+
 resource "aws_lambda_function" "health" {
   function_name    = "${local.resource_prefix}-health"
   description      = "${local.resource_prefix} health check Lambda."
@@ -310,6 +319,7 @@ resource "aws_lambda_function" "files" {
   environment {
     variables = {
       APP_ENVIRONMENT      = var.deployment_environment
+      CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
       MAX_UPLOAD_BYTES     = tostring(var.client_portal_max_upload_bytes)
       PORTAL_HANDLER_GROUP = "files"
       UPLOAD_BUCKET        = aws_s3_bucket.client_portal_uploads.bucket
@@ -318,6 +328,7 @@ resource "aws_lambda_function" "files" {
 
   depends_on = [
     aws_cloudwatch_log_group.files_lambda,
+    aws_iam_role_policy.files_dynamodb,
     aws_iam_role_policy.files_s3,
     aws_iam_role_policy_attachment.files_lambda_basic,
   ]
@@ -325,6 +336,75 @@ resource "aws_lambda_function" "files" {
   tags = {
     Name = "${local.resource_prefix}-files"
   }
+}
+
+resource "aws_lambda_function" "file_scan_result" {
+  function_name    = "${local.resource_prefix}-file-scan-result"
+  description      = "${local.resource_prefix} GuardDuty S3 malware scan result processor."
+  role             = aws_iam_role.file_scan_result_lambda.arn
+  handler          = "files/guardDutyScan.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = {
+      APP_ENVIRONMENT                   = var.deployment_environment
+      CLIENT_PORTAL_TABLE               = aws_dynamodb_table.client_portal.name
+      DELETE_QUARANTINE_AFTER_PROMOTION = tostring(var.client_portal_delete_quarantine_after_promotion)
+      PORTAL_HANDLER_GROUP              = "fileScanResult"
+      PROMOTE_SCANNED_FILES             = tostring(var.client_portal_promote_scanned_files)
+      UPLOAD_BUCKET                     = aws_s3_bucket.client_portal_uploads.bucket
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.file_scan_result_lambda,
+    aws_iam_role_policy.file_scan_result_lambda,
+    aws_iam_role_policy_attachment.file_scan_result_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-file-scan-result"
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "guardduty_malware_scan_result" {
+  name        = "${local.resource_prefix}-guardduty-s3-scan-results"
+  description = "Routes GuardDuty Malware Protection for S3 object scan results to the client portal scan-result Lambda."
+
+  event_pattern = jsonencode({
+    source        = ["aws.guardduty"]
+    "detail-type" = ["GuardDuty Malware Protection Object Scan Result"]
+    detail = {
+      s3ObjectDetails = {
+        bucketName = [aws_s3_bucket.client_portal_uploads.bucket]
+        objectKey = [
+          for prefix in var.client_portal_malware_scan_prefixes : {
+            prefix = prefix
+          }
+        ]
+      }
+    }
+  })
+
+  tags = {
+    Name = "${local.resource_prefix}-guardduty-s3-scan-results"
+  }
+}
+
+resource "aws_cloudwatch_event_target" "guardduty_malware_scan_result" {
+  arn  = aws_lambda_function.file_scan_result.arn
+  rule = aws_cloudwatch_event_rule.guardduty_malware_scan_result.name
+}
+
+resource "aws_lambda_permission" "allow_guardduty_malware_scan_eventbridge" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.file_scan_result.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.guardduty_malware_scan_result.arn
 }
 
 resource "aws_apigatewayv2_api" "app" {
@@ -374,6 +454,13 @@ resource "aws_apigatewayv2_integration" "admin" {
   api_id                 = aws_apigatewayv2_api.app.id
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.admin.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "files" {
+  api_id                 = aws_apigatewayv2_api.app.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.files.invoke_arn
   payload_format_version = "2.0"
 }
 
@@ -435,6 +522,22 @@ resource "aws_apigatewayv2_route" "client_profile_patch" {
   authorizer_id        = aws_apigatewayv2_authorizer.auth0.id
   route_key            = "PATCH /api/client/profile"
   target               = "integrations/${aws_apigatewayv2_integration.auth_placeholder.id}"
+}
+
+resource "aws_apigatewayv2_route" "files_presign_upload_post" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "POST /api/files/presign-upload"
+  target             = "integrations/${aws_apigatewayv2_integration.files.id}"
+}
+
+resource "aws_apigatewayv2_route" "files_complete_post" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "POST /api/files/{fileId}/complete"
+  target             = "integrations/${aws_apigatewayv2_integration.files.id}"
 }
 
 resource "aws_apigatewayv2_route" "admin_clients_get" {
@@ -499,6 +602,14 @@ resource "aws_lambda_permission" "allow_api_gateway_admin" {
   statement_id  = "AllowExecutionFromApiGatewayAdmin"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.admin.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_files" {
+  statement_id  = "AllowExecutionFromApiGatewayFiles"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.files.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }

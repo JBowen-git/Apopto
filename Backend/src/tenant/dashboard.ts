@@ -169,6 +169,7 @@ function projectSummary(project: ProjectItem) {
 
 function fileSummary(file: FileMetadataItem) {
   return {
+    cleanStorageKey: file.cleanStorageKey,
     category: file.category,
     createdAt: file.createdAt,
     fileId: file.fileId,
@@ -176,7 +177,11 @@ function fileSummary(file: FileMetadataItem) {
     originalFilename: file.originalFilename,
     projectId: file.projectId,
     safeFilename: file.safeFilename,
+    scanStatus: file.scanStatus ?? 'pending',
+    scannedAt: file.scannedAt,
     sizeBytes: file.sizeBytes,
+    storageKey: file.storageKey ?? file.key,
+    storagePrefix: file.storagePrefix ?? 'quarantine',
     updatedAt: file.updatedAt,
     uploadStatus: file.uploadStatus,
   };

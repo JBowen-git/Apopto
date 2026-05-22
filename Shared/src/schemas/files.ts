@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { FileCategorySchema, UploadStatusSchema } from './core.js';
+import {
+  FileCategorySchema,
+  FileScanStatusSchema,
+  FileStoragePrefixSchema,
+  UploadStatusSchema,
+} from './core.js';
 import { isoDateTimeString, nonEmptyString, optionalTrimmedString } from './common.js';
 
 export const CreateUploadUrlRequestSchema = z.object({
@@ -15,6 +20,7 @@ export const CompleteUploadRequestSchema = z.object({
 });
 
 export const FileMetadataSummarySchema = z.object({
+  cleanStorageKey: optionalTrimmedString,
   fileId: nonEmptyString,
   projectId: optionalTrimmedString,
   originalFilename: nonEmptyString,
@@ -22,6 +28,10 @@ export const FileMetadataSummarySchema = z.object({
   mimeType: nonEmptyString,
   sizeBytes: z.number().int().nonnegative(),
   category: FileCategorySchema,
+  scanStatus: FileScanStatusSchema,
+  scannedAt: optionalTrimmedString,
+  storageKey: nonEmptyString,
+  storagePrefix: FileStoragePrefixSchema,
   uploadStatus: UploadStatusSchema,
   createdAt: isoDateTimeString,
   updatedAt: isoDateTimeString,

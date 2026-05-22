@@ -41,9 +41,28 @@ export const fileCategories = [
 export const uploadStatuses = [
   'pending',
   'uploaded',
+  'available',
+  'blocked',
+  'pending_review',
   'clean',
   'quarantined',
   'deleted',
+] as const;
+
+export const fileScanStatuses = [
+  'pending',
+  'clean',
+  'infected',
+  'failed',
+  'skipped',
+  'unsupported',
+  'unknown',
+] as const;
+
+export const fileStoragePrefixes = [
+  'quarantine',
+  'clean',
+  'infected',
 ] as const;
 
 export const invoiceStatuses = [
@@ -60,6 +79,8 @@ export const ProjectStatusSchema = z.enum(projectStatuses);
 export const MembershipRoleSchema = z.enum(membershipRoles);
 export const FileCategorySchema = z.enum(fileCategories);
 export const UploadStatusSchema = z.enum(uploadStatuses);
+export const FileScanStatusSchema = z.enum(fileScanStatuses);
+export const FileStoragePrefixSchema = z.enum(fileStoragePrefixes);
 export const InvoiceStatusSchema = z.enum(invoiceStatuses);
 
 export const ApiErrorResponseSchema = z.object({
@@ -112,6 +133,8 @@ export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
 export type MembershipRole = z.infer<typeof MembershipRoleSchema>;
 export type FileCategory = z.infer<typeof FileCategorySchema>;
 export type UploadStatus = z.infer<typeof UploadStatusSchema>;
+export type FileScanStatus = z.infer<typeof FileScanStatusSchema>;
+export type FileStoragePrefix = z.infer<typeof FileStoragePrefixSchema>;
 export type InvoiceStatus = z.infer<typeof InvoiceStatusSchema>;
 export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;
 export type ApiSuccessEnvelope = z.infer<typeof ApiSuccessEnvelopeSchema>;

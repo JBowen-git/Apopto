@@ -6,7 +6,16 @@ export {
   type AdminHandlerDependencies,
 } from './handlers/admin.js';
 export { handler as billingHandler } from './handlers/billing.js';
-export { handler as filesHandler } from './handlers/files.js';
+export {
+  createFilesHandler,
+  handler as filesHandler,
+  type FilesHandlerDependencies,
+} from './handlers/files.js';
+export {
+  createGuardDutyScanResultHandler,
+  handler as guardDutyScanResultHandler,
+} from './files/guardDutyScan.js';
+export * from './files/index.js';
 export { handler as healthHandler } from './handlers/health.js';
 export {
   createIdentityIntakeHandler,

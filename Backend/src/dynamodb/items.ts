@@ -2,6 +2,8 @@ import type {
   ClientStatus,
   EmailNotificationStatus,
   FileCategory,
+  FileScanStatus,
+  FileStoragePrefix,
   IntakeFormData,
   InvoiceStatus,
   MembershipRole,
@@ -111,11 +113,18 @@ export type FileMetadataItem = PortalTableKey & Partial<PortalGsi1Key> & PortalG
   fileId: string;
   bucket: string;
   key: string;
+  storageKey: string;
+  storagePrefix: FileStoragePrefix;
+  cleanStorageKey?: string;
   originalFilename: string;
   safeFilename: string;
   mimeType: string;
   sizeBytes: number;
   category: FileCategory;
+  scanStatus: FileScanStatus;
+  scannedAt?: string;
+  guardDutyMalwareScanStatus?: string;
+  scanStatusReason?: string;
   uploadStatus: UploadStatus;
   uploadedBy: string;
 };

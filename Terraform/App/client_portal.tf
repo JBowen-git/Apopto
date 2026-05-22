@@ -218,7 +218,11 @@ data "aws_iam_policy_document" "files_s3" {
       "s3:PutObject",
     ]
 
-    resources = ["${aws_s3_bucket.client_portal_uploads.arn}/clients/*"]
+    resources = [
+      "${aws_s3_bucket.client_portal_uploads.arn}/clean/*",
+      "${aws_s3_bucket.client_portal_uploads.arn}/infected/*",
+      "${aws_s3_bucket.client_portal_uploads.arn}/quarantine/*",
+    ]
   }
 }
 
@@ -226,6 +230,253 @@ resource "aws_iam_role_policy" "files_s3" {
   name   = "${local.resource_prefix}-files-s3"
   role   = aws_iam_role.files_lambda.id
   policy = data.aws_iam_policy_document.files_s3.json
+}
+
+data "aws_iam_policy_document" "files_dynamodb" {
+  statement {
+    sid    = "ReadWriteFileMetadata"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:TransactWriteItems",
+    ]
+
+    resources = [aws_dynamodb_table.client_portal.arn]
+  }
+
+  statement {
+    sid    = "QueryTenantAndFileIndexes"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:Query",
+    ]
+
+    resources = local.client_portal_table_index_arns
+  }
+}
+
+resource "aws_iam_role_policy" "files_dynamodb" {
+  name   = "${local.resource_prefix}-files-dynamodb"
+  role   = aws_iam_role.files_lambda.id
+  policy = data.aws_iam_policy_document.files_dynamodb.json
+}
+
+resource "aws_iam_role" "file_scan_result_lambda" {
+  name               = "${local.resource_prefix}-file-scan-result-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-file-scan-result-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "file_scan_result_lambda_basic" {
+  role       = aws_iam_role.file_scan_result_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "file_scan_result_lambda" {
+  statement {
+    sid    = "ReadAndMoveScannedUploadObjects"
+    effect = "Allow"
+
+    actions = [
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:GetObjectVersion",
+      "s3:GetObjectVersionTagging",
+      "s3:PutObject",
+      "s3:PutObjectTagging",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.client_portal_uploads.arn}/clean/*",
+      "${aws_s3_bucket.client_portal_uploads.arn}/infected/*",
+      "${aws_s3_bucket.client_portal_uploads.arn}/quarantine/*",
+    ]
+  }
+
+  statement {
+    sid    = "UpdateFileMetadataAndAudit"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:Query",
+      "dynamodb:TransactWriteItems",
+    ]
+
+    resources = [
+      aws_dynamodb_table.client_portal.arn,
+      "${aws_dynamodb_table.client_portal.arn}/index/GSI2",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "file_scan_result_lambda" {
+  name   = "${local.resource_prefix}-file-scan-result"
+  role   = aws_iam_role.file_scan_result_lambda.id
+  policy = data.aws_iam_policy_document.file_scan_result_lambda.json
+}
+
+data "aws_iam_policy_document" "guardduty_malware_protection_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["malware-protection-plan.guardduty.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "guardduty_malware_protection" {
+  name               = "${local.resource_prefix}-guardduty-s3-malware-role"
+  assume_role_policy = data.aws_iam_policy_document.guardduty_malware_protection_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-guardduty-s3-malware-role"
+  }
+}
+
+data "aws_iam_policy_document" "guardduty_malware_protection" {
+  statement {
+    sid    = "AllowManagedRuleToSendS3EventsToGuardDuty"
+    effect = "Allow"
+
+    actions = [
+      "events:DeleteRule",
+      "events:PutRule",
+      "events:PutTargets",
+      "events:RemoveTargets",
+    ]
+
+    resources = [
+      "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*",
+    ]
+
+    condition {
+      test     = "StringLike"
+      variable = "events:ManagedBy"
+      values   = ["malware-protection-plan.guardduty.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid    = "AllowGuardDutyToMonitorEventBridgeManagedRule"
+    effect = "Allow"
+
+    actions = [
+      "events:DescribeRule",
+      "events:ListTargetsByRule",
+    ]
+
+    resources = [
+      "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*",
+    ]
+  }
+
+  statement {
+    sid    = "AllowPostScanTag"
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObjectTagging",
+      "s3:GetObjectVersionTagging",
+      "s3:PutObjectTagging",
+      "s3:PutObjectVersionTagging",
+    ]
+
+    resources = [
+      for prefix in var.client_portal_malware_scan_prefixes :
+      "${aws_s3_bucket.client_portal_uploads.arn}/${prefix}*"
+    ]
+  }
+
+  statement {
+    sid    = "AllowEnableS3EventBridgeEvents"
+    effect = "Allow"
+
+    actions = [
+      "s3:GetBucketNotification",
+      "s3:PutBucketNotification",
+    ]
+
+    resources = [aws_s3_bucket.client_portal_uploads.arn]
+  }
+
+  statement {
+    sid    = "AllowPutValidationObject"
+    effect = "Allow"
+
+    actions = ["s3:PutObject"]
+
+    resources = [
+      "${aws_s3_bucket.client_portal_uploads.arn}/malware-protection-resource-validation-object",
+    ]
+  }
+
+  statement {
+    sid    = "AllowCheckBucketOwnership"
+    effect = "Allow"
+
+    actions = ["s3:ListBucket"]
+
+    resources = [aws_s3_bucket.client_portal_uploads.arn]
+  }
+
+  statement {
+    sid    = "AllowMalwareScan"
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+    ]
+
+    resources = [
+      for prefix in var.client_portal_malware_scan_prefixes :
+      "${aws_s3_bucket.client_portal_uploads.arn}/${prefix}*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "guardduty_malware_protection" {
+  name   = "${local.resource_prefix}-guardduty-s3-malware"
+  role   = aws_iam_role.guardduty_malware_protection.id
+  policy = data.aws_iam_policy_document.guardduty_malware_protection.json
+}
+
+resource "aws_guardduty_malware_protection_plan" "client_portal_uploads" {
+  role = aws_iam_role.guardduty_malware_protection.arn
+
+  protected_resource {
+    s3_bucket {
+      bucket_name     = aws_s3_bucket.client_portal_uploads.id
+      object_prefixes = var.client_portal_malware_scan_prefixes
+    }
+  }
+
+  actions {
+    tagging {
+      status = "ENABLED"
+    }
+  }
+
+  tags = {
+    Name = "${local.resource_prefix}-client-portal-upload-malware-protection"
+  }
+
+  depends_on = [
+    aws_iam_role_policy.guardduty_malware_protection,
+    aws_s3_bucket_policy.client_portal_uploads,
+  ]
 }
 
 resource "aws_s3_bucket" "client_portal_uploads" {
@@ -322,6 +573,82 @@ data "aws_iam_policy_document" "client_portal_uploads_bucket" {
       test     = "Bool"
       variable = "aws:SecureTransport"
       values   = ["false"]
+    }
+  }
+
+  statement {
+    sid    = "DenyQuarantineReadExceptScanAndVerification"
+    effect = "Deny"
+
+    not_principals {
+      type = "AWS"
+      identifiers = [
+        aws_iam_role.file_scan_result_lambda.arn,
+        aws_iam_role.files_lambda.arn,
+        aws_iam_role.guardduty_malware_protection.arn,
+      ]
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+    ]
+
+    resources = ["${aws_s3_bucket.client_portal_uploads.arn}/quarantine/*"]
+  }
+
+  statement {
+    sid    = "DenyFinalReadUnlessGuardDutyClean"
+    effect = "Deny"
+
+    not_principals {
+      type = "AWS"
+      identifiers = [
+        aws_iam_role.file_scan_result_lambda.arn,
+        aws_iam_role.guardduty_malware_protection.arn,
+      ]
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.client_portal_uploads.arn}/clean/*",
+      "${aws_s3_bucket.client_portal_uploads.arn}/infected/*",
+    ]
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:ExistingObjectTag/GuardDutyMalwareScanStatus"
+      values   = ["NO_THREATS_FOUND"]
+    }
+  }
+
+  statement {
+    sid    = "OnlyGuardDutyCanWriteScanStatusTag"
+    effect = "Deny"
+
+    not_principals {
+      type = "AWS"
+      identifiers = [
+        aws_iam_role.file_scan_result_lambda.arn,
+        aws_iam_role.guardduty_malware_protection.arn,
+      ]
+    }
+
+    actions = [
+      "s3:PutObjectTagging",
+      "s3:PutObjectVersionTagging",
+    ]
+
+    resources = ["${aws_s3_bucket.client_portal_uploads.arn}/*"]
+
+    condition {
+      test     = "ForAnyValue:StringEquals"
+      variable = "s3:RequestObjectTagKeys"
+      values   = ["GuardDutyMalwareScanStatus"]
     }
   }
 }

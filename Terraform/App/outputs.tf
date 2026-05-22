@@ -43,6 +43,16 @@ output "client_portal_files_lambda_function_name" {
   value       = aws_lambda_function.files.function_name
 }
 
+output "client_portal_file_scan_result_lambda_function_name" {
+  description = "GuardDuty malware scan-result Lambda function name."
+  value       = aws_lambda_function.file_scan_result.function_name
+}
+
+output "client_portal_guardduty_malware_protection_plan_id" {
+  description = "GuardDuty Malware Protection for S3 plan ID for the client portal upload bucket."
+  value       = aws_guardduty_malware_protection_plan.client_portal_uploads.id
+}
+
 output "health_check_url" {
   description = "CloudFront health check URL."
   value       = "https://${aws_cloudfront_distribution.website.domain_name}/api/health"

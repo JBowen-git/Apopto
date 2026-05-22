@@ -88,6 +88,36 @@ variable "client_portal_max_upload_bytes" {
   }
 }
 
+variable "client_portal_malware_scan_prefixes" {
+  description = "S3 object prefixes protected by GuardDuty Malware Protection for client portal uploads."
+  type        = list(string)
+  default     = ["quarantine/"]
+
+  validation {
+    condition = (
+      length(var.client_portal_malware_scan_prefixes) > 0
+      && length(var.client_portal_malware_scan_prefixes) <= 5
+      && alltrue([
+        for prefix in var.client_portal_malware_scan_prefixes :
+        can(regex("^[A-Za-z0-9][A-Za-z0-9!_.*'()/-]*/$", prefix))
+      ])
+    )
+    error_message = "client_portal_malware_scan_prefixes must contain 1 to 5 non-empty S3 prefixes ending in /."
+  }
+}
+
+variable "client_portal_promote_scanned_files" {
+  description = "Whether the GuardDuty scan-result Lambda copies clean and infected files into final storage prefixes."
+  type        = bool
+  default     = true
+}
+
+variable "client_portal_delete_quarantine_after_promotion" {
+  description = "Whether the GuardDuty scan-result Lambda deletes the quarantine object after successful clean/infected promotion."
+  type        = bool
+  default     = true
+}
+
 variable "aws_region" {
   description = "AWS region for regional application resources."
   type        = string
