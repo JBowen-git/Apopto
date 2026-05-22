@@ -540,6 +540,30 @@ resource "aws_apigatewayv2_route" "files_complete_post" {
   target             = "integrations/${aws_apigatewayv2_integration.files.id}"
 }
 
+resource "aws_apigatewayv2_route" "files_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/files"
+  target             = "integrations/${aws_apigatewayv2_integration.files.id}"
+}
+
+resource "aws_apigatewayv2_route" "files_download_url_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/files/{fileId}/download-url"
+  target             = "integrations/${aws_apigatewayv2_integration.files.id}"
+}
+
+resource "aws_apigatewayv2_route" "files_delete" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "DELETE /api/files/{fileId}"
+  target             = "integrations/${aws_apigatewayv2_integration.files.id}"
+}
+
 resource "aws_apigatewayv2_route" "admin_clients_get" {
   api_id             = aws_apigatewayv2_api.app.id
   authorization_type = "JWT"

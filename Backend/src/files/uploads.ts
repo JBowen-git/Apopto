@@ -1,15 +1,26 @@
-import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   CompleteUploadRequestSchema,
   CompleteUploadResponseSchema,
   CreateUploadUrlRequestSchema,
   CreateUploadUrlResponseSchema,
+  DeleteFileResponseSchema,
   FileMetadataSummarySchema,
+  ListFilesResponseSchema,
+  DownloadUrlResponseSchema,
   type CompleteUploadResponse,
   type CreateUploadUrlRequest,
   type CreateUploadUrlResponse,
+  type DeleteFileResponse,
+  type DownloadUrlResponse,
   type FileMetadataSummary,
+  type ListFilesResponse,
 } from '@apopto/shared';
 
 import {
@@ -34,6 +45,8 @@ import { buildPendingFileMetadataItem } from './metadata.js';
 import { FileSafetyError, resolveMaxUploadBytes } from './safety.js';
 
 export const DEFAULT_PRESIGNED_UPLOAD_EXPIRES_SECONDS = 15 * 60;
+export const DEFAULT_PRESIGNED_DOWNLOAD_EXPIRES_SECONDS = 5 * 60;
+const DEFAULT_FILE_LIST_LIMIT = 50;
 
 export type FilesRepository = TenantResolverRepository & {
   getItem<TItem extends PortalTableItem = PortalTableItem>(
@@ -53,6 +66,15 @@ export type FilesRepository = TenantResolverRepository & {
       scanIndexForward?: boolean;
     },
   ): Promise<TItem[]>;
+  queryByPartition<TItem extends PortalTableItem = PortalTableItem>(
+    options: {
+      pk: string;
+      skBeginsWith?: string;
+      limit?: number;
+      scanIndexForward?: boolean;
+      consistentRead?: boolean;
+    },
+  ): Promise<TItem[]>;
   transactWriteItems<TItem extends PortalTableItem>(
     items: TransactWriteItem<TItem>[],
   ): Promise<void>;
@@ -70,6 +92,11 @@ export type PresignPutObject = (
   expiresInSeconds: number,
 ) => Promise<string>;
 
+export type PresignGetObject = (
+  command: GetObjectCommand,
+  expiresInSeconds: number,
+) => Promise<string>;
+
 export type FilesServiceInput = {
   auth0Sub: string;
   bucket: string;
@@ -78,7 +105,9 @@ export type FilesServiceInput = {
   newAuditId?: () => string;
   newFileId?: () => string;
   now?: () => string;
+  presignGetObject?: PresignGetObject;
   presignPutObject?: PresignPutObject;
+  presignedDownloadExpiresSeconds?: number;
   presignedUploadExpiresSeconds?: number;
   s3Client?: S3HeadObjectClient;
 };
@@ -99,7 +128,25 @@ export type CompleteUploadResult =
   | { ok: true; response: CompleteUploadResponse }
   | FilesApiFailure;
 
+export type ListFilesResult =
+  | { ok: true; response: ListFilesResponse }
+  | FilesApiFailure;
+
+export type CreateDownloadUrlResult =
+  | { ok: true; response: DownloadUrlResponse }
+  | FilesApiFailure;
+
+export type SoftDeleteFileResult =
+  | { ok: true; response: DeleteFileResponse }
+  | FilesApiFailure;
+
 function defaultPresignPutObject(command: PutObjectCommand, expiresInSeconds: number) {
+  return getSignedUrl(new S3Client({}), command, {
+    expiresIn: expiresInSeconds,
+  });
+}
+
+function defaultPresignGetObject(command: GetObjectCommand, expiresInSeconds: number) {
   return getSignedUrl(new S3Client({}), command, {
     expiresIn: expiresInSeconds,
   });
@@ -131,6 +178,10 @@ function isProjectItem(item: PortalTableItem | null): item is ProjectItem {
 
 function isFileMetadataItem(item: PortalTableItem): item is FileMetadataItem {
   return item.type === 'FILE';
+}
+
+function isVisibleFileMetadataItem(item: PortalTableItem): item is FileMetadataItem {
+  return isFileMetadataItem(item) && item.uploadStatus !== 'deleted';
 }
 
 function failureFromTenantResolution(
@@ -203,6 +254,40 @@ async function resolveUploadContext({
       statusCode: 403,
       error: 'file_upload_not_available',
       message: 'File uploads are available only for active or maintenance clients.',
+      details: {
+        clientStatus: result.context.client.status,
+      },
+    };
+  }
+
+  return {
+    ok: true,
+    context: result.context,
+  };
+}
+
+async function resolveFileAccessContext({
+  auth0Sub,
+  repository,
+}: Pick<FilesServiceInput, 'auth0Sub' | 'repository'>): Promise<
+  | { ok: true; context: ResolvedClientContext }
+  | FilesApiFailure
+> {
+  const result = await resolveClientContext({ auth0Sub, repository });
+
+  if (!result.ok) {
+    return failureFromTenantResolution(result);
+  }
+
+  if (
+    !result.context.featureFlags.canUploadFiles
+    && !result.context.featureFlags.canViewProjects
+  ) {
+    return {
+      ok: false,
+      statusCode: 403,
+      error: 'file_access_not_available',
+      message: 'File access is not available for this client status.',
       details: {
         clientStatus: result.context.client.status,
       },
@@ -632,6 +717,244 @@ export async function completeUpload({
         ...file,
         updatedAt: timestamp,
         uploadStatus: 'uploaded',
+      }),
+    }),
+  };
+}
+
+export async function listFiles({
+  auth0Sub,
+  query = {},
+  repository,
+}: Pick<FilesServiceInput, 'auth0Sub' | 'repository'> & {
+  query?: Record<string, string | undefined>;
+}): Promise<ListFilesResult> {
+  const resolved = await resolveFileAccessContext({ auth0Sub, repository });
+
+  if (!resolved.ok) {
+    return resolved;
+  }
+
+  const { client } = resolved.context;
+  const category = query.category?.trim();
+  const projectId = query.projectId?.trim();
+  let files: FileMetadataItem[];
+
+  if (projectId) {
+    const projectFailure = await assertProjectBelongsToClient({
+      clientId: client.clientId,
+      projectId,
+      repository,
+    });
+
+    if (projectFailure) {
+      return projectFailure;
+    }
+
+    const items = await repository.queryByIndex<FileMetadataItem>({
+      indexName: 'GSI1',
+      limit: DEFAULT_FILE_LIST_LIMIT,
+      pk: `PROJECT#${projectId}`,
+      skBeginsWith: 'FILE#',
+      scanIndexForward: false,
+    });
+    files = items.filter((file) => (
+      isVisibleFileMetadataItem(file) && file.clientId === client.clientId
+    ));
+  } else {
+    const items = await repository.queryByPartition<FileMetadataItem>({
+      limit: DEFAULT_FILE_LIST_LIMIT,
+      pk: `CLIENT#${client.clientId}`,
+      skBeginsWith: 'FILE#',
+      scanIndexForward: false,
+    });
+    files = items.filter(isVisibleFileMetadataItem);
+  }
+
+  const filteredFiles = category
+    ? files.filter((file) => file.category === category)
+    : files;
+
+  return {
+    ok: true,
+    response: ListFilesResponseSchema.parse({
+      files: filteredFiles.map(fileSummary),
+    }),
+  };
+}
+
+function fileNotFoundFailure(): FilesApiFailure {
+  return {
+    ok: false,
+    statusCode: 404,
+    error: 'file_not_found',
+    message: 'The requested file was not found for this client.',
+  };
+}
+
+function unavailableDownloadFailure(file: FileMetadataItem): FilesApiFailure {
+  return {
+    ok: false,
+    statusCode: 409,
+    error: 'file_not_available_for_download',
+    message: 'This file is not available for download.',
+    details: {
+      scanStatus: file.scanStatus,
+      storagePrefix: file.storagePrefix,
+      uploadStatus: file.uploadStatus,
+    },
+  };
+}
+
+export async function createDownloadUrl({
+  auth0Sub,
+  bucket,
+  fileId,
+  now = () => new Date().toISOString(),
+  presignGetObject = defaultPresignGetObject,
+  presignedDownloadExpiresSeconds = DEFAULT_PRESIGNED_DOWNLOAD_EXPIRES_SECONDS,
+  repository,
+}: Pick<FilesServiceInput, 'auth0Sub' | 'bucket' | 'now' | 'presignGetObject' | 'presignedDownloadExpiresSeconds' | 'repository'> & {
+  fileId: string;
+}): Promise<CreateDownloadUrlResult> {
+  const resolved = await resolveFileAccessContext({ auth0Sub, repository });
+
+  if (!resolved.ok) {
+    return resolved;
+  }
+
+  const { client } = resolved.context;
+  const file = await getFileForClient({
+    clientId: client.clientId,
+    fileId,
+    repository,
+  });
+
+  if (!file) {
+    return fileNotFoundFailure();
+  }
+
+  if (
+    file.bucket !== bucket
+    || file.scanStatus !== 'clean'
+    || file.uploadStatus !== 'available'
+  ) {
+    return unavailableDownloadFailure(file);
+  }
+
+  const downloadKey = file.cleanStorageKey ?? file.storageKey;
+  const timestamp = now();
+  const url = await presignGetObject(new GetObjectCommand({
+    Bucket: file.bucket,
+    Key: downloadKey,
+    ResponseContentDisposition: `attachment; filename="${file.safeFilename.replace(/"/g, '')}"`,
+  }), presignedDownloadExpiresSeconds);
+
+  return {
+    ok: true,
+    response: DownloadUrlResponseSchema.parse({
+      url,
+      expiresAt: addSeconds(timestamp, presignedDownloadExpiresSeconds),
+    }),
+  };
+}
+
+export async function softDeleteFile({
+  auth0Sub,
+  bucket,
+  fileId,
+  newAuditId = () => newId('audit'),
+  now = () => new Date().toISOString(),
+  repository,
+}: Pick<FilesServiceInput, 'auth0Sub' | 'bucket' | 'newAuditId' | 'now' | 'repository'> & {
+  fileId: string;
+}): Promise<SoftDeleteFileResult> {
+  const resolved = await resolveFileAccessContext({ auth0Sub, repository });
+
+  if (!resolved.ok) {
+    return resolved;
+  }
+
+  const { client, user } = resolved.context;
+  const file = await getFileForClient({
+    clientId: client.clientId,
+    fileId,
+    repository,
+  });
+
+  if (!file) {
+    return fileNotFoundFailure();
+  }
+
+  if (file.bucket !== bucket || file.uploadStatus === 'deleted') {
+    return {
+      ok: false,
+      statusCode: 409,
+      error: 'file_delete_state_conflict',
+      message: 'This file cannot be deleted from its current state.',
+      details: {
+        uploadStatus: file.uploadStatus,
+      },
+    };
+  }
+
+  const timestamp = now();
+
+  try {
+    await repository.transactWriteItems([
+      {
+        action: 'update',
+        key: {
+          PK: file.PK,
+          SK: file.SK,
+        },
+        conditionExpression: [
+          '#type = :type',
+          '#clientId = :clientId',
+          '#fileId = :fileId',
+          '#uploadStatus <> :deleted',
+        ].join(' AND '),
+        expressionAttributeNames: {
+          '#clientId': 'clientId',
+          '#fileId': 'fileId',
+          '#type': 'type',
+          '#updatedAt': 'updatedAt',
+          '#uploadStatus': 'uploadStatus',
+        },
+        expressionAttributeValues: {
+          ':clientId': client.clientId,
+          ':deleted': 'deleted',
+          ':fileId': file.fileId,
+          ':type': 'FILE',
+          ':updatedAt': timestamp,
+        },
+        updateExpression: 'SET #uploadStatus = :deleted, #updatedAt = :updatedAt',
+      },
+      auditPut({
+        action: 'file.deleted',
+        actorUserId: user.auth0Sub,
+        clientId: client.clientId,
+        createdAt: timestamp,
+        entityId: file.fileId,
+        metadata: {
+          previousUploadStatus: file.uploadStatus,
+          scanStatus: file.scanStatus,
+          storageKey: file.storageKey,
+        },
+        newAuditId,
+      }),
+    ]);
+  } catch (error) {
+    return writeFailure(error);
+  }
+
+  return {
+    ok: true,
+    response: DeleteFileResponseSchema.parse({
+      file: fileSummary({
+        ...file,
+        updatedAt: timestamp,
+        uploadStatus: 'deleted',
       }),
     }),
   };

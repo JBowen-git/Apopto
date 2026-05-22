@@ -8,10 +8,14 @@ import {
 } from '../dynamodb/index.js';
 import {
   completeUpload,
+  createDownloadUrl,
   createPresignedUpload,
+  listFiles,
   resolveMaxUploadBytes,
+  softDeleteFile,
   type FilesApiFailure,
   type FilesRepository,
+  type PresignGetObject,
   type PresignPutObject,
   type S3HeadObjectClient,
 } from '../files/index.js';
@@ -37,7 +41,9 @@ export type FilesHandlerDependencies = {
   newAuditId?: () => string;
   newFileId?: () => string;
   now?: () => string;
+  presignGetObject?: PresignGetObject;
   presignPutObject?: PresignPutObject;
+  presignedDownloadExpiresSeconds?: number;
   presignedUploadExpiresSeconds?: number;
   repository?: FilesRepository;
   s3Client?: S3HeadObjectClient;
@@ -46,6 +52,9 @@ export type FilesHandlerDependencies = {
 const notImplementedHandler = createNotImplementedHandler('files', fileRoutes);
 
 const routeScopes: Record<string, string[]> = {
+  'GET /api/files': ['read:files'],
+  'GET /api/files/{fileId}/download-url': ['read:files'],
+  'DELETE /api/files/{fileId}': ['write:files'],
   'POST /api/files/presign-upload': ['write:files'],
   'POST /api/files/{fileId}/complete': ['write:files'],
 };
@@ -136,7 +145,7 @@ function getFileId(event: APIGatewayProxyEventV2) {
     return fileId;
   }
 
-  const match = event.rawPath.match(/^\/api\/files\/([^/]+)\/complete$/);
+  const match = event.rawPath.match(/^\/api\/files\/([^/]+)(?:\/(?:complete|download-url))?$/);
 
   return match?.[1] ? decodeURIComponent(match[1]) : undefined;
 }
@@ -166,6 +175,20 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
 
       const maxUploadBytes = dependencies.maxUploadBytes
         ?? resolveMaxUploadBytes(environment);
+
+      if (routeKey === 'GET /api/files') {
+        const result = await listFiles({
+          auth0Sub: claims.sub,
+          query: event.queryStringParameters ?? {},
+          repository,
+        });
+
+        if (!result.ok) {
+          return failureResponse(result, requestId);
+        }
+
+        return jsonResponse(200, result.response, { requestId });
+      }
 
       if (routeKey === 'POST /api/files/presign-upload') {
         const result = await createPresignedUpload({
@@ -197,6 +220,41 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
           undefined,
           { requestId },
         );
+      }
+
+      if (routeKey === 'GET /api/files/{fileId}/download-url') {
+        const result = await createDownloadUrl({
+          auth0Sub: claims.sub,
+          bucket: uploadBucket,
+          fileId,
+          now: dependencies.now,
+          presignGetObject: dependencies.presignGetObject,
+          presignedDownloadExpiresSeconds: dependencies.presignedDownloadExpiresSeconds,
+          repository,
+        });
+
+        if (!result.ok) {
+          return failureResponse(result, requestId);
+        }
+
+        return jsonResponse(200, result.response, { requestId });
+      }
+
+      if (routeKey === 'DELETE /api/files/{fileId}') {
+        const result = await softDeleteFile({
+          auth0Sub: claims.sub,
+          bucket: uploadBucket,
+          fileId,
+          newAuditId: dependencies.newAuditId,
+          now: dependencies.now,
+          repository,
+        });
+
+        if (!result.ok) {
+          return failureResponse(result, requestId);
+        }
+
+        return jsonResponse(200, result.response, { requestId });
       }
 
       const result = await completeUpload({

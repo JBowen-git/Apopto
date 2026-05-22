@@ -1,4 +1,5 @@
 import {
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -129,6 +130,16 @@ function fakeRepository(initialItems: PortalTableItem[] = [
         && item.GSI2SK.startsWith(options.skBeginsWith ?? '')
       ));
     }),
+    queryByPartition: vi.fn(async (options: {
+      pk: string;
+      skBeginsWith?: string;
+    }) => (
+      [...itemsByKey.values()].filter((item): item is FileMetadataItem => (
+        item.type === 'FILE'
+        && item.PK === options.pk
+        && item.SK.startsWith(options.skBeginsWith ?? '')
+      ))
+    )),
     transactWriteItems: vi.fn(async (entries: TransactWriteItem[]) => {
       for (const entry of entries) {
         if (entry.action !== 'update') {
@@ -428,5 +439,270 @@ describe('files handler upload routes', () => {
     });
     expect(s3Client.send).not.toHaveBeenCalled();
     expect(repository.transactWriteItems).not.toHaveBeenCalled();
+  });
+
+  it('lists non-deleted files for the resolved tenant only', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      fileItem({
+        fileId: 'file_visible',
+        originalFilename: 'visible.pdf',
+        safeFilename: 'visible.pdf',
+      }),
+      fileItem({
+        fileId: 'file_deleted',
+        originalFilename: 'deleted.pdf',
+        safeFilename: 'deleted.pdf',
+        uploadStatus: 'deleted',
+      }),
+      fileItem({
+        clientId: otherClientId,
+        fileId: 'file_other',
+        originalFilename: 'other.pdf',
+        safeFilename: 'other.pdf',
+      }),
+    ]);
+    const handler = createFilesHandler({
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        UPLOAD_BUCKET: uploadBucket,
+      },
+      repository,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'GET /api/files',
+      scopes: ['read:files'],
+    }), context);
+    const body = responseBody(response) as {
+      files?: Array<{ fileId: string }>;
+    };
+
+    expect(response.statusCode).toBe(200);
+    expect(body.files?.map((file) => file.fileId)).toEqual(['file_visible']);
+    expect(repository.queryByPartition).toHaveBeenCalledWith({
+      limit: 50,
+      pk: 'CLIENT#client_files',
+      skBeginsWith: 'FILE#',
+      scanIndexForward: false,
+    });
+  });
+
+  it('creates a download URL only for a clean available file owned by the tenant', async () => {
+    const cleanStorageKey = 'clean/client_files/file_clean/brand-guide.pdf';
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      fileItem({
+        cleanStorageKey,
+        fileId: 'file_clean',
+        scanStatus: 'clean',
+        storageKey: cleanStorageKey,
+        storagePrefix: 'clean',
+        uploadStatus: 'available',
+      }),
+    ]);
+    const presignGetObject = vi.fn(async () => 'https://downloads.example.test/signed');
+    const handler = createFilesHandler({
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        UPLOAD_BUCKET: uploadBucket,
+      },
+      now: () => now,
+      presignGetObject,
+      repository,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'GET /api/files/{fileId}/download-url',
+      rawPath: '/api/files/file_clean/download-url',
+      pathParameters: {
+        fileId: 'file_clean',
+      },
+      scopes: ['read:files'],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body).toMatchObject({
+      url: 'https://downloads.example.test/signed',
+    });
+    expect(presignGetObject.mock.calls[0]?.[0]).toBeInstanceOf(GetObjectCommand);
+    expect(commandInput(presignGetObject.mock.calls[0]?.[0])).toMatchObject({
+      Bucket: uploadBucket,
+      Key: cleanStorageKey,
+      ResponseContentDisposition: 'attachment; filename="brand-guide.pdf"',
+    });
+  });
+
+  it('does not create download URLs for cross-client files', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      fileItem({
+        clientId: otherClientId,
+        fileId: 'file_cross_client',
+        scanStatus: 'clean',
+        storageKey: 'clean/client_other/file_cross_client/other.pdf',
+        storagePrefix: 'clean',
+        uploadStatus: 'available',
+      }),
+    ]);
+    const presignGetObject = vi.fn(async () => 'https://downloads.example.test/signed');
+    const handler = createFilesHandler({
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        UPLOAD_BUCKET: uploadBucket,
+      },
+      presignGetObject,
+      repository,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'GET /api/files/{fileId}/download-url',
+      rawPath: '/api/files/file_cross_client/download-url',
+      pathParameters: {
+        fileId: 'file_cross_client',
+      },
+      scopes: ['read:files'],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(404);
+    expect(body).toMatchObject({
+      error: 'file_not_found',
+    });
+    expect(presignGetObject).not.toHaveBeenCalled();
+  });
+
+  it('does not create download URLs for quarantined or deleted files', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      fileItem({
+        fileId: 'file_quarantined',
+        scanStatus: 'pending',
+        storagePrefix: 'quarantine',
+        uploadStatus: 'uploaded',
+      }),
+      fileItem({
+        fileId: 'file_deleted',
+        scanStatus: 'clean',
+        storageKey: 'clean/client_files/file_deleted/deleted.pdf',
+        storagePrefix: 'clean',
+        uploadStatus: 'deleted',
+      }),
+    ]);
+    const presignGetObject = vi.fn(async () => 'https://downloads.example.test/signed');
+    const handler = createFilesHandler({
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        UPLOAD_BUCKET: uploadBucket,
+      },
+      presignGetObject,
+      repository,
+    });
+
+    const quarantinedResponse = await handler(apiEvent({
+      routeKey: 'GET /api/files/{fileId}/download-url',
+      rawPath: '/api/files/file_quarantined/download-url',
+      pathParameters: {
+        fileId: 'file_quarantined',
+      },
+      scopes: ['read:files'],
+    }), context);
+    const deletedResponse = await handler(apiEvent({
+      routeKey: 'GET /api/files/{fileId}/download-url',
+      rawPath: '/api/files/file_deleted/download-url',
+      pathParameters: {
+        fileId: 'file_deleted',
+      },
+      scopes: ['read:files'],
+    }), context);
+
+    expect(quarantinedResponse.statusCode).toBe(409);
+    expect(responseBody(quarantinedResponse)).toMatchObject({
+      error: 'file_not_available_for_download',
+      details: {
+        scanStatus: 'pending',
+        storagePrefix: 'quarantine',
+        uploadStatus: 'uploaded',
+      },
+    });
+    expect(deletedResponse.statusCode).toBe(409);
+    expect(responseBody(deletedResponse)).toMatchObject({
+      error: 'file_not_available_for_download',
+      details: {
+        uploadStatus: 'deleted',
+      },
+    });
+    expect(presignGetObject).not.toHaveBeenCalled();
+  });
+
+  it('soft deletes file metadata without deleting the S3 object', async () => {
+    const file = fileItem({
+      fileId: 'file_delete_me',
+      scanStatus: 'clean',
+      storageKey: 'clean/client_files/file_delete_me/brand-guide.pdf',
+      storagePrefix: 'clean',
+      uploadStatus: 'available',
+    });
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      file,
+    ]);
+    const handler = createFilesHandler({
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        UPLOAD_BUCKET: uploadBucket,
+      },
+      newAuditId: () => 'audit_file_deleted',
+      now: () => now,
+      repository,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'DELETE /api/files/{fileId}',
+      rawPath: '/api/files/file_delete_me',
+      pathParameters: {
+        fileId: 'file_delete_me',
+      },
+      scopes: ['write:files'],
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body).toMatchObject({
+      file: {
+        fileId: 'file_delete_me',
+        uploadStatus: 'deleted',
+      },
+    });
+    expect(repository.transactWriteItems).toHaveBeenCalledWith([
+      expect.objectContaining({
+        action: 'update',
+        key: {
+          PK: file.PK,
+          SK: file.SK,
+        },
+        updateExpression: 'SET #uploadStatus = :deleted, #updatedAt = :updatedAt',
+      }),
+      expect.objectContaining({
+        item: expect.objectContaining({
+          action: 'file.deleted',
+          actorUserId: auth0Sub,
+          clientId,
+          entityId: 'file_delete_me',
+          entityType: 'FILE',
+        }),
+      }),
+    ]);
   });
 });

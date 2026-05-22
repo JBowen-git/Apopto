@@ -58,6 +58,10 @@ export const DownloadUrlResponseSchema = z.object({
   expiresAt: isoDateTimeString,
 });
 
+export const DeleteFileResponseSchema = z.object({
+  file: FileMetadataSummarySchema,
+});
+
 export type CreateUploadUrlRequest = z.infer<typeof CreateUploadUrlRequestSchema>;
 export type CompleteUploadRequest = z.infer<typeof CompleteUploadRequestSchema>;
 export type FileMetadataSummary = z.infer<typeof FileMetadataSummarySchema>;
@@ -65,3 +69,4 @@ export type CreateUploadUrlResponse = z.infer<typeof CreateUploadUrlResponseSche
 export type CompleteUploadResponse = z.infer<typeof CompleteUploadResponseSchema>;
 export type ListFilesResponse = z.infer<typeof ListFilesResponseSchema>;
 export type DownloadUrlResponse = z.infer<typeof DownloadUrlResponseSchema>;
+export type DeleteFileResponse = z.infer<typeof DeleteFileResponseSchema>;
