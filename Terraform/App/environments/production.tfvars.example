@@ -9,6 +9,9 @@ site_renderer_lambda_zip_path = "lambda_packages/site-renderer.zip"
 
 frontend_site_origin = "https://replace-with-production-domain"
 
+ses_from_email            = ""
+ses_notification_to_email = ""
+
 auth0_domain   = "replace-with-production-auth0-domain"
 auth0_audience = "https://replace-with-production-api-audience"
 

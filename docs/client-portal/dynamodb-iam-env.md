@@ -58,7 +58,8 @@ Allowed index action:
 dynamodb:Query
 ```
 
-No `dynamodb:*`, S3, SES, or Stripe permissions are granted.
+No `dynamodb:*`, S3, or Stripe permissions are granted. Later message phases add
+optional SES `SendEmail` permissions only when a verified sender is configured.
 
 ## Admin Client Index IAM
 

@@ -1,6 +1,7 @@
 import {
   CreateMessageRequestSchema,
   CreateThreadRequestSchema,
+  type EmailNotificationStatus,
   ListThreadsResponseSchema,
   MessageSummarySchema,
   ThreadMessagesResponseSchema,
@@ -24,6 +25,7 @@ import {
   type PortalTableItem,
   type ThreadItem,
   type TransactWriteItem,
+  type UpdateItemOptions,
 } from '../dynamodb/index.js';
 import { newId } from '../shared/ids.js';
 import { validateWithSchema } from '../shared/validation.js';
@@ -32,6 +34,13 @@ import {
   type ResolvedClientContext,
   type TenantResolverRepository,
 } from '../tenant/index.js';
+import {
+  sendMessageNotification as sendPortalMessageNotification,
+  type MessageNotificationConfig,
+  type MessageNotificationResult,
+} from './notifications.js';
+
+export * from './notifications.js';
 
 export const messageSliceLimits = {
   messages: 100,
@@ -57,6 +66,10 @@ export type MessagesRepository = TenantResolverRepository & {
   transactWriteItems<TItem extends PortalTableItem>(
     items: TransactWriteItem<TItem>[],
   ): Promise<void>;
+  updateItem<TItem extends PortalTableItem = PortalTableItem>(
+    key: { PK: string; SK: string },
+    options: UpdateItemOptions,
+  ): Promise<TItem | null>;
 };
 
 export type MessagesApiFailure = {
@@ -77,11 +90,13 @@ export type ThreadMessagesResult =
 
 export type MessageServiceInput = {
   auth0Sub: string;
+  notificationConfig?: MessageNotificationConfig;
   repository: MessagesRepository;
   newAuditId?: () => string;
   newMessageId?: () => string;
   newThreadId?: () => string;
   now?: () => string;
+  sendMessageNotification?: typeof sendPortalMessageNotification;
 };
 
 function isThreadItem(item: PortalTableItem): item is ThreadItem {
@@ -307,6 +322,85 @@ function messageSummary(message: MessageItem): MessageSummary {
   });
 }
 
+async function markMessageNotificationStatus({
+  message,
+  repository,
+  status,
+}: {
+  message: MessageItem;
+  repository: MessagesRepository;
+  status: EmailNotificationStatus;
+}) {
+  try {
+    const updatedMessage = await repository.updateItem<MessageItem>(
+      {
+        PK: message.PK,
+        SK: message.SK,
+      },
+      {
+        conditionExpression: '#type = :type AND #messageId = :messageId',
+        expressionAttributeNames: {
+          '#emailNotificationStatus': 'emailNotificationStatus',
+          '#messageId': 'messageId',
+          '#type': 'type',
+        },
+        expressionAttributeValues: {
+          ':emailNotificationStatus': status,
+          ':messageId': message.messageId,
+          ':type': 'MESSAGE',
+        },
+        updateExpression: 'SET #emailNotificationStatus = :emailNotificationStatus',
+      },
+    );
+
+    return updatedMessage ?? {
+      ...message,
+      emailNotificationStatus: status,
+    };
+  } catch {
+    return {
+      ...message,
+      emailNotificationStatus: status,
+    };
+  }
+}
+
+async function notifyNewMessage({
+  client,
+  message,
+  notificationConfig,
+  repository,
+  sendMessageNotification,
+  thread,
+  user,
+}: {
+  client: ResolvedClientContext['client'];
+  message: MessageItem;
+  notificationConfig: MessageNotificationConfig;
+  repository: MessagesRepository;
+  sendMessageNotification: typeof sendPortalMessageNotification;
+  thread: ThreadItem;
+  user: ResolvedClientContext['user'];
+}) {
+  const result: MessageNotificationResult = await sendMessageNotification({
+    client,
+    config: notificationConfig,
+    message,
+    sender: user,
+    thread,
+  });
+
+  if (result.status === 'not_sent') {
+    return message;
+  }
+
+  return markMessageNotificationStatus({
+    message,
+    repository,
+    status: result.status,
+  });
+}
+
 function auditPut({
   action,
   actorUserId,
@@ -462,7 +556,9 @@ export async function createThread({
   newMessageId = () => newId('message'),
   newThreadId = () => newId('thread'),
   now = () => new Date().toISOString(),
+  notificationConfig = {},
   repository,
+  sendMessageNotification = sendPortalMessageNotification,
 }: MessageServiceInput & {
   body: unknown;
 }): Promise<ThreadMessagesResult> {
@@ -544,10 +640,20 @@ export async function createThread({
     return writeFailure(error);
   }
 
+  const notifiedMessage = await notifyNewMessage({
+    client,
+    message,
+    notificationConfig,
+    repository,
+    sendMessageNotification,
+    thread,
+    user,
+  });
+
   return {
     ok: true,
     response: ThreadMessagesResponseSchema.parse({
-      messages: [messageSummary(message)],
+      messages: [messageSummary(notifiedMessage)],
       thread: threadSummary(thread),
     }),
   };
@@ -605,7 +711,9 @@ export async function createMessage({
   newAuditId = () => newId('audit'),
   newMessageId = () => newId('message'),
   now = () => new Date().toISOString(),
+  notificationConfig = {},
   repository,
+  sendMessageNotification = sendPortalMessageNotification,
   threadId,
 }: MessageServiceInput & {
   body: unknown;
@@ -691,10 +799,20 @@ export async function createMessage({
     return writeFailure(error);
   }
 
+  const notifiedMessage = await notifyNewMessage({
+    client,
+    message,
+    notificationConfig,
+    repository,
+    sendMessageNotification,
+    thread: nextThread,
+    user,
+  });
+
   return {
     ok: true,
     response: ThreadMessagesResponseSchema.parse({
-      messages: [messageSummary(message)],
+      messages: [messageSummary(notifiedMessage)],
       thread: threadSummary(nextThread),
     }),
   };

@@ -177,6 +177,33 @@ function fakeRepository(initialItems: PortalTableItem[] = [
         }
       }
     }),
+    updateItem: vi.fn(async <TItem extends PortalTableItem = PortalTableItem>(key: {
+      PK: string;
+      SK: string;
+    }, options: {
+      expressionAttributeValues?: Record<string, unknown>;
+    }): Promise<TItem | null> => {
+      const current = itemsByKey.get(itemKey(key));
+
+      if (!current) {
+        return null;
+      }
+
+      const emailNotificationStatus = options.expressionAttributeValues?.[
+        ':emailNotificationStatus'
+      ];
+
+      const updated = typeof emailNotificationStatus === 'string'
+        ? {
+          ...current,
+          emailNotificationStatus,
+        } as PortalTableItem
+        : current;
+
+      itemsByKey.set(itemKey(key), updated);
+
+      return updated as TItem;
+    }),
     itemsByKey,
   } satisfies MessagesRepository & {
     itemsByKey: Map<string, PortalTableItem>;
@@ -444,6 +471,125 @@ describe('messages handler routes', () => {
         }),
       }),
     ]);
+  });
+
+  it('sends and marks a new-thread email notification when SES is configured', async () => {
+    const repository = fakeRepository();
+    const sendMessageNotification = vi.fn(async () => ({
+      status: 'sent' as const,
+    }));
+    const handler = createMessagesHandler({
+      environment: {
+        PORTAL_BASE_URL: 'https://portal.apopto.test',
+        SES_FROM_EMAIL: 'portal@example.com',
+        SES_NOTIFICATION_TO_EMAIL: 'jake@example.com',
+      },
+      newAuditId: () => 'audit_thread_created',
+      newMessageId: () => 'message_first',
+      newThreadId: () => 'thread_new',
+      now: () => now,
+      repository,
+      sendMessageNotification,
+    });
+
+    const response = await handler(apiEvent({
+      body: {
+        body: 'Can we talk launch?',
+        subject: 'Launch timing',
+      },
+      routeKey: 'POST /api/threads',
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(201);
+    expect(sendMessageNotification).toHaveBeenCalledWith(expect.objectContaining({
+      config: {
+        fromEmail: 'portal@example.com',
+        notificationToEmail: 'jake@example.com',
+        portalBaseUrl: 'https://portal.apopto.test',
+      },
+      message: expect.objectContaining({
+        messageId: 'message_first',
+      }),
+      thread: expect.objectContaining({
+        threadId: 'thread_new',
+      }),
+    }));
+    expect(repository.updateItem).toHaveBeenCalledWith(
+      {
+        PK: 'THREAD#thread_new',
+        SK: `MESSAGE#${now}#message_first`,
+      },
+      expect.objectContaining({
+        expressionAttributeValues: expect.objectContaining({
+          ':emailNotificationStatus': 'sent',
+        }),
+      }),
+    );
+    expect(body).toMatchObject({
+      messages: [{
+        emailNotificationStatus: 'sent',
+        messageId: 'message_first',
+      }],
+    });
+  });
+
+  it('marks a reply notification failed when the optional SES send fails', async () => {
+    const thread = threadItem({
+      threadId: 'thread_existing',
+      updatedAt: '2026-05-22T16:05:00.000Z',
+    });
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      thread,
+    ]);
+    const handler = createMessagesHandler({
+      environment: {
+        PORTAL_BASE_URL: 'https://portal.apopto.test',
+        SES_FROM_EMAIL: 'portal@example.com',
+      },
+      newAuditId: () => 'audit_message_created',
+      newMessageId: () => 'message_reply',
+      now: () => now,
+      repository,
+      sendMessageNotification: vi.fn(async () => ({
+        errorName: 'MessageRejected',
+        status: 'failed' as const,
+      })),
+    });
+
+    const response = await handler(apiEvent({
+      body: {
+        body: 'This one should record a failed notification.',
+      },
+      pathParameters: {
+        threadId: thread.threadId,
+      },
+      rawPath: `/api/threads/${thread.threadId}/messages`,
+      routeKey: 'POST /api/threads/{threadId}/messages',
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(201);
+    expect(repository.updateItem).toHaveBeenCalledWith(
+      {
+        PK: 'THREAD#thread_existing',
+        SK: `MESSAGE#${now}#message_reply`,
+      },
+      expect.objectContaining({
+        expressionAttributeValues: expect.objectContaining({
+          ':emailNotificationStatus': 'failed',
+        }),
+      }),
+    );
+    expect(body).toMatchObject({
+      messages: [{
+        emailNotificationStatus: 'failed',
+        messageId: 'message_reply',
+      }],
+    });
   });
 
   it('does not expose or write messages for a thread owned by another client', async () => {

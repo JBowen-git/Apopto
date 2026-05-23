@@ -142,6 +142,28 @@ variable "frontend_site_origin" {
   default     = ""
 }
 
+variable "ses_from_email" {
+  description = "Optional verified SES sender address for portal message notifications. Leave empty to disable email sending."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = trimspace(var.ses_from_email) == "" || can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", trimspace(var.ses_from_email)))
+    error_message = "ses_from_email must be empty or a valid email address."
+  }
+}
+
+variable "ses_notification_to_email" {
+  description = "Optional recipient address for portal message notifications. Defaults to ses_from_email when omitted."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = trimspace(var.ses_notification_to_email) == "" || can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", trimspace(var.ses_notification_to_email)))
+    error_message = "ses_notification_to_email must be empty or a valid email address."
+  }
+}
+
 variable "auth0_domain" {
   description = "Auth0 tenant domain without protocol, for example tenant.us.auth0.com. This is not a secret."
   type        = string

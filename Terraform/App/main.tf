@@ -359,16 +359,24 @@ resource "aws_lambda_function" "messages" {
   timeout          = var.lambda_timeout
 
   environment {
-    variables = {
-      APP_ENVIRONMENT      = var.deployment_environment
-      CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
-      PORTAL_HANDLER_GROUP = "messages"
-    }
+    variables = merge(
+      {
+        APP_ENVIRONMENT      = var.deployment_environment
+        CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
+        PORTAL_HANDLER_GROUP = "messages"
+        PORTAL_BASE_URL      = local.client_portal_portal_base_url
+      },
+      local.client_portal_ses_from_email != "" ? {
+        SES_FROM_EMAIL            = local.client_portal_ses_from_email
+        SES_NOTIFICATION_TO_EMAIL = local.client_portal_ses_notification_to_email
+      } : {},
+    )
   }
 
   depends_on = [
     aws_cloudwatch_log_group.messages_lambda,
     aws_iam_role_policy.messages_dynamodb,
+    aws_iam_role_policy.messages_ses,
     aws_iam_role_policy_attachment.messages_lambda_basic,
   ]
 

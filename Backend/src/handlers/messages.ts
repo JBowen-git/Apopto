@@ -13,6 +13,10 @@ import {
   listThreads,
   type MessagesApiFailure,
   type MessagesRepository,
+  resolveMessageNotificationConfig,
+  type MessageNotificationEnvironment,
+  type MessageNotificationInput,
+  type MessageNotificationResult,
 } from '../messages/index.js';
 import { createNotImplementedHandler } from '../router/notImplemented.js';
 import { messageRoutes } from '../router/routeOwnership.js';
@@ -25,11 +29,13 @@ import {
 } from '../shared/response.js';
 
 export type MessagesHandlerDependencies = {
+  environment?: MessageNotificationEnvironment;
   newAuditId?: () => string;
   newMessageId?: () => string;
   newThreadId?: () => string;
   now?: () => string;
   repository?: MessagesRepository;
+  sendMessageNotification?: (input: MessageNotificationInput) => Promise<MessageNotificationResult>;
 };
 
 const notImplementedHandler = createNotImplementedHandler('messages', messageRoutes);
@@ -129,6 +135,9 @@ export function createMessagesHandler(dependencies: MessagesHandlerDependencies 
     try {
       const repository = dependencies.repository ?? defaultRepository();
       const claims = parseAuth0Claims(event);
+      const notificationConfig = resolveMessageNotificationConfig(
+        dependencies.environment ?? process.env,
+      );
       const routeScopeFailure = scopeFailureResponse(routeKey, claims, requestId);
 
       if (routeScopeFailure) {
@@ -156,7 +165,9 @@ export function createMessagesHandler(dependencies: MessagesHandlerDependencies 
           newMessageId: dependencies.newMessageId,
           newThreadId: dependencies.newThreadId,
           now: dependencies.now,
+          notificationConfig,
           repository,
+          sendMessageNotification: dependencies.sendMessageNotification,
         });
 
         if (!result.ok) {
@@ -198,7 +209,9 @@ export function createMessagesHandler(dependencies: MessagesHandlerDependencies 
         newAuditId: dependencies.newAuditId,
         newMessageId: dependencies.newMessageId,
         now: dependencies.now,
+        notificationConfig,
         repository,
+        sendMessageNotification: dependencies.sendMessageNotification,
         threadId,
       });
 

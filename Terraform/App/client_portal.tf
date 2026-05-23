@@ -17,6 +17,17 @@ locals {
     "${aws_dynamodb_table.client_portal.arn}/index/GSI1",
     "${aws_dynamodb_table.client_portal.arn}/index/GSI2",
   ]
+  client_portal_portal_base_url = (
+    trimspace(var.frontend_site_origin) != ""
+    ? trimsuffix(trimspace(var.frontend_site_origin), "/")
+    : "https://${aws_cloudfront_distribution.website.domain_name}"
+  )
+  client_portal_ses_from_email = trimspace(var.ses_from_email)
+  client_portal_ses_notification_to_email = (
+    trimspace(var.ses_notification_to_email) != ""
+    ? trimspace(var.ses_notification_to_email)
+    : local.client_portal_ses_from_email
+  )
 }
 
 resource "aws_dynamodb_table" "client_portal" {
@@ -288,6 +299,7 @@ data "aws_iam_policy_document" "messages_dynamodb" {
       "dynamodb:GetItem",
       "dynamodb:Query",
       "dynamodb:TransactWriteItems",
+      "dynamodb:UpdateItem",
     ]
 
     resources = [aws_dynamodb_table.client_portal.arn]
@@ -309,6 +321,41 @@ resource "aws_iam_role_policy" "messages_dynamodb" {
   name   = "${local.resource_prefix}-messages-dynamodb"
   role   = aws_iam_role.messages_lambda.id
   policy = data.aws_iam_policy_document.messages_dynamodb.json
+}
+
+data "aws_iam_policy_document" "messages_ses" {
+  count = local.client_portal_ses_from_email != "" ? 1 : 0
+
+  statement {
+    sid    = "SendPortalMessageNotifications"
+    effect = "Allow"
+
+    actions = [
+      "ses:SendEmail",
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ses:FromAddress"
+      values   = [local.client_portal_ses_from_email]
+    }
+
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "ses:Recipients"
+      values   = [local.client_portal_ses_notification_to_email]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "messages_ses" {
+  count = local.client_portal_ses_from_email != "" ? 1 : 0
+
+  name   = "${local.resource_prefix}-messages-ses"
+  role   = aws_iam_role.messages_lambda.id
+  policy = data.aws_iam_policy_document.messages_ses[0].json
 }
 
 resource "aws_iam_role" "file_scan_result_lambda" {
