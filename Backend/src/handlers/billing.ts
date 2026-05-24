@@ -17,10 +17,11 @@ import { createNotImplementedHandler } from '../router/notImplemented.js';
 import { billingRoutes } from '../router/routeOwnership.js';
 import {
   errorResponse,
-  getRequestId,
   jsonResponse,
+  requestMetadata,
   unauthorizedResponse,
   type ApiGatewayLikeResponse,
+  type ResponseRequestContext,
 } from '../shared/response.js';
 
 export type BillingHandlerEnvironment = {
@@ -84,7 +85,7 @@ function getRequiredEnvironment(environment: BillingHandlerEnvironment) {
 function scopeFailureResponse(
   routeKey: string,
   claims: Auth0Claims,
-  requestId: string | undefined,
+  responseContext: ResponseRequestContext,
 ) {
   const requiredScopes = routeScopes[routeKey] ?? [];
   const missing = missingScopes(claims, requiredScopes);
@@ -101,17 +102,17 @@ function scopeFailureResponse(
       missingScopes: missing,
       requiredScopes,
     },
-    { requestId },
+    responseContext,
   );
 }
 
-function failureResponse(result: BillingApiFailure, requestId: string | undefined) {
+function failureResponse(result: BillingApiFailure, responseContext: ResponseRequestContext) {
   return errorResponse(
     result.statusCode,
     result.error,
     result.message,
     result.details,
-    { requestId },
+    responseContext,
   );
 }
 
@@ -120,8 +121,8 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
     event: APIGatewayProxyEventV2,
     context: Context,
   ): Promise<ApiGatewayLikeResponse> => {
-    const requestId = getRequestId(event, context);
     const routeKey = getRouteKey(event);
+    const responseContext = { ...requestMetadata(event, context), routeKey };
 
     if (!routeScopes[routeKey]) {
       return notImplementedHandler(event, context);
@@ -132,7 +133,7 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
       const { stripeSecretKey, tableName } = getRequiredEnvironment(environment);
       const repository = dependencies.repository ?? defaultRepository(tableName);
       const claims = parseAuth0Claims(event);
-      const routeScopeFailure = scopeFailureResponse(routeKey, claims, requestId);
+      const routeScopeFailure = scopeFailureResponse(routeKey, claims, responseContext);
 
       if (routeScopeFailure) {
         return routeScopeFailure;
@@ -145,10 +146,10 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       const result = await createStripePortalSession({
@@ -160,13 +161,13 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
       });
 
       if (!result.ok) {
-        return failureResponse(result, requestId);
+        return failureResponse(result, responseContext);
       }
 
-      return jsonResponse(200, result.response, { requestId });
+      return jsonResponse(200, result.response, responseContext);
     } catch (error) {
       if (error instanceof AuthClaimError) {
-        return unauthorizedResponse(requestId, error.message);
+        return unauthorizedResponse(responseContext, error.message);
       }
 
       if (error instanceof SyntaxError) {
@@ -175,7 +176,7 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
           'invalid_json',
           'The request body must be valid JSON.',
           undefined,
-          { requestId },
+          responseContext,
         );
       }
 
@@ -186,7 +187,7 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
         {
           errorName: (error as { name?: string }).name ?? 'UnknownError',
         },
-        { requestId },
+        responseContext,
       );
     }
   };

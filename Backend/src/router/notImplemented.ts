@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2, Context } from 'aws-lambda';
 
-import { errorResponse } from '../shared/response.js';
+import { errorResponse, requestMetadata } from '../shared/response.js';
 import type { ApiGatewayLikeResponse } from '../shared/response.js';
 import type { ApiRouteDefinition, HandlerGroupName } from './routeOwnership.js';
 import { toRouteKey } from './routeOwnership.js';
@@ -31,10 +31,11 @@ export function createNotImplementedHandler(
 ) {
   return async (
     event: APIGatewayProxyEventV2,
-    _context: Context,
+    context: Context,
   ): Promise<ApiGatewayLikeResponse> => {
     const routeKey = getRequestedRouteKey(event);
     const matchedRoute = routes.find((route) => toRouteKey(route) === routeKey);
+    const responseContext = { ...requestMetadata(event, context), routeKey };
 
     return errorResponse(
       501,
@@ -46,6 +47,7 @@ export function createNotImplementedHandler(
         operation: matchedRoute?.operation ?? null,
         ownedRoutes: routes.map(toRouteKey),
       },
+      responseContext,
     );
   };
 }

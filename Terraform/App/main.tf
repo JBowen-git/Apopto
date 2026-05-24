@@ -754,6 +754,26 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gateway_access.arn
+    format = jsonencode({
+      apiId                   = "$context.apiId"
+      authorizerError         = "$context.authorizer.error"
+      errorMessage            = "$context.error.message"
+      httpMethod              = "$context.httpMethod"
+      integrationErrorMessage = "$context.integrationErrorMessage"
+      integrationLatency      = "$context.integrationLatency"
+      ip                      = "$context.identity.sourceIp"
+      protocol                = "$context.protocol"
+      requestId               = "$context.requestId"
+      requestTime             = "$context.requestTime"
+      responseLatency         = "$context.responseLatency"
+      responseLength          = "$context.responseLength"
+      routeKey                = "$context.routeKey"
+      status                  = "$context.status"
+    })
+  }
+
   tags = {
     Name = "${local.resource_prefix}-api-default-stage"
   }

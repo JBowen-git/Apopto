@@ -309,9 +309,137 @@ variable "lambda_timeout" {
 }
 
 variable "lambda_log_retention_days" {
-  description = "CloudWatch log retention for health Lambda logs."
+  description = "CloudWatch log retention for Lambda log groups."
   type        = number
   default     = 14
+
+  validation {
+    condition     = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 3653], var.lambda_log_retention_days)
+    error_message = "lambda_log_retention_days must be a valid CloudWatch Logs retention value."
+  }
+}
+
+variable "api_gateway_log_retention_days" {
+  description = "CloudWatch log retention for HTTP API Gateway access logs."
+  type        = number
+  default     = 14
+
+  validation {
+    condition     = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 3653], var.api_gateway_log_retention_days)
+    error_message = "api_gateway_log_retention_days must be a valid CloudWatch Logs retention value."
+  }
+}
+
+variable "cloudwatch_alarms_enabled" {
+  description = "Whether to create baseline CloudWatch alarms for Lambda and API Gateway."
+  type        = bool
+  default     = true
+}
+
+variable "cloudwatch_alarm_actions" {
+  description = "Optional SNS topic/action ARNs invoked when an alarm enters ALARM. Leave empty until notification wiring is chosen."
+  type        = list(string)
+  default     = []
+}
+
+variable "cloudwatch_alarm_ok_actions" {
+  description = "Optional SNS topic/action ARNs invoked when an alarm returns to OK."
+  type        = list(string)
+  default     = []
+}
+
+variable "cloudwatch_alarm_insufficient_data_actions" {
+  description = "Optional SNS topic/action ARNs invoked when an alarm enters INSUFFICIENT_DATA."
+  type        = list(string)
+  default     = []
+}
+
+variable "cloudwatch_alarm_period_seconds" {
+  description = "Metric period used by baseline CloudWatch alarms."
+  type        = number
+  default     = 60
+
+  validation {
+    condition     = contains([60, 120, 180, 300, 600, 900], var.cloudwatch_alarm_period_seconds)
+    error_message = "cloudwatch_alarm_period_seconds must be one of 60, 120, 180, 300, 600, or 900."
+  }
+}
+
+variable "cloudwatch_alarm_evaluation_periods" {
+  description = "Number of periods evaluated by baseline CloudWatch alarms."
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.cloudwatch_alarm_evaluation_periods >= 1 && var.cloudwatch_alarm_evaluation_periods <= 10
+    error_message = "cloudwatch_alarm_evaluation_periods must be between 1 and 10."
+  }
+}
+
+variable "lambda_error_alarm_threshold" {
+  description = "Lambda error count that triggers each Lambda error alarm over the evaluation window."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.lambda_error_alarm_threshold >= 1
+    error_message = "lambda_error_alarm_threshold must be at least 1."
+  }
+}
+
+variable "lambda_duration_alarm_timeout_ratio" {
+  description = "Default Lambda high-duration threshold as a ratio of each function timeout when lambda_duration_alarm_threshold_ms is 0."
+  type        = number
+  default     = 0.8
+
+  validation {
+    condition     = var.lambda_duration_alarm_timeout_ratio > 0 && var.lambda_duration_alarm_timeout_ratio <= 1
+    error_message = "lambda_duration_alarm_timeout_ratio must be greater than 0 and less than or equal to 1."
+  }
+}
+
+variable "lambda_duration_alarm_threshold_ms" {
+  description = "Optional fixed Lambda duration threshold in milliseconds. Set 0 to derive from each Lambda timeout."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.lambda_duration_alarm_threshold_ms == 0 || var.lambda_duration_alarm_threshold_ms >= 100
+    error_message = "lambda_duration_alarm_threshold_ms must be 0 or at least 100 milliseconds."
+  }
+}
+
+variable "api_gateway_5xx_alarm_threshold" {
+  description = "HTTP API 5xx count that triggers the API Gateway 5xx alarm over the evaluation window."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.api_gateway_5xx_alarm_threshold >= 1
+    error_message = "api_gateway_5xx_alarm_threshold must be at least 1."
+  }
+}
+
+variable "api_gateway_4xx_alarm_threshold" {
+  description = "HTTP API 4xx count that triggers the API Gateway 4xx alarm over the evaluation window."
+  type        = number
+  default     = 25
+
+  validation {
+    condition     = var.api_gateway_4xx_alarm_threshold >= 1
+    error_message = "api_gateway_4xx_alarm_threshold must be at least 1."
+  }
+}
+
+variable "api_gateway_latency_alarm_threshold_ms" {
+  description = "Average HTTP API latency in milliseconds that triggers the API Gateway latency alarm."
+  type        = number
+  default     = 3000
+
+  validation {
+    condition     = var.api_gateway_latency_alarm_threshold_ms >= 100
+    error_message = "api_gateway_latency_alarm_threshold_ms must be at least 100 milliseconds."
+  }
 }
 
 variable "cloudfront_price_class" {

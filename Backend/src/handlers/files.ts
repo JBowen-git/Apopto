@@ -23,10 +23,11 @@ import { createNotImplementedHandler } from '../router/notImplemented.js';
 import { fileRoutes } from '../router/routeOwnership.js';
 import {
   errorResponse,
-  getRequestId,
   jsonResponse,
+  requestMetadata,
   unauthorizedResponse,
   type ApiGatewayLikeResponse,
+  type ResponseRequestContext,
 } from '../shared/response.js';
 
 export type FilesHandlerEnvironment = {
@@ -107,7 +108,7 @@ function getRequiredEnvironment(environment: FilesHandlerEnvironment) {
 function scopeFailureResponse(
   routeKey: string,
   claims: Auth0Claims,
-  requestId: string | undefined,
+  responseContext: ResponseRequestContext,
 ) {
   const requiredScopes = routeScopes[routeKey] ?? [];
   const missing = missingScopes(claims, requiredScopes);
@@ -124,17 +125,17 @@ function scopeFailureResponse(
       missingScopes: missing,
       requiredScopes,
     },
-    { requestId },
+    responseContext,
   );
 }
 
-function failureResponse(result: FilesApiFailure, requestId: string | undefined) {
+function failureResponse(result: FilesApiFailure, responseContext: ResponseRequestContext) {
   return errorResponse(
     result.statusCode,
     result.error,
     result.message,
     result.details,
-    { requestId },
+    responseContext,
   );
 }
 
@@ -155,8 +156,8 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
     event: APIGatewayProxyEventV2,
     context: Context,
   ): Promise<ApiGatewayLikeResponse> => {
-    const requestId = getRequestId(event, context);
     const routeKey = getRouteKey(event);
+    const responseContext = { ...requestMetadata(event, context), routeKey };
 
     if (!routeScopes[routeKey]) {
       return notImplementedHandler(event, context);
@@ -167,7 +168,7 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
       const { tableName, uploadBucket } = getRequiredEnvironment(environment);
       const repository = dependencies.repository ?? defaultRepository(tableName);
       const claims = parseAuth0Claims(event);
-      const routeScopeFailure = scopeFailureResponse(routeKey, claims, requestId);
+      const routeScopeFailure = scopeFailureResponse(routeKey, claims, responseContext);
 
       if (routeScopeFailure) {
         return routeScopeFailure;
@@ -184,10 +185,10 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       if (routeKey === 'POST /api/files/presign-upload') {
@@ -204,10 +205,10 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(201, result.response, { requestId });
+        return jsonResponse(201, result.response, responseContext);
       }
 
       const fileId = getFileId(event);
@@ -218,7 +219,7 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
           'file_id_required',
           'A fileId path parameter is required.',
           undefined,
-          { requestId },
+          responseContext,
         );
       }
 
@@ -234,10 +235,10 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       if (routeKey === 'DELETE /api/files/{fileId}') {
@@ -251,10 +252,10 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       const result = await completeUpload({
@@ -269,13 +270,13 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
       });
 
       if (!result.ok) {
-        return failureResponse(result, requestId);
+        return failureResponse(result, responseContext);
       }
 
-      return jsonResponse(200, result.response, { requestId });
+      return jsonResponse(200, result.response, responseContext);
     } catch (error) {
       if (error instanceof AuthClaimError) {
-        return unauthorizedResponse(requestId, error.message);
+        return unauthorizedResponse(responseContext, error.message);
       }
 
       if (error instanceof SyntaxError) {
@@ -284,7 +285,7 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
           'invalid_json',
           'The request body must be valid JSON.',
           undefined,
-          { requestId },
+          responseContext,
         );
       }
 
@@ -295,7 +296,7 @@ export function createFilesHandler(dependencies: FilesHandlerDependencies = {}) 
         {
           errorName: (error as { name?: string }).name ?? 'UnknownError',
         },
-        { requestId },
+        responseContext,
       );
     }
   };

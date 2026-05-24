@@ -87,12 +87,14 @@ export const ApiErrorResponseSchema = z.object({
   error: z.string().min(1),
   message: z.string().min(1).optional(),
   requestId: z.string().min(1).optional(),
+  correlationId: z.string().min(1).optional(),
   details: z.unknown().optional(),
 });
 
 export const ApiSuccessEnvelopeSchema = z.object({
   ok: z.literal(true),
   requestId: z.string().min(1).optional(),
+  correlationId: z.string().min(1).optional(),
 });
 
 export const FeatureFlagsSchema = z.object({

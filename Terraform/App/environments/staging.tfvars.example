@@ -16,6 +16,16 @@ stripe_secret_key         = ""
 auth0_domain   = "replace-with-staging-auth0-domain"
 auth0_audience = "https://replace-with-staging-api-audience"
 
+lambda_log_retention_days      = 14
+api_gateway_log_retention_days = 14
+cloudwatch_alarms_enabled      = true
+
+# Leave alarm actions empty until an SNS topic or incident-management action ARN
+# is intentionally wired for the environment.
+cloudwatch_alarm_actions                   = []
+cloudwatch_alarm_ok_actions                = []
+cloudwatch_alarm_insufficient_data_actions = []
+
 cors_allowed_origins = [
   "http://localhost:5173",
   "https://replace-with-staging-cloudfront-or-domain",

@@ -66,3 +66,15 @@ The deployment scripts set `TF_VAR_site_asset_root=.artifacts/site` and
 `TF_VAR_site_renderer_asset_root=.artifacts/site-renderer` after building the
 frontend. Terraform uploads public SSR output to the website root and private
 renderer runtime files under `internal/site-renderer`.
+
+## Observability
+
+Terraform manages Lambda log groups, HTTP API access logs, and baseline
+CloudWatch alarms for Lambda errors, Lambda high duration, HTTP API 4xx/5xx
+errors, and HTTP API latency.
+
+Alarm notification actions are intentionally empty by default. Set
+`cloudwatch_alarm_actions`, `cloudwatch_alarm_ok_actions`, and
+`cloudwatch_alarm_insufficient_data_actions` to SNS topic ARNs or other
+CloudWatch-supported action ARNs when an environment-specific notification path
+is ready.

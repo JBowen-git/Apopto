@@ -10,10 +10,11 @@ import { createNotImplementedHandler } from '../router/notImplemented.js';
 import { identityIntakeRoutes } from '../router/routeOwnership.js';
 import {
   errorResponse,
-  getRequestId,
   jsonResponse,
+  requestMetadata,
   unauthorizedResponse,
   type ApiGatewayLikeResponse,
+  type ResponseRequestContext,
 } from '../shared/response.js';
 import {
   getDashboard,
@@ -75,21 +76,21 @@ function parseJsonBody(event: APIGatewayProxyEventV2) {
 
 function failureResponse(
   result: IntakeApiFailure | DashboardApiFailure,
-  requestId: string | undefined,
+  responseContext: ResponseRequestContext,
 ) {
   return errorResponse(
     result.statusCode,
     result.error,
     result.message,
     result.details,
-    { requestId },
+    responseContext,
   );
 }
 
 function scopeFailureResponse(
   routeKey: string,
   claims: Auth0Claims,
-  requestId: string | undefined,
+  responseContext: ResponseRequestContext,
 ) {
   const requiredScopes = routeScopes[routeKey] ?? [];
   const missing = missingScopes(claims, requiredScopes);
@@ -106,7 +107,7 @@ function scopeFailureResponse(
       missingScopes: missing,
       requiredScopes,
     },
-    { requestId },
+    responseContext,
   );
 }
 
@@ -117,8 +118,8 @@ export function createIdentityIntakeHandler(
     event: APIGatewayProxyEventV2,
     context: Context,
   ): Promise<ApiGatewayLikeResponse> => {
-    const requestId = getRequestId(event, context);
     const routeKey = getRouteKey(event);
+    const responseContext = { ...requestMetadata(event, context), routeKey };
     const repository = dependencies.repository ?? defaultRepository();
 
     if (![
@@ -133,7 +134,7 @@ export function createIdentityIntakeHandler(
 
     try {
       const claims = parseAuth0Claims(event);
-      const routeScopeFailure = scopeFailureResponse(routeKey, claims, requestId);
+      const routeScopeFailure = scopeFailureResponse(routeKey, claims, responseContext);
 
       if (routeScopeFailure) {
         return routeScopeFailure;
@@ -146,10 +147,10 @@ export function createIdentityIntakeHandler(
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       if (routeKey === 'GET /api/intake') {
@@ -159,10 +160,10 @@ export function createIdentityIntakeHandler(
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       if (routeKey === 'PUT /api/intake') {
@@ -175,10 +176,10 @@ export function createIdentityIntakeHandler(
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       if (routeKey === 'PATCH /api/client/profile') {
@@ -191,10 +192,10 @@ export function createIdentityIntakeHandler(
         });
 
         if (!result.ok) {
-          return failureResponse(result, requestId);
+          return failureResponse(result, responseContext);
         }
 
-        return jsonResponse(200, result.response, { requestId });
+        return jsonResponse(200, result.response, responseContext);
       }
 
       const result = await getOrBootstrapMe({
@@ -210,14 +211,14 @@ export function createIdentityIntakeHandler(
           result.error,
           result.message,
           result.details,
-          { requestId },
+          responseContext,
         );
       }
 
-      return jsonResponse(200, result.response, { requestId });
+      return jsonResponse(200, result.response, responseContext);
     } catch (error) {
       if (error instanceof AuthClaimError) {
-        return unauthorizedResponse(requestId, error.message);
+        return unauthorizedResponse(responseContext, error.message);
       }
 
       if (error instanceof SyntaxError) {
@@ -226,7 +227,7 @@ export function createIdentityIntakeHandler(
           'invalid_json',
           'The request body must be valid JSON.',
           undefined,
-          { requestId },
+          responseContext,
         );
       }
 
@@ -237,7 +238,7 @@ export function createIdentityIntakeHandler(
         {
           errorName: (error as { name?: string }).name ?? 'UnknownError',
         },
-        { requestId },
+        responseContext,
       );
     }
   };

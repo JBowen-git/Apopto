@@ -26,10 +26,11 @@ import { createNotImplementedHandler } from '../router/notImplemented.js';
 import { adminRoutes } from '../router/routeOwnership.js';
 import {
   errorResponse,
-  getRequestId,
   jsonResponse,
+  requestMetadata,
   unauthorizedResponse,
   type ApiGatewayLikeResponse,
+  type ResponseRequestContext,
 } from '../shared/response.js';
 
 type AdminRepository =
@@ -70,14 +71,14 @@ function defaultRepository(): AdminRepository {
 
 function adminFailureResponse(
   result: AdminClientListFailure | AdminClientDetailFailure,
-  requestId: string | undefined,
+  responseContext: ResponseRequestContext,
 ) {
   return errorResponse(
     result.statusCode,
     result.error,
     result.message,
     result.details,
-    { requestId },
+    responseContext,
   );
 }
 
@@ -110,8 +111,8 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
     event: APIGatewayProxyEventV2,
     context: Context,
   ): Promise<ApiGatewayLikeResponse> => {
-    const requestId = getRequestId(event, context);
     const routeKey = getRouteKey(event);
+    const responseContext = { ...requestMetadata(event, context), routeKey };
     const requiredScopes = routeScopes[routeKey];
 
     if (!requiredScopes) {
@@ -133,7 +134,7 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
           adminResult.error,
           adminResult.message,
           adminResult.details,
-          { requestId },
+          responseContext,
         );
       }
 
@@ -144,10 +145,10 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
         });
 
         if (!listResult.ok) {
-          return adminFailureResponse(listResult, requestId);
+          return adminFailureResponse(listResult, responseContext);
         }
 
-        return jsonResponse(200, listResult.response, { requestId });
+        return jsonResponse(200, listResult.response, responseContext);
       }
 
       if (routeKey === 'GET /api/admin/clients/{clientId}') {
@@ -159,7 +160,7 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
             'client_id_required',
             'A clientId path parameter is required.',
             undefined,
-            { requestId },
+            responseContext,
           );
         }
 
@@ -169,10 +170,10 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
         });
 
         if (!detailResult.ok) {
-          return adminFailureResponse(detailResult, requestId);
+          return adminFailureResponse(detailResult, responseContext);
         }
 
-        return jsonResponse(200, detailResult.response, { requestId });
+        return jsonResponse(200, detailResult.response, responseContext);
       }
 
       if (routeKey === 'PATCH /api/admin/clients/{clientId}/status') {
@@ -184,7 +185,7 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
             'client_id_required',
             'A clientId path parameter is required.',
             undefined,
-            { requestId },
+            responseContext,
           );
         }
 
@@ -198,10 +199,10 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
         });
 
         if (!updateResult.ok) {
-          return adminFailureResponse(updateResult, requestId);
+          return adminFailureResponse(updateResult, responseContext);
         }
 
-        return jsonResponse(200, updateResult.response, { requestId });
+        return jsonResponse(200, updateResult.response, responseContext);
       }
 
       if (routeKey === 'POST /api/admin/clients/{clientId}/projects') {
@@ -213,7 +214,7 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
             'client_id_required',
             'A clientId path parameter is required.',
             undefined,
-            { requestId },
+            responseContext,
           );
         }
 
@@ -228,16 +229,16 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
         });
 
         if (!projectResult.ok) {
-          return adminFailureResponse(projectResult, requestId);
+          return adminFailureResponse(projectResult, responseContext);
         }
 
-        return jsonResponse(201, projectResult.response, { requestId });
+        return jsonResponse(201, projectResult.response, responseContext);
       }
 
       return notImplementedHandler(event, context);
     } catch (error) {
       if (error instanceof AuthClaimError) {
-        return unauthorizedResponse(requestId, error.message);
+        return unauthorizedResponse(responseContext, error.message);
       }
 
       if (error instanceof SyntaxError) {
@@ -246,7 +247,7 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
           'invalid_json',
           'The request body must be valid JSON.',
           undefined,
-          { requestId },
+          responseContext,
         );
       }
 
@@ -257,7 +258,7 @@ export function createAdminHandler(dependencies: AdminHandlerDependencies = {}) 
         {
           errorName: (error as { name?: string }).name ?? 'UnknownError',
         },
-        { requestId },
+        responseContext,
       );
     }
   };
