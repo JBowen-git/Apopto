@@ -164,6 +164,13 @@ variable "ses_notification_to_email" {
   }
 }
 
+variable "stripe_secret_key" {
+  description = "Optional Stripe secret key used by the billing Lambda to create customer portal sessions. Leave empty to return the 501 scaffold fallback."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "auth0_domain" {
   description = "Auth0 tenant domain without protocol, for example tenant.us.auth0.com. This is not a secret."
   type        = string

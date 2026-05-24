@@ -218,6 +218,15 @@ resource "aws_cloudwatch_log_group" "messages_lambda" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "billing_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-billing"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-billing-logs"
+  }
+}
+
 resource "aws_cloudwatch_log_group" "file_scan_result_lambda" {
   name              = "/aws/lambda/${local.resource_prefix}-file-scan-result"
   retention_in_days = var.lambda_log_retention_days
@@ -385,6 +394,41 @@ resource "aws_lambda_function" "messages" {
   }
 }
 
+resource "aws_lambda_function" "billing" {
+  function_name    = "${local.resource_prefix}-billing"
+  description      = "${local.resource_prefix} client portal billing API Lambda."
+  role             = aws_iam_role.billing_lambda.arn
+  handler          = "handlers/billing.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = merge(
+      {
+        APP_ENVIRONMENT      = var.deployment_environment
+        CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
+        PORTAL_HANDLER_GROUP = "billing"
+      },
+      trimspace(var.stripe_secret_key) != "" ? {
+        STRIPE_SECRET_KEY = trimspace(var.stripe_secret_key)
+      } : {},
+    )
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.billing_lambda,
+    aws_iam_role_policy.billing_dynamodb,
+    aws_iam_role_policy_attachment.billing_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-billing"
+  }
+}
+
 resource "aws_lambda_function" "file_scan_result" {
   function_name    = "${local.resource_prefix}-file-scan-result"
   description      = "${local.resource_prefix} GuardDuty S3 malware scan result processor."
@@ -515,6 +559,13 @@ resource "aws_apigatewayv2_integration" "messages" {
   api_id                 = aws_apigatewayv2_api.app.id
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.messages.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "billing" {
+  api_id                 = aws_apigatewayv2_api.app.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.billing.invoke_arn
   payload_format_version = "2.0"
 }
 
@@ -650,6 +701,22 @@ resource "aws_apigatewayv2_route" "thread_messages_post" {
   target             = "integrations/${aws_apigatewayv2_integration.messages.id}"
 }
 
+resource "aws_apigatewayv2_route" "billing_get" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "GET /api/billing"
+  target             = "integrations/${aws_apigatewayv2_integration.billing.id}"
+}
+
+resource "aws_apigatewayv2_route" "billing_stripe_portal_session_post" {
+  api_id             = aws_apigatewayv2_api.app.id
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth0.id
+  route_key          = "POST /api/billing/stripe-portal-session"
+  target             = "integrations/${aws_apigatewayv2_integration.billing.id}"
+}
+
 resource "aws_apigatewayv2_route" "admin_clients_get" {
   api_id             = aws_apigatewayv2_api.app.id
   authorization_type = "JWT"
@@ -728,6 +795,14 @@ resource "aws_lambda_permission" "allow_api_gateway_messages" {
   statement_id  = "AllowExecutionFromApiGatewayMessages"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.messages.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_billing" {
+  statement_id  = "AllowExecutionFromApiGatewayBilling"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.billing.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }

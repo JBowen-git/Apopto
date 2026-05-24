@@ -2261,6 +2261,110 @@ a {
   white-space: pre-wrap;
 }
 
+.billing-shell {
+  max-width: 1180px;
+}
+
+.billing-page-lede {
+  color: #475569;
+  font-size: clamp(1rem, 1.1vw, 1.14rem);
+  line-height: 1.65;
+  margin: 14px 0 0;
+  max-width: 720px;
+}
+
+.billing-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.82fr);
+}
+
+.billing-invoice-panel,
+.billing-portal-panel,
+.billing-unavailable-panel {
+  align-content: start;
+}
+
+.billing-invoice-list {
+  display: grid;
+  gap: 12px;
+}
+
+.billing-invoice-card {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.billing-invoice-main {
+  display: grid;
+  gap: 10px;
+}
+
+.billing-invoice-card h3 {
+  color: #0f172a;
+  font-size: clamp(1.45rem, 2vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.billing-invoice-meta {
+  color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+  font-weight: 800;
+  gap: 8px 14px;
+}
+
+.billing-status-pill {
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  justify-self: start;
+  padding: 7px 10px;
+}
+
+.billing-status-pill-paid {
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.26);
+  color: #166534;
+}
+
+.billing-status-pill-open {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: #1d4ed8;
+}
+
+.billing-status-pill-attention {
+  background: rgba(185, 28, 28, 0.1);
+  border: 1px solid rgba(185, 28, 28, 0.24);
+  color: #991b1b;
+}
+
+.billing-status-pill-muted {
+  background: rgba(100, 116, 139, 0.1);
+  border: 1px solid rgba(100, 116, 139, 0.22);
+  color: #475569;
+}
+
+.billing-action-button.MuiButton-root {
+  background: #2563eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 800;
+  justify-self: start;
+  min-height: 46px;
+  padding-inline: 22px;
+  text-transform: none;
+}
+
 .admin-shell {
   max-width: 1180px;
 }
@@ -5275,6 +5379,7 @@ a {
   .dashboard-module-grid,
   .dashboard-detail-list,
   .dashboard-profile-form .start-project-field-grid,
+  .billing-layout,
   .files-layout,
   .files-form-grid,
   .files-file-card,

@@ -7,6 +7,7 @@ const About = lazy(() => import('./pages/About.jsx'))
 const AdminClientDetail = lazy(() => import('./pages/AdminClientDetail'))
 const AdminClients = lazy(() => import('./pages/AdminClients'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback.jsx'))
+const Billing = lazy(() => import('./pages/Billing'))
 const Contact = lazy(() => import('./pages/Contact.jsx'))
 const CustomerAccount = lazy(() => import('./pages/CustomerAccount.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -28,6 +29,7 @@ const pages = {
   AdminClientDetail,
   AdminClients,
   AuthCallback,
+  Billing,
   Contact,
   CustomerAccount,
   Dashboard,

@@ -3,6 +3,7 @@ import About from './pages/About.jsx'
 import AdminClientDetail from './pages/AdminClientDetail'
 import AdminClients from './pages/AdminClients'
 import AuthCallback from './pages/AuthCallback.jsx'
+import Billing from './pages/Billing'
 import Contact from './pages/Contact.jsx'
 import CustomerAccount from './pages/CustomerAccount.jsx'
 import Dashboard from './pages/Dashboard'
@@ -25,6 +26,7 @@ const pages = {
   AdminClientDetail,
   AdminClients,
   AuthCallback,
+  Billing,
   Contact,
   CustomerAccount,
   Dashboard,

@@ -65,8 +65,10 @@ export default function DashboardLifecycleModules({
       title: 'Messages',
     } : null,
     featureFlags.canViewBilling ? {
-      copy: 'Billing links and invoice details will appear here when the billing module comes online.',
+      badge: 'Available',
+      copy: 'Review invoice metadata and open the Stripe-hosted billing portal when configured.',
       count: moduleCountLabel(invoices.length, 'invoice'),
+      href: '/billing',
       id: 'billing',
       items: invoices.map((invoice) => ({
         label: `${invoice.currency.toUpperCase()} ${(invoice.amountDue / 100).toLocaleString(undefined, {

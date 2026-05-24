@@ -8,6 +8,7 @@ export default function AppRoutes({ pages }) {
     AdminClientDetail,
     AdminClients,
     AuthCallback,
+    Billing,
     Contact,
     CustomerAccount,
     Dashboard,
@@ -89,6 +90,14 @@ export default function AppRoutes({ pages }) {
         element={(
           <ProtectedRoute>
             <MessageThread />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/billing"
+        element={(
+          <ProtectedRoute>
+            <Billing />
           </ProtectedRoute>
         )}
       />

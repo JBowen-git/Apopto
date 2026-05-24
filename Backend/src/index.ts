@@ -1,11 +1,16 @@
 export * from './admin/index.js';
 export * from './auth/index.js';
+export * from './billing/index.js';
 export {
   createAdminHandler,
   handler as adminHandler,
   type AdminHandlerDependencies,
 } from './handlers/admin.js';
-export { handler as billingHandler } from './handlers/billing.js';
+export {
+  createBillingHandler,
+  handler as billingHandler,
+  type BillingHandlerDependencies,
+} from './handlers/billing.js';
 export {
   createFilesHandler,
   handler as filesHandler,

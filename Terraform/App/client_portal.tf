@@ -358,6 +358,51 @@ resource "aws_iam_role_policy" "messages_ses" {
   policy = data.aws_iam_policy_document.messages_ses[0].json
 }
 
+resource "aws_iam_role" "billing_lambda" {
+  name               = "${local.resource_prefix}-billing-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-billing-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "billing_lambda_basic" {
+  role       = aws_iam_role.billing_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "billing_dynamodb" {
+  statement {
+    sid    = "ReadBillingMetadata"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+    ]
+
+    resources = [aws_dynamodb_table.client_portal.arn]
+  }
+
+  statement {
+    sid    = "QueryTenantIndexes"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:Query",
+    ]
+
+    resources = local.client_portal_table_index_arns
+  }
+}
+
+resource "aws_iam_role_policy" "billing_dynamodb" {
+  name   = "${local.resource_prefix}-billing-dynamodb"
+  role   = aws_iam_role.billing_lambda.id
+  policy = data.aws_iam_policy_document.billing_dynamodb.json
+}
+
 resource "aws_iam_role" "file_scan_result_lambda" {
   name               = "${local.resource_prefix}-file-scan-result-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
