@@ -18,7 +18,13 @@ auth0_audience = "https://replace-with-production-api-audience"
 
 lambda_log_retention_days      = 30
 api_gateway_log_retention_days = 30
-cloudwatch_alarms_enabled      = true
+cloudwatch_alarms_enabled      = false
+
+# Optional paid alarms. Enabling these also requires the deploy role to have
+# CloudWatch alarm permissions such as cloudwatch:PutMetricAlarm.
+cloudwatch_lambda_error_alarm_targets    = []
+cloudwatch_lambda_duration_alarm_targets = []
+cloudwatch_api_alarm_types               = []
 
 # Leave alarm actions empty until an SNS topic or incident-management action ARN
 # is intentionally wired for the environment.

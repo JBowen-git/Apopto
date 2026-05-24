@@ -69,12 +69,14 @@ renderer runtime files under `internal/site-renderer`.
 
 ## Observability
 
-Terraform manages Lambda log groups, HTTP API access logs, and baseline
-CloudWatch alarms for Lambda errors, Lambda high duration, HTTP API 4xx/5xx
-errors, and HTTP API latency.
+Terraform manages Lambda log groups and HTTP API access logs. CloudWatch metric
+alarms are intentionally opt-in because each alarm is a paid resource.
 
-Alarm notification actions are intentionally empty by default. Set
-`cloudwatch_alarm_actions`, `cloudwatch_alarm_ok_actions`, and
+Set `cloudwatch_alarms_enabled = true`, then list only the specific alarm
+targets needed with `cloudwatch_lambda_error_alarm_targets`,
+`cloudwatch_lambda_duration_alarm_targets`, and `cloudwatch_api_alarm_types`.
+Alarm notification actions are empty by default. Set `cloudwatch_alarm_actions`,
+`cloudwatch_alarm_ok_actions`, and
 `cloudwatch_alarm_insufficient_data_actions` to SNS topic ARNs or other
 CloudWatch-supported action ARNs when an environment-specific notification path
 is ready.

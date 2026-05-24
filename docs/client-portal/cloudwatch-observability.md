@@ -1,7 +1,7 @@
 # CloudWatch Observability
 
-Phase 44 adds Terraform-managed CloudWatch retention and baseline alarms for the
-client portal stack.
+Phase 44 adds Terraform-managed CloudWatch retention and optional alarms for
+the client portal stack.
 
 ## Managed Logs
 
@@ -13,17 +13,31 @@ client portal stack.
   integration error metadata. It does not log headers, tokens, cookies, request
   bodies, or response bodies.
 
-## Managed Alarms
+## Optional Alarms
 
-Terraform creates alarms when `cloudwatch_alarms_enabled = true`:
+CloudWatch metric alarms are paid resources, so Terraform creates no metric
+alarms by default. To create alarms, set `cloudwatch_alarms_enabled = true` and
+list the exact alarm targets needed:
 
-- Lambda `Errors` per function.
-- Lambda `Duration` per function, using either
+```hcl
+cloudwatch_alarms_enabled = true
+
+cloudwatch_api_alarm_types = ["5xx"]
+
+cloudwatch_lambda_error_alarm_targets    = ["health", "identity_intake"]
+cloudwatch_lambda_duration_alarm_targets = []
+```
+
+Supported alarm types:
+
+- Lambda `Errors` for each function listed in
+  `cloudwatch_lambda_error_alarm_targets`.
+- Lambda `Duration` for each function listed in
+  `cloudwatch_lambda_duration_alarm_targets`, using either
   `lambda_duration_alarm_threshold_ms` or a timeout-derived threshold from
   `lambda_duration_alarm_timeout_ratio`.
-- HTTP API Gateway `5xx`.
-- HTTP API Gateway `4xx`.
-- HTTP API Gateway `Latency`.
+- HTTP API Gateway `5xx`, `4xx`, and `latency`, selected with
+  `cloudwatch_api_alarm_types`.
 
 Thresholds and evaluation windows are configurable through Terraform variables:
 
@@ -36,7 +50,7 @@ Thresholds and evaluation windows are configurable through Terraform variables:
 - `api_gateway_4xx_alarm_threshold`
 - `api_gateway_latency_alarm_threshold_ms`
 
-## Deferred Notification Wiring
+## Deferred Alarm IAM And Notification Wiring
 
 Alarm action lists are intentionally empty by default:
 
@@ -47,3 +61,9 @@ Alarm action lists are intentionally empty by default:
 This avoids hardcoding personal emails, phone numbers, or one-off notification
 targets. A later phase can add an SNS topic, ChatOps integration, or incident
 management destination and pass those action ARNs through environment tfvars.
+
+GitHub deployments also need CloudWatch alarm permissions before paid alarms are
+enabled, including `cloudwatch:PutMetricAlarm`, `cloudwatch:DeleteAlarms`, and
+`cloudwatch:DescribeAlarms`. Depending on provider tagging behavior, alarm
+tagging may also require `cloudwatch:TagResource` and
+`cloudwatch:UntagResource`.

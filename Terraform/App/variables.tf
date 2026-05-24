@@ -331,9 +331,51 @@ variable "api_gateway_log_retention_days" {
 }
 
 variable "cloudwatch_alarms_enabled" {
-  description = "Whether to create baseline CloudWatch alarms for Lambda and API Gateway."
+  description = "Master switch for optional paid CloudWatch metric alarms. Target lists below decide which alarms are created."
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "cloudwatch_lambda_error_alarm_targets" {
+  description = "Lambda target keys that should receive Errors alarms. Empty by default to avoid unnecessary paid alarms."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for target in var.cloudwatch_lambda_error_alarm_targets :
+      contains(["health", "identity_intake", "admin", "files", "messages", "billing", "file_scan_result", "site_renderer"], target)
+    ])
+    error_message = "cloudwatch_lambda_error_alarm_targets can contain only: health, identity_intake, admin, files, messages, billing, file_scan_result, site_renderer."
+  }
+}
+
+variable "cloudwatch_lambda_duration_alarm_targets" {
+  description = "Lambda target keys that should receive high-duration alarms. Empty by default to avoid unnecessary paid alarms."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for target in var.cloudwatch_lambda_duration_alarm_targets :
+      contains(["health", "identity_intake", "admin", "files", "messages", "billing", "file_scan_result", "site_renderer"], target)
+    ])
+    error_message = "cloudwatch_lambda_duration_alarm_targets can contain only: health, identity_intake, admin, files, messages, billing, file_scan_result, site_renderer."
+  }
+}
+
+variable "cloudwatch_api_alarm_types" {
+  description = "HTTP API alarm types to create. Supported values are 5xx, 4xx, and latency. Empty by default to avoid unnecessary paid alarms."
+  type        = set(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for alarm_type in var.cloudwatch_api_alarm_types :
+      contains(["5xx", "4xx", "latency"], alarm_type)
+    ])
+    error_message = "cloudwatch_api_alarm_types can contain only: 5xx, 4xx, latency."
+  }
 }
 
 variable "cloudwatch_alarm_actions" {
@@ -355,7 +397,7 @@ variable "cloudwatch_alarm_insufficient_data_actions" {
 }
 
 variable "cloudwatch_alarm_period_seconds" {
-  description = "Metric period used by baseline CloudWatch alarms."
+  description = "Metric period used by optional CloudWatch alarms."
   type        = number
   default     = 60
 
@@ -366,7 +408,7 @@ variable "cloudwatch_alarm_period_seconds" {
 }
 
 variable "cloudwatch_alarm_evaluation_periods" {
-  description = "Number of periods evaluated by baseline CloudWatch alarms."
+  description = "Number of periods evaluated by optional CloudWatch alarms."
   type        = number
   default     = 2
 

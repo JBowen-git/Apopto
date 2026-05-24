@@ -34,6 +34,18 @@ locals {
     }
   }
 
+  selected_lambda_error_alarm_targets = {
+    for key, target in local.lambda_alarm_targets : key => target
+    if var.cloudwatch_alarms_enabled && contains(var.cloudwatch_lambda_error_alarm_targets, key)
+  }
+
+  selected_lambda_duration_alarm_targets = {
+    for key, target in local.lambda_alarm_targets : key => target
+    if var.cloudwatch_alarms_enabled && contains(var.cloudwatch_lambda_duration_alarm_targets, key)
+  }
+
+  selected_api_alarm_types = var.cloudwatch_alarms_enabled ? var.cloudwatch_api_alarm_types : toset([])
+
   api_gateway_alarm_dimensions = {
     ApiId = aws_apigatewayv2_api.app.id
     Stage = aws_apigatewayv2_stage.default.name
@@ -50,7 +62,7 @@ resource "aws_cloudwatch_log_group" "api_gateway_access" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  for_each = var.cloudwatch_alarms_enabled ? local.lambda_alarm_targets : {}
+  for_each = local.selected_lambda_error_alarm_targets
 
   alarm_name          = "${local.resource_prefix}-${replace(each.key, "_", "-")}-lambda-errors"
   alarm_description   = "Lambda ${each.value.function_name} reported errors."
@@ -78,7 +90,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_high_duration" {
-  for_each = var.cloudwatch_alarms_enabled ? local.lambda_alarm_targets : {}
+  for_each = local.selected_lambda_duration_alarm_targets
 
   alarm_name          = "${local.resource_prefix}-${replace(each.key, "_", "-")}-lambda-high-duration"
   alarm_description   = "Lambda ${each.value.function_name} is approaching its configured timeout."
@@ -111,7 +123,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_high_duration" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
-  count = var.cloudwatch_alarms_enabled ? 1 : 0
+  count = contains(local.selected_api_alarm_types, "5xx") ? 1 : 0
 
   alarm_name          = "${local.resource_prefix}-api-5xx"
   alarm_description   = "HTTP API Gateway is returning 5xx responses."
@@ -137,7 +149,7 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "api_gateway_4xx" {
-  count = var.cloudwatch_alarms_enabled ? 1 : 0
+  count = contains(local.selected_api_alarm_types, "4xx") ? 1 : 0
 
   alarm_name          = "${local.resource_prefix}-api-4xx"
   alarm_description   = "HTTP API Gateway is returning elevated 4xx responses."
@@ -163,7 +175,7 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_4xx" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "api_gateway_latency" {
-  count = var.cloudwatch_alarms_enabled ? 1 : 0
+  count = contains(local.selected_api_alarm_types, "latency") ? 1 : 0
 
   alarm_name          = "${local.resource_prefix}-api-latency"
   alarm_description   = "HTTP API Gateway average latency is elevated."
