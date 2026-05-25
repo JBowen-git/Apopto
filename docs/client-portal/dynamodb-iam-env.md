@@ -1,48 +1,47 @@
 # DynamoDB IAM and Environment Wiring
 
-Phase 14 wires DynamoDB table access into the currently deployed portal handler
-group without adding repository code or new business routes. Phase 29 adds a
-separate admin Lambda role for the admin client index endpoint.
+Portal Lambda handler groups receive `CLIENT_PORTAL_TABLE` only when they need
+DynamoDB access. The public health Lambda does not receive table access.
 
-## Wired Handler Group
+## Environment Variables
 
-Terraform currently exposes the Auth0-protected placeholder route through the
-`identityIntake` handler group:
-
-```text
-GET /api/_auth-placeholder
-```
-
-That Lambda now receives:
+Common portal handler variables:
 
 ```text
 CLIENT_PORTAL_TABLE=ClientPortal-{deployment_environment}
-PORTAL_HANDLER_GROUP=identityIntake
+PORTAL_HANDLER_GROUP={identityIntake|admin|files|messages|billing}
 APP_ENVIRONMENT={deployment_environment}
 ```
 
-The public health Lambda does not receive `CLIENT_PORTAL_TABLE` and does not
-have DynamoDB permissions.
+Additional group-specific variables include:
+
+```text
+UPLOAD_BUCKET
+MAX_UPLOAD_BYTES
+SES_FROM_EMAIL
+SES_NOTIFICATION_TO_EMAIL
+PORTAL_BASE_URL
+STRIPE_SECRET_KEY
+```
+
+Optional secrets should be absent when the integration is disabled. Do not
+commit real values.
+
+## Handler Groups
+
+```text
+identityIntake  user bootstrap, dashboard, intake, profile updates
+admin           client list/detail/status/project actions
+files           file metadata, upload completion, download/soft delete
+messages        thread/message records and optional notification status
+billing         invoice metadata and optional Stripe portal session
+fileScanResult  GuardDuty scan result updates and audit events
+```
 
 ## IAM Scope
 
-The `identityIntake` execution role can access only the portal table and its two
-indexes.
-
-Table ARN:
-
-```text
-aws_dynamodb_table.client_portal.arn
-```
-
-Index ARNs:
-
-```text
-aws_dynamodb_table.client_portal.arn/index/GSI1
-aws_dynamodb_table.client_portal.arn/index/GSI2
-```
-
-Allowed table actions:
+Policies should grant only the DynamoDB actions each handler group needs.
+Common allowed actions include narrowly scoped combinations of:
 
 ```text
 dynamodb:BatchGetItem
@@ -50,43 +49,36 @@ dynamodb:GetItem
 dynamodb:PutItem
 dynamodb:Query
 dynamodb:UpdateItem
+dynamodb:TransactWriteItems
 ```
 
-Allowed index action:
+Index access is limited to:
 
 ```text
-dynamodb:Query
+aws_dynamodb_table.client_portal.arn/index/GSI1
+aws_dynamodb_table.client_portal.arn/index/GSI2
 ```
 
-No `dynamodb:*`, S3, or Stripe permissions are granted. Later message phases add
-optional SES `SendEmail` permissions only when a verified sender is configured.
+Do not grant broad `dynamodb:*` for portal handlers.
 
-## Admin Client Index IAM
+## Access Patterns
 
-Phase 29 wires:
+- `identityIntake` resolves user membership, bootstraps first client context,
+  reads dashboard slices, and writes intake/profile/audit records.
+- `admin` verifies `INTERNAL_ADMIN`, queries clients by status, reads bounded
+  detail, changes client status, creates projects, and writes audit records.
+- `files` verifies ownership through metadata keys/indexes and writes file/audit
+  lifecycle updates.
+- `messages` verifies thread/client ownership and writes thread/message/audit
+  records.
+- `billing` reads invoice metadata and verifies tenant access before returning
+  Stripe portal sessions.
+- `fileScanResult` updates file metadata after GuardDuty scan events.
 
-```text
-GET /api/admin/clients
-```
+Normal request paths should use `GetItem`, bounded `Query`, `BatchGetItem`, or
+targeted writes. Avoid table scans.
 
-to the `admin` handler group. That Lambda receives the same
-`CLIENT_PORTAL_TABLE`, `PORTAL_HANDLER_GROUP=admin`, and `APP_ENVIRONMENT`
-environment variables.
+## Review Rule
 
-Its IAM policy is read-only for this phase:
-
-```text
-dynamodb:GetItem on the table
-dynamodb:Query on GSI1/GSI2
-```
-
-The handler uses `GetItem` to verify the caller's `INTERNAL_ADMIN` record and
-`Query` on `GSI1` to list clients by status. It does not receive
-`PutItem`, `UpdateItem`, `TransactWriteItems`, or `Scan`.
-
-## Deferred Handler Groups
-
-The `files`, `messages`, and `billing` TypeScript handler skeletons remain
-unwired to Terraform routes in this phase. Their DynamoDB access should be added
-when those Lambda resources/routes are introduced so each group can receive only
-the actions it needs.
+IAM and environment changes are infrastructure-sensitive. Produce a Terraform
+plan for review before apply and check for unexpected permission broadening.

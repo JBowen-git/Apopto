@@ -1,6 +1,8 @@
 # GuardDuty File Scanning Workflow
 
-Phase 34.5 adds the malware-scanning enforcement layer for client portal uploads before presigned upload URLs are implemented.
+Phase 34.5 added the malware-scanning enforcement layer for client portal
+uploads. Later file phases now presign uploads into the quarantine prefix and
+block downloads until scan metadata is clean.
 
 ## Storage Prefixes
 
@@ -47,7 +49,8 @@ FAILED           -> scanStatus=failed, uploadStatus=blocked
 unknown result   -> scanStatus=unknown, uploadStatus=pending_review
 ```
 
-Future download endpoints must issue URLs only when metadata is `scanStatus=clean` and `uploadStatus=available`.
+Download endpoints must issue URLs only when metadata is `scanStatus=clean` and
+`uploadStatus=available`.
 
 ## GuardDuty Integration
 
@@ -66,3 +69,8 @@ GuardDutyMalwareScanStatus=NO_THREATS_FOUND
 ```
 
 The GuardDuty role and scan-result Lambda role are exempt so GuardDuty can scan and the Lambda can promote/quarantine objects.
+
+## Terraform Review
+
+GuardDuty, EventBridge, S3 bucket policy, and scan-result Lambda changes are
+infrastructure-sensitive. Produce and review a Terraform plan before apply.

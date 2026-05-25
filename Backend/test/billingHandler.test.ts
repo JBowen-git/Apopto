@@ -338,6 +338,61 @@ describe('billing handler routes', () => {
     });
   });
 
+  it('ignores clientId in the request body when creating a Stripe portal session', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      invoiceItem(1, {
+        stripeCustomerId: 'cus_client',
+      }),
+      invoiceItem(1, {
+        clientId: otherClientId,
+        invoiceId: 'invoice_other',
+        stripeCustomerId: 'cus_other',
+      }),
+    ]);
+    const createStripePortalSession = vi.fn(async () => ({
+      url: 'https://billing.stripe.test/session',
+    }));
+    const handler = createBillingHandler({
+      createStripePortalSession,
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        STRIPE_SECRET_KEY: 'sk_test_123',
+      },
+      repository,
+    });
+
+    const response = await handler(apiEvent({
+      body: {
+        clientId: otherClientId,
+        returnUrl: 'https://apopto.test/billing',
+      },
+      routeKey: 'POST /api/billing/stripe-portal-session',
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body).toMatchObject({
+      url: 'https://billing.stripe.test/session',
+    });
+    expect(createStripePortalSession).toHaveBeenCalledWith({
+      customerId: 'cus_client',
+      returnUrl: 'https://apopto.test/billing',
+      stripeSecretKey: 'sk_test_123',
+    });
+    expect(createStripePortalSession).not.toHaveBeenCalledWith(expect.objectContaining({
+      customerId: 'cus_other',
+    }));
+    expect(repository.queryByPartition).toHaveBeenCalledWith({
+      limit: 50,
+      pk: pk.client(clientId),
+      scanIndexForward: true,
+      skBeginsWith: 'INVOICE#',
+    });
+  });
+
   it('requires the read:billing scope', async () => {
     const repository = fakeRepository();
     const handler = createBillingHandler({

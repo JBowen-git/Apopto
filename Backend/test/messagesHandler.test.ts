@@ -398,6 +398,47 @@ describe('messages handler routes', () => {
     });
   });
 
+  it('does not expose messages for a thread owned by another client', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      threadItem({
+        clientId: otherClientId,
+        threadId: 'thread_cross_client',
+      }),
+      messageItem({
+        clientId: otherClientId,
+        messageId: 'message_other',
+        threadId: 'thread_cross_client',
+      }),
+    ]);
+    const handler = createMessagesHandler({ repository });
+
+    const response = await handler(apiEvent({
+      pathParameters: {
+        threadId: 'thread_cross_client',
+      },
+      rawPath: '/api/threads/thread_cross_client/messages',
+      routeKey: 'GET /api/threads/{threadId}/messages',
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(404);
+    expect(body).toMatchObject({
+      error: 'thread_not_found',
+    });
+    expect(repository.queryByIndex).toHaveBeenCalledWith({
+      indexName: 'GSI2',
+      limit: 1,
+      pk: 'THREAD#thread_cross_client',
+      skBeginsWith: 'CLIENT#client_messages',
+    });
+    expect(repository.queryByPartition).not.toHaveBeenCalledWith(expect.objectContaining({
+      pk: 'THREAD#thread_cross_client',
+    }));
+  });
+
   it('creates a reply, moves thread metadata forward, and leaves email notification not sent', async () => {
     const thread = threadItem({
       threadId: 'thread_existing',

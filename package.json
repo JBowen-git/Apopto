@@ -3,10 +3,16 @@
   "private": true,
   "scripts": {
     "build:backend": "npm --prefix Backend run build",
+    "build:frontend": "npm --prefix Frontend run build",
+    "build:frontend:ssr": "npm --prefix Frontend run build:ssr",
     "build:shared": "npm --prefix Shared run build",
+    "test:backend": "npm --prefix Backend run test",
+    "test:frontend": "npm --prefix Frontend run test",
     "test:shared": "npm --prefix Shared run test",
     "typecheck:backend": "npm --prefix Backend run typecheck",
-    "typecheck:shared": "npm --prefix Shared run typecheck"
+    "typecheck:frontend": "npm --prefix Frontend run typecheck",
+    "typecheck:shared": "npm --prefix Shared run typecheck",
+    "validate:repo": "bash scripts/cicd/run_repo_validation.sh"
   },
   "workspaces": [
     "Shared"

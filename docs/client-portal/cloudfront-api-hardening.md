@@ -96,3 +96,10 @@ terraform -chdir=Terraform/App plan \
 Do not apply a plan that shows unrelated CloudFront distribution drift, Web ACL
 removal, price class changes, or site-renderer object destruction unless that
 drift is intentionally reviewed.
+
+## WAF Rate Limiting
+
+Phase 45 adds optional WAF rate-limit rules for `/api/*`, upload presign, and
+message routes. See `security.md` for the flat-rate Web ACL attachment caution:
+the current distribution must keep its required Web ACL, so Terraform should not
+replace the association without a specific import/adoption plan.

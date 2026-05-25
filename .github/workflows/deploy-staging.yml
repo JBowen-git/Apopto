@@ -53,7 +53,17 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: "Frontend/package-lock.json"
+          cache-dependency-path: |
+            Frontend/package-lock.json
+            Backend/package-lock.json
+            Shared/package-lock.json
+
+      - name: Run repository validation
+        env:
+          APP_ENVIRONMENT: staging
+          PRERENDER_SITE_ORIGIN: ${{ vars.STAGING_SITE_ORIGIN || 'https://example.com' }}
+          RUN_ARTIFACT_PACKAGE_VALIDATION: "false"
+        run: bash scripts/cicd/run_repo_validation.sh
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

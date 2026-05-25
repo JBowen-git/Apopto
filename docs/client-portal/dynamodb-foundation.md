@@ -1,7 +1,9 @@
 # DynamoDB Foundation
 
-Phase 13 adds the Terraform foundation for the client portal single-table data
-model without wiring application handlers to it yet.
+The client portal uses one single-table DynamoDB table per environment. The
+Terraform foundation was added in Phase 13, and later backend phases now use
+the table for users, memberships, intake, admin, files, messages, billing
+metadata, and audit records.
 
 ## Table
 
@@ -71,7 +73,27 @@ client_portal_table_allow_destroy = true
 
 That opt-in is rejected for production.
 
-## Deferred
+## Item Model
 
-Phase 13 does not add Lambda permissions, DynamoDB data access code, portal
-routes, seed data, or application reads/writes.
+See `dynamodb-item-model.md` for the full item model, including:
+
+- client profiles
+- user profiles
+- memberships
+- internal admins
+- current intake
+- projects
+- file metadata
+- thread/message records
+- invoice metadata
+- audit events
+
+## Operational Notes
+
+- Do not run normal tenant reads with table scans.
+- Client users must resolve tenant access from the Auth0 subject and membership
+  records.
+- Admin list uses the `CLIENT_STATUS#{status}` GSI partition and bounded
+  queries.
+- Infrastructure phases that touch this table must produce a Terraform plan
+  for human review before apply.

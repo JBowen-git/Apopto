@@ -3,6 +3,44 @@
 This folder is intended to be copied into a new client repository after the
 basic frontend/backend folder structure exists.
 
+## Apopto Client Portal MVP
+
+This repository now also contains the production-oriented client portal MVP
+foundation. The portal keeps the existing top-level folder shape:
+
+```text
+Frontend/   React/Vite marketing site and authenticated portal screens
+Backend/    TypeScript Lambda handlers plus the legacy .NET health project
+Shared/     Shared TypeScript/Zod schemas used by frontend and backend
+Terraform/  Bootstrap and App infrastructure roots
+scripts/    CI/CD validation, packaging, and deployment scripts
+```
+
+Start with the client portal documentation index:
+
+```text
+docs/client-portal/README.md
+```
+
+Key runbooks:
+
+- Architecture and route ownership: `docs/client-portal/README.md`
+- Auth0 setup: `docs/client-portal/auth0-setup.md`
+- Terraform deployment: `docs/client-portal/terraform-deployment.md`
+- DynamoDB item model: `docs/client-portal/dynamodb-item-model.md`
+- File upload and GuardDuty flow: `docs/client-portal/file-upload-flow.md`
+- Internal admin seeding: `docs/client-portal/internal-admin-seeding.md`
+- Observability: `docs/client-portal/cloudwatch-observability.md`
+- CI validation: `docs/client-portal/ci-validation.md`
+- Final acceptance matrix: `docs/client-portal/final-acceptance-matrix.md`
+- Final validation report: `docs/client-portal/final-validation-report.md`
+- Troubleshooting: `docs/client-portal/troubleshooting.md`
+
+Infrastructure phases must stop at a Terraform plan for human review unless an
+operator explicitly approves apply. Do not commit real Auth0, Stripe, SES, or
+AWS secrets; use environment variables, GitHub Actions variables/secrets, SSM,
+or local untracked tfvars files.
+
 Recommended client repo shape:
 
 ```text
@@ -31,9 +69,10 @@ reference Xavier site:
 The deploy scripts build SSR frontend assets, stage public site files under
 `Terraform/App/.artifacts/site`, stage private renderer files under
 `Terraform/App/.artifacts/site-renderer`, and let Terraform transfer changed S3
-objects. Backend packaging automatically picks the first non-test `.csproj`
-under `Backend`. Set `BACKEND_PUBLISH_PROJECT_PATH` in a workflow if a client
-repo needs an explicit project path.
+objects. Backend packaging builds the TypeScript portal API artifact and still
+produces the legacy `.NET` zip as a rollback artifact. Set
+`BACKEND_PUBLISH_PROJECT_PATH` in a workflow if a client repo needs an explicit
+legacy project path.
 
 ## Client Setup Flow
 
@@ -58,7 +97,7 @@ repo needs an explicit project path.
     - `Terraform/App/backends/production.hcl`
     - `Terraform/App/environments/staging.tfvars`
     - `Terraform/App/environments/production.tfvars`
-18. Run staging App Terraform locally or push to `main` and let `deploy-staging.yml` apply it.
+18. Run staging App Terraform plan locally, review it, then apply only after explicit approval.
 19. Add Bootstrap role outputs to GitHub repository variables.
 20. Run `Release Production` from GitHub with `plan`, then with `apply` when ready.
 
@@ -90,5 +129,6 @@ manually from `main`.
 It first assumes the staging GitHub Actions role, then assumes the production
 deploy role through `APP_DEPLOY_ROLE_ARN`.
 
-`pr-checks.yml` validates frontend SSR build, backend build/tests, Terraform
-formatting, and Terraform validation.
+`pr-checks.yml` runs the full repo validation matrix: shared tests/build,
+backend tests/build, frontend typecheck/tests/SSR build, artifact packaging,
+Terraform formatting, and Terraform validation. It does not apply Terraform.

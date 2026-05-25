@@ -35,7 +35,10 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: "Frontend/package-lock.json"
+          cache-dependency-path: |
+            Frontend/package-lock.json
+            Backend/package-lock.json
+            Shared/package-lock.json
 
       - name: Run repository validation
         run: bash scripts/cicd/run_repo_validation.sh

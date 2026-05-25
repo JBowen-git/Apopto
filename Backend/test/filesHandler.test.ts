@@ -290,6 +290,42 @@ describe('files handler upload routes', () => {
     expect(repository.putItem).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['inline-script.js', 'application/javascript'],
+    ['deploy.SH', 'text/x-shellscript'],
+    ['cleanup.cmd', 'application/octet-stream'],
+    ['report.pdf.bat', 'application/octet-stream'],
+  ])('rejects blocked script extension %s before storage work', async (originalFilename, mimeType) => {
+    const repository = fakeRepository();
+    const presignPutObject = vi.fn(async () => 'https://uploads.example.test/signed');
+    const handler = createFilesHandler({
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        UPLOAD_BUCKET: uploadBucket,
+      },
+      presignPutObject,
+      repository,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'POST /api/files/presign-upload',
+      body: {
+        category: 'other',
+        mimeType,
+        originalFilename,
+        sizeBytes: 1024,
+      },
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(400);
+    expect(body).toMatchObject({
+      error: 'blocked_extension',
+    });
+    expect(presignPutObject).not.toHaveBeenCalled();
+    expect(repository.putItem).not.toHaveBeenCalled();
+  });
+
   it('rejects uploads while the client lifecycle is not eligible', async () => {
     const repository = fakeRepository([
       userItem(),

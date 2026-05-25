@@ -16,6 +16,29 @@ SHARED_PACKAGE_BUILT=false
 
 source "${ROOT_DIR}/scripts/cicd/aws_runtime.sh"
 
+require_non_empty_file() {
+  local file_path="$1"
+
+  if [ ! -s "${file_path}" ]; then
+    echo "Expected artifact was not created or is empty: ${file_path}" >&2
+    return 1
+  fi
+}
+
+require_directory_with_files() {
+  local directory_path="$1"
+
+  if [ ! -d "${directory_path}" ]; then
+    echo "Expected artifact directory was not created: ${directory_path}" >&2
+    return 1
+  fi
+
+  if ! find "${directory_path}" -type f -print -quit | grep -q .; then
+    echo "Expected artifact directory contains no files: ${directory_path}" >&2
+    return 1
+  fi
+}
+
 resolve_backend_publish_project() {
   local candidate="${BACKEND_PUBLISH_PROJECT_PATH:-${ROOT_DIR}/${BACKEND_PROJECT_PATH}}"
   local project
@@ -190,6 +213,18 @@ rm -f "${renderer_zip_path}"
   cd "${ROOT_DIR}/${APP_STACK_DIRECTORY}/Renderer"
   zip -qr "${renderer_zip_path}" index.mjs
 )
+
+require_directory_with_files "${staged_site_root}"
+require_non_empty_file "${staged_site_root}/index.html"
+require_directory_with_files "${staged_renderer_root}"
+require_non_empty_file "${staged_renderer_root}/site-renderer-manifest.json"
+require_non_empty_file "${staged_renderer_root}/site-renderer-template.html"
+require_non_empty_file "${staged_renderer_root}/server/entry-server.js"
+require_non_empty_file "${zip_path}"
+if [ "${PACKAGE_TYPESCRIPT_BACKEND}" = "true" ]; then
+  require_non_empty_file "${typescript_zip_path}"
+fi
+require_non_empty_file "${renderer_zip_path}"
 
 echo "Packaged ${APP_ENVIRONMENT} frontend and Lambda artifacts."
 echo ".NET backend Lambda artifact: ${zip_path}"

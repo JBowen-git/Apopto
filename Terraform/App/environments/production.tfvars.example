@@ -32,6 +32,14 @@ cloudwatch_alarm_actions                   = []
 cloudwatch_alarm_ok_actions                = []
 cloudwatch_alarm_insufficient_data_actions = []
 
+# Optional WAF rate-limit Web ACL. The current flat-rate CloudFront Web ACL
+# should be preserved unless a reviewed plan shows a safe attach/adoption path.
+cloudfront_waf_rate_limiting_enabled    = false
+cloudfront_waf_rate_limit_action        = "block"
+cloudfront_waf_api_rate_limit           = 2000
+cloudfront_waf_upload_presign_rate_limit = 300
+cloudfront_waf_messages_rate_limit       = 600
+
 cors_allowed_origins = [
   "https://replace-with-production-domain",
 ]

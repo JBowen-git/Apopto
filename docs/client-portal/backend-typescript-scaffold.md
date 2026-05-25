@@ -1,91 +1,82 @@
-# Backend TypeScript Scaffold
+# Backend TypeScript Package
 
-Phase 7 added a TypeScript backend package inside the existing `Backend` folder
-without removing the `.NET` Lambda project. Phase 9 switches the health Lambda
-to the TypeScript artifact while keeping the `.NET` project as rollback code.
+The portal backend now runs through a TypeScript package inside the existing
+`Backend` folder. The legacy `.NET` health Lambda project remains as rollback
+code and is still packaged by the release artifact script.
 
-## Current Layout
+## Layout
 
 ```text
 Backend/
-  Apopto.Backend/        Existing .NET health Lambda project, rollback only
+  Apopto.Backend/        Legacy .NET health Lambda project, rollback only
   artifacts/             Packaged .NET and TypeScript Lambda zips, ignored
-  package.json           New TypeScript backend package config
-  package-lock.json      New TypeScript backend package lockfile
+  package.json           TypeScript backend package config
+  package-lock.json      Backend npm lockfile
   tsconfig.json          Strict NodeNext TypeScript build config
   src/
-    handlers/health.ts   Minimal Node.js /api/health handler
-    handlers/*.ts        Future grouped API handler skeletons
-    router/              Route ownership and safe placeholder routing
-    shared/              Utility skeletons for later portal handlers
+    admin/               Admin client list/detail/status/project services
+    auth/                Auth0 claim parsing and admin checks
+    billing/             Invoice metadata and Stripe portal scaffold
+    dynamodb/            Key builders, item builders, repository utilities
+    files/               File safety, metadata, presign, scan result handling
+    handlers/            Lambda entrypoints by API handler group
+    messages/            Thread/message services and optional SES notifications
+    router/              Route ownership definitions
+    shared/              Logging, response, validation, ids, time helpers
+    tenant/              Tenant resolver, feature flags, dashboard, intake
 ```
 
-## Utility Skeletons
-
-The scaffold includes these small modules for future backend handlers:
+## Handler Groups
 
 ```text
-src/shared/response.ts
-src/shared/logger.ts
-src/shared/validation.ts
-src/shared/time.ts
-src/shared/ids.ts
+handlers/health.ts          GET /api/health
+handlers/identityIntake.ts  /api/me, dashboard, intake, client profile
+handlers/files.ts           file upload/list/download/delete routes
+handlers/messages.ts        thread/message routes
+handlers/billing.ts         billing metadata and Stripe portal scaffold
+handlers/admin.ts           admin client routes
 ```
 
-`src/shared/sharedSchemaSmoke.ts` imports `FeatureFlagsSchema` and
-`FeatureFlags` from `@apopto/shared` and parses a static feature flag object.
-The `src/handlers/health.ts` handler calls that helper so the backend build and
-packaged Lambda artifact prove shared schemas are available from the backend
-package.
+See `api-routing.md` for route ownership and auth boundaries.
 
-Phase 10 adds future handler group skeletons for identity/intake, files,
-messages, billing, and admin. Those handlers are not wired to Terraform yet and
-return safe `501 not_implemented` responses if invoked directly. Route
-ownership is documented in `docs/client-portal/api-routing.md`.
+## Build And Test
 
-## Build Commands
-
-Build order for a clean checkout:
+Clean build order:
 
 ```bash
 npm run build:shared
-npm --prefix Backend install
+npm --prefix Backend ci
 npm run build:backend
-```
-
-Additional check:
-
-```bash
 npm run typecheck:backend
+npm run test:backend
 ```
 
-The existing frontend still builds separately:
+Full repo validation:
 
 ```bash
-npm --prefix Frontend run build
+npm run validate:repo
 ```
 
-## Deployment Boundary
+## Packaging
 
-No Terraform resources were changed in this phase. The live API Gateway and
-CloudFront `/api/*` behavior still point at the existing `.NET` health Lambda
-artifact. The TypeScript backend outputs to `Backend/dist`, which is ignored.
-
-Phase 8 stages that build output into a separate Lambda artifact:
+Release packaging creates:
 
 ```text
-Backend/artifacts/{environment}/portal-api
 Backend/artifacts/{environment}-portal-api.zip
 ```
 
-Phase 9 updates the existing health Lambda to consume that TypeScript zip for
-`/api/health`. The existing `.NET` artifact is still produced as a rollback
-artifact:
+Terraform points the Node.js portal Lambdas at this TypeScript artifact. The
+packaging script also creates the legacy rollback zip:
 
 ```text
 Backend/artifacts/{environment}-backend.zip
 ```
 
-Later phases can add real portal API handlers and supporting infrastructure.
-This scaffold still only contains the minimal health handler and utility
-boundary.
+## Runtime Rules
+
+- Do not log tokens, secrets, presigned URLs, or sensitive body data.
+- Private responses should use `Cache-Control: no-store`.
+- Validate request bodies with shared Zod schemas.
+- Resolve tenants server-side from the Auth0 subject and DynamoDB membership.
+- Use scoped IAM per handler group.
+- Store files in S3 and metadata in DynamoDB.

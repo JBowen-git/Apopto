@@ -495,6 +495,56 @@ variable "cloudfront_price_class" {
   }
 }
 
+variable "cloudfront_waf_rate_limiting_enabled" {
+  description = "Whether to create the optional CloudFront-scope WAF Web ACL containing API rate-limit rules. Keep false until the existing flat-rate Web ACL attachment is reviewed."
+  type        = bool
+  default     = false
+}
+
+variable "cloudfront_waf_rate_limit_action" {
+  description = "Action used by CloudFront WAF rate-limit rules when thresholds are exceeded."
+  type        = string
+  default     = "block"
+
+  validation {
+    condition     = contains(["block", "count"], var.cloudfront_waf_rate_limit_action)
+    error_message = "cloudfront_waf_rate_limit_action must be block or count."
+  }
+}
+
+variable "cloudfront_waf_api_rate_limit" {
+  description = "Maximum requests per source IP over AWS WAF's rate-based evaluation window for all /api/* paths."
+  type        = number
+  default     = 2000
+
+  validation {
+    condition     = var.cloudfront_waf_api_rate_limit >= 100
+    error_message = "cloudfront_waf_api_rate_limit must be at least 100."
+  }
+}
+
+variable "cloudfront_waf_upload_presign_rate_limit" {
+  description = "Maximum requests per source IP for /api/files/presign-upload. Set to 0 to omit the stricter upload presign rule."
+  type        = number
+  default     = 300
+
+  validation {
+    condition     = var.cloudfront_waf_upload_presign_rate_limit == 0 || var.cloudfront_waf_upload_presign_rate_limit >= 100
+    error_message = "cloudfront_waf_upload_presign_rate_limit must be 0 or at least 100."
+  }
+}
+
+variable "cloudfront_waf_messages_rate_limit" {
+  description = "Maximum requests per source IP for /api/threads message routes. Set to 0 to omit the stricter messages rule."
+  type        = number
+  default     = 600
+
+  validation {
+    condition     = var.cloudfront_waf_messages_rate_limit == 0 || var.cloudfront_waf_messages_rate_limit >= 100
+    error_message = "cloudfront_waf_messages_rate_limit must be 0 or at least 100."
+  }
+}
+
 variable "cors_allowed_headers" {
   description = "CORS headers allowed by S3 and API Gateway."
   type        = list(string)

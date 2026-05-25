@@ -1,43 +1,70 @@
-# Frontend Dashboard Shell
+# Frontend Portal Routes
 
-Phase 22 adds the first protected client portal shell at:
+The frontend keeps public marketing pages and authenticated portal pages in the
+same Vite app. `Frontend/src/App.jsx` imports route components lazily, and
+`Frontend/src/routes/AppRoutes.jsx` owns the route table.
+
+## Protected Routes
+
+Protected portal routes:
 
 ```text
 /dashboard
+/intake
+/files
+/messages
+/messages/:threadId
+/billing
+/admin/clients
+/admin/clients/:clientId
 ```
 
-The route is a client-side React route protected by `ProtectedRoute`. It calls:
+`ProtectedRoute` handles login/session loading states. API calls use the
+central tokenized API client so requests include:
 
 ```text
-GET /api/me
+Authorization: Bearer <access-token>
 ```
 
-through the tokenized API client, validates the response with the shared
-`MeResponseSchema`, and renders only minimal user, client, membership, status,
-and feature-flag information.
+## Dashboard Behavior
+
+`/dashboard` calls:
+
+```text
+GET /api/dashboard
+```
+
+The backend returns client status, feature flags, next steps, and bounded
+summary slices. The frontend renders modules based on backend feature flags:
+
+```text
+canEditIntake
+canSendMessages
+canUploadFiles
+canViewBilling
+canViewProjects
+canAccessAdmin
+```
+
+The frontend should hide unavailable modules, but backend authorization remains
+the source of enforcement.
 
 ## SPA Fallback Requirement
 
-`/dashboard` is intentionally not added to `Frontend/ssr-routes.json`. It should
-not be prerendered as public static content because it is an authenticated route.
-
-Production and staging must keep the existing SPA fallback behavior for direct
-loads and refreshes:
+Authenticated portal routes are intentionally not prerendered as public static
+content. Direct navigation should fall through to `index.html` and then React
+Router:
 
 ```text
 /dashboard -> index.html -> React Router -> ProtectedRoute
 ```
 
-The current Terraform CloudFront custom error responses for S3 `403` and `404`
-to `/index.html` support this. If those fallbacks are removed or replaced,
-direct navigation to `/dashboard` can fail before React Router loads.
+The current CloudFront custom error responses for S3 `403` and `404` support
+this. If those fallbacks change, direct loads of authenticated routes can fail
+before React Router runs.
 
-Local Vite development already supports this route through the dev server
-history fallback.
+## File Structure Rule
 
-## Deferred
-
-- No dashboard modules beyond `/api/me` context.
-- No intake UI.
-- No files, messages, billing, or admin UI.
-- No admin scopes.
+Keep `App.jsx` focused on lazy page imports and route wiring. New portal UI
+should live in page/component files, with reusable logic in feature-specific
+component directories or hooks. See `frontend-structure.md`.

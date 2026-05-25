@@ -13,6 +13,15 @@ the client portal stack.
   integration error metadata. It does not log headers, tokens, cookies, request
   bodies, or response bodies.
 
+Backend application logs are structured JSON and should include request/correlation
+context when available. Do not log:
+
+- access tokens or refresh tokens
+- cookies
+- API keys or Stripe/SES secrets
+- presigned S3 URLs
+- raw intake/message bodies unless a future redaction layer is added
+
 ## Optional Alarms
 
 CloudWatch metric alarms are paid resources, so Terraform creates no metric
@@ -67,3 +76,17 @@ enabled, including `cloudwatch:PutMetricAlarm`, `cloudwatch:DeleteAlarms`, and
 `cloudwatch:DescribeAlarms`. Depending on provider tagging behavior, alarm
 tagging may also require `cloudwatch:TagResource` and
 `cloudwatch:UntagResource`.
+
+## Runbook
+
+Use CloudWatch Logs first when debugging a single request:
+
+1. Capture the frontend/backend `requestId` or API Gateway request ID.
+2. Search the relevant Lambda log group.
+3. Check API Gateway access logs for route, status, latency, and integration
+   error metadata.
+4. If file scan behavior is involved, check the scan-result Lambda and
+   EventBridge rule metrics.
+
+Keep alarms disabled unless the team has intentionally accepted the cost and
+notification path for the target environment.

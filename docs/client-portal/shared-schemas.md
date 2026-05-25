@@ -1,8 +1,7 @@
 # Shared Schemas
 
-Phase 5 adds shared Zod schemas for client portal request and response
-contracts. These schemas live in `Shared/src/schemas` and are exported from
-`@apopto/shared`.
+Shared Zod schemas define client portal request and response contracts. These
+schemas live in `Shared/src/schemas` and are exported from `@apopto/shared`.
 
 ## Intake Schema
 
@@ -27,7 +26,7 @@ values as URLs. Optional text fields also normalize blank strings to
 
 ## Request And Response Families
 
-The shared package now includes initial contracts for:
+The shared package includes contracts for:
 
 - `UpdateIntakeRequestSchema`
 - `UpdateClientProfileRequestSchema`
@@ -35,8 +34,8 @@ The shared package now includes initial contracts for:
 - file upload/list/download requests and responses
 - message thread/message requests and summaries
 - billing invoice and Stripe portal session responses
-- admin client status/project request schemas
+- admin client list/detail/status/project request and response schemas
 
-These are validation/type contracts only. Phase 5 does not implement UI,
-backend handlers, database access, S3 uploads, billing, messages, or admin
-routes.
+Frontend and backend code should import these schemas instead of redefining
+payload shapes. Backend handlers must validate request bodies before writing to
+DynamoDB or S3.

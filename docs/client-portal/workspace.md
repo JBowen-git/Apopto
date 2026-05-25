@@ -1,17 +1,17 @@
 # Client Portal Workspace
 
-Phase 3 adds the smallest TypeScript package boundary needed for future shared
-schemas while preserving the current `Frontend`, `Backend`, and `Terraform`
+Phase 3 added the TypeScript package boundary that later portal phases now use.
+The repo still preserves the current `Frontend`, `Backend`, and `Terraform`
 folders.
 
 ## Current Package Layout
 
 ```text
-package.json        Root convenience scripts only
-Frontend/           Existing Vite React app, still managed by Frontend/package-lock.json
-Backend/            Existing .NET rollback project plus TypeScript health backend
-Shared/             New TypeScript package for future shared portal types/schemas
-Terraform/          Existing infrastructure roots, unchanged in this phase
+package.json        Root convenience scripts and validation entrypoint
+Frontend/           Vite React app and authenticated portal UI
+Backend/            TypeScript portal API plus .NET rollback project
+Shared/             Shared TypeScript/Zod schemas
+Terraform/          Bootstrap and App infrastructure roots
 ```
 
 The root `package.json` intentionally does not replace the frontend package
@@ -31,15 +31,24 @@ Package name:
 @apopto/shared
 ```
 
-It currently exports only a placeholder readiness constant and helper from:
+It exports shared Zod schemas and inferred TypeScript types from:
 
 ```text
 Shared/src/index.ts
 ```
 
-This phase does not add portal schemas, backend handlers, frontend imports, or
-runtime behavior. Future phases can add Zod schemas and then wire frontend and
-backend imports through this package.
+Schema families include:
+
+- core status enums and API envelope shapes
+- intake/profile requests and responses
+- dashboard summaries and feature flags
+- file upload/list/download contracts
+- message thread/message contracts
+- billing contracts
+- admin request and response contracts
+
+`Shared` must build before clean frontend/backend builds that consume
+`@apopto/shared`.
 
 ## Commands
 
@@ -53,6 +62,12 @@ Typecheck the shared package from the repo root:
 
 ```bash
 npm run typecheck:shared
+```
+
+Run the full validation matrix:
+
+```bash
+npm run validate:repo
 ```
 
 Build the existing frontend directly from `Frontend`:

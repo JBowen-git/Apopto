@@ -28,6 +28,8 @@ Resource names follow:
 ## Usage
 
 Bootstrap must run first so the state bucket and GitHub deploy roles exist.
+For infrastructure phases, create and review a Terraform plan before apply.
+Do not apply unless the plan has been explicitly approved.
 
 Copy and edit the examples:
 
@@ -42,14 +44,16 @@ Run staging:
 
 ```bash
 terraform init -backend-config=backends/staging.hcl
-terraform apply -var-file=environments/staging.tfvars
+terraform plan -var-file=environments/staging.tfvars -out=staging.tfplan
+terraform apply staging.tfplan
 ```
 
 Run production:
 
 ```bash
 terraform init -reconfigure -backend-config=backends/production.hcl
-terraform apply -var-file=environments/production.tfvars
+terraform plan -var-file=environments/production.tfvars -out=production.tfplan
+terraform apply production.tfplan
 ```
 
 The Lambda zip files referenced by the selected tfvars file must exist before
@@ -80,3 +84,11 @@ Alarm notification actions are empty by default. Set `cloudwatch_alarm_actions`,
 `cloudwatch_alarm_insufficient_data_actions` to SNS topic ARNs or other
 CloudWatch-supported action ARNs when an environment-specific notification path
 is ready.
+
+## CloudFront WAF
+
+Optional `/api/*` WAF rate-limit rules are defined behind
+`cloudfront_waf_rate_limiting_enabled`. The current CloudFront flat-rate plan
+requires its existing Web ACL, so Terraform intentionally does not replace that
+association during normal deploys. See
+`../../docs/client-portal/security.md` before enabling or attaching WAF changes.

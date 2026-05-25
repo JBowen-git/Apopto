@@ -1,10 +1,7 @@
 # Deployment Artifact Audit
 
-Phase 2 audit for the client portal MVP work.
-
-This document records how deployment artifacts are currently built, where they
-are staged, and what Terraform expects before any backend runtime migration is
-attempted. This phase makes no runtime, Lambda, or Terraform resource changes.
+This document records how deployment artifacts are built, where they are
+staged, and what Terraform expects before plan/apply.
 
 ## Current Artifact Flow
 
@@ -31,6 +28,9 @@ Frontend npm install
 The deployment script then runs Terraform from `Terraform/App`, using the
 selected environment backend config and tfvars file.
 
+The package script now fails early if expected artifacts are missing or empty.
+See `ci-validation.md` for the validation order and PR behavior.
+
 ## Scripts Inspected
 
 ```text
@@ -48,28 +48,12 @@ scripts/cicd/run_repo_validation.sh
 zip as a rollback artifact in these places:
 
 ```text
-lines 8-9:
-  BACKEND_PROJECT_PATH defaults to Backend
-  BACKEND_PUBLISH_PROJECT_PATH may override the project path
-
-lines 14-40:
-  resolve_backend_publish_project searches for the first non-test *.csproj
-  under Backend unless BACKEND_PUBLISH_PROJECT_PATH points to a specific file
-
-lines 77-80:
-  publish_dir = Backend/artifacts/{APP_ENVIRONMENT}/publish
-  zip_path    = Backend/artifacts/{APP_ENVIRONMENT}-backend.zip
-
-lines 85-91:
-  backend_publish_project="$(resolve_backend_publish_project)"
-  dotnet restore "${backend_publish_project}"
-  dotnet publish "${backend_publish_project}" \
-    --configuration Release \
-    --framework net10.0 \
-    --output "${publish_dir}"
-
-lines 93-96:
-  zip the dotnet publish directory into Backend/artifacts/{environment}-backend.zip
+BACKEND_PROJECT_PATH defaults to Backend
+BACKEND_PUBLISH_PROJECT_PATH may override the project path
+resolve_backend_publish_project searches for the first non-test *.csproj
+dotnet restore
+dotnet publish --configuration Release --framework net10.0
+zip publish output to Backend/artifacts/{environment}-backend.zip
 ```
 
 The `.NET` backend project that this resolves to is:
@@ -84,10 +68,10 @@ Before Phase 9, the deployed Lambda handler configured by tfvars was:
 Apopto.Backend::Apopto.Backend.Function::Health
 ```
 
-## Phase 8 TypeScript Backend Artifact
+## TypeScript Backend Artifact
 
-Phase 8 keeps the existing `.NET` artifact and adds a separate TypeScript/Node
-artifact for a later Terraform runtime migration.
+The TypeScript/Node artifact is the current portal API Lambda artifact. The
+`.NET` artifact remains available as a rollback package.
 
 The package script now accepts these TypeScript packaging settings:
 
@@ -134,69 +118,63 @@ APP_ENVIRONMENT=production
     Backend/artifacts/production/portal-api
 ```
 
-The staged TypeScript artifact currently exposes the future handler path:
+The staged TypeScript artifact exposes handler paths such as:
 
 ```text
 handlers/health.handler
+handlers/identityIntake.handler
+handlers/files.handler
+handlers/messages.handler
+handlers/billing.handler
+handlers/admin.handler
 ```
 
-Phase 9 updates the existing health Lambda tfvars to consume this TypeScript
-artifact for `/api/health`. The `.NET` artifact is still produced by the
-packaging script as a rollback artifact.
+Terraform points the portal Lambda functions at this artifact.
 
 ## Frontend And Site Renderer Artifacts
 
 The package script also owns frontend and site renderer artifact staging.
 
-Frontend build:
+Frontend build runs `npm ci` and `npm run build:ssr` inside `Frontend`.
+
+Public website staging copies `Frontend/dist` into
+`Terraform/App/.artifacts/site`, then removes the private server bundle and
+renderer manifest/template from public staging.
+
+Private site renderer staging copies the renderer manifest, renderer template,
+and server bundle into `Terraform/App/.artifacts/site-renderer`.
+
+The site renderer Lambda zip is written to:
 
 ```text
-lines 46-49:
-  cd Frontend
-  npm ci
-  PRERENDER_SITE_ORIGIN=... npm run build:ssr
+Terraform/App/lambda_packages/site-renderer.zip
 ```
 
-Public website staging:
+The site renderer Lambda is already Node.js and is separate from the portal API
+Lambdas.
+
+## Artifact Assertions
+
+Packaging fails if any of these are missing or empty:
 
 ```text
-lines 51-62:
-  staged_site_root = Terraform/App/.artifacts/site
-  copy Frontend/dist into staged_site_root
-  remove server bundle and renderer manifest/template from public staging
-  copy Terraform/App/site/error.html if needed
+Terraform/App/.artifacts/site/index.html
+Terraform/App/.artifacts/site-renderer/site-renderer-manifest.json
+Terraform/App/.artifacts/site-renderer/site-renderer-template.html
+Terraform/App/.artifacts/site-renderer/server/entry-server.js
+Backend/artifacts/{environment}-backend.zip
+Backend/artifacts/{environment}-portal-api.zip
+Terraform/App/lambda_packages/site-renderer.zip
 ```
-
-Private site renderer staging:
-
-```text
-lines 64-75:
-  copy Frontend/dist/site-renderer-manifest.json
-  copy Frontend/dist/site-renderer-template.html
-  copy Frontend/dist/server
-  into Terraform/App/.artifacts/site-renderer
-```
-
-Site renderer Lambda zip:
-
-```text
-lines 79-80:
-  renderer_zip_dir  = Terraform/App/lambda_packages
-  renderer_zip_path = Terraform/App/lambda_packages/site-renderer.zip
-
-lines 98-103:
-  zip Terraform/App/Renderer/index.mjs into site-renderer.zip
-```
-
-The site renderer Lambda is already Node.js and is separate from the backend
-health Lambda. It should not be confused with the future client portal API
-runtime migration.
 
 ## Terraform Artifact Contract
 
 Terraform expects Lambda zip files to exist before plan/apply can fully
 evaluate the Lambda resources because `source_code_hash` calls
 `filebase64sha256(...)`.
+
+Infrastructure phases should review the Terraform plan before apply, especially
+when package hashes change Lambda functions.
 
 ### Health Lambda
 
@@ -336,6 +314,7 @@ Staging deploy:
 ```text
 .github/workflows/deploy-staging.yml
   -> APP_ENVIRONMENT=staging
+  -> runs scripts/cicd/run_repo_validation.sh with package validation disabled
   -> runs scripts/cicd/package_release_artifacts.sh
   -> runs scripts/cicd/deploy_app_stack.sh
      with Terraform/App, staging backend config, staging tfvars, apply
@@ -346,6 +325,7 @@ Production release:
 ```text
 .github/workflows/release-production.yml
   -> APP_ENVIRONMENT=production
+  -> runs scripts/cicd/run_repo_validation.sh with package validation disabled
   -> runs scripts/cicd/package_release_artifacts.sh
   -> runs scripts/cicd/deploy_app_stack.sh
      with Terraform/App, production backend config, production tfvars
@@ -358,18 +338,17 @@ Production release:
 `scripts/cicd/run_repo_validation.sh` currently validates the repo by:
 
 ```text
-npm ci in Frontend
-npm run lint --if-present
-PRERENDER_SITE_ORIGIN=... npm run build:ssr
-dotnet build first publishable Backend/*.csproj
-dotnet test any Backend/*Tests.csproj projects
+Shared npm ci, build, typecheck, test
+Backend TypeScript npm ci, build, typecheck, test
+legacy .NET backend build and any discovered .NET tests
+Frontend npm ci, optional lint, typecheck, test, SSR/prerender build
+release artifact packaging unless RUN_ARTIFACT_PACKAGE_VALIDATION=false
 terraform fmt -check -recursive
 terraform init -backend=false and validate for Terraform/Bootstrap
 terraform init -backend=false and validate for Terraform/App
 ```
 
-This means a future backend TypeScript migration must update both release
-packaging and validation, not only Terraform.
+See `ci-validation.md` for the current validation runbook.
 
 ## Migration Path Status
 
