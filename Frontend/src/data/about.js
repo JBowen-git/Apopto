@@ -13,9 +13,7 @@ export const aboutPrinciples = [
   },
 ]
 
-export const aboutPicturePlaceholders = [
-  {
-    title: 'About page vertical placeholder',
-    image: '/assets/images/about/about-image-placeholder-1.svg',
-  },
-]
+export const aboutProfileImage = {
+  image: '/assets/images/about/profile-picture.webp',
+  alt: 'Jake Bowen, founder of Apopto',
+}

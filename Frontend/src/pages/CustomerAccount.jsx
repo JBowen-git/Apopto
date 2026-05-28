@@ -3,15 +3,26 @@ import { Navigate } from 'react-router-dom'
 import { bootstrapPortalContext } from '../api/portalBootstrap'
 import { useApiClient } from '../api/useApiClient'
 import { useApoptoAuth } from '../auth.jsx'
+import { resolvePostLoginReturnTo } from '../authToken'
 
 export default function CustomerAccount() {
-  const { error, isAuthenticated, isConfigured, isLoading, login, logout, user } = useApoptoAuth()
+  const { error, getAccessToken, isAuthenticated, isConfigured, isLoading, login, logout, user } = useApoptoAuth()
   const apiClient = useApiClient()
-  const bootstrapQuery = useQuery({
+  const landingQuery = useQuery({
     enabled: isConfigured && !isLoading && isAuthenticated,
+    queryKey: ['postLoginLanding', 'account'],
+    queryFn: async () => resolvePostLoginReturnTo('/dashboard', await getAccessToken()),
+    staleTime: 30_000,
+  })
+  const bootstrapQuery = useQuery({
+    enabled: landingQuery.isSuccess && landingQuery.data === '/dashboard',
     queryKey: ['me'],
     queryFn: () => bootstrapPortalContext(apiClient),
   })
+
+  if (landingQuery.isSuccess && landingQuery.data !== '/dashboard') {
+    return <Navigate replace to={landingQuery.data} />
+  }
 
   if (bootstrapQuery.isSuccess) {
     return <Navigate replace to="/dashboard" />
@@ -61,7 +72,7 @@ export default function CustomerAccount() {
           </div>
         ) : null}
 
-        {isConfigured && !isLoading && isAuthenticated && bootstrapQuery.isLoading ? (
+        {isConfigured && !isLoading && isAuthenticated && (landingQuery.isLoading || bootstrapQuery.isLoading) ? (
           <div className="account-status-panel">
             <h2>Preparing your dashboard.</h2>
             <p>Your customer portal account is being connected.</p>

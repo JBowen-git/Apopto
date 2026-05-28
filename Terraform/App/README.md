@@ -62,6 +62,11 @@ The Lambda zip files referenced by the selected tfvars file must exist before
 `auth0_domain` and `auth0_audience` must be configured before relying on
 protected routes. See `../../docs/client-portal/auth0-setup.md`.
 
+Runtime secrets are manually created in SSM Parameter Store. Terraform receives
+parameter names only, such as `stripe_secret_key_parameter_name`, and grants
+the runtime Lambda permission to read the parameter. See
+`../../docs/client-portal/parameter-store-secrets.md`.
+
 The `/api/*` CloudFront behavior uses a dedicated origin request policy for
 Auth0 and CORS headers. See
 `../../docs/client-portal/cloudfront-api-hardening.md`.

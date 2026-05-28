@@ -1,6 +1,27 @@
 import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from '../components/routing/ProtectedRoute'
+import PortalWorkspaceShell from '../components/layout/PortalWorkspaceShell'
 import { portfolioDetailPages } from '../data/portfolio.js'
+
+function clientWorkspace(children) {
+  return (
+    <ProtectedRoute>
+      <PortalWorkspaceShell variant="client">
+        {children}
+      </PortalWorkspaceShell>
+    </ProtectedRoute>
+  )
+}
+
+function adminWorkspace(children) {
+  return (
+    <ProtectedRoute>
+      <PortalWorkspaceShell variant="admin">
+        {children}
+      </PortalWorkspaceShell>
+    </ProtectedRoute>
+  )
+}
 
 export default function AppRoutes({ pages }) {
   const {
@@ -55,67 +76,35 @@ export default function AppRoutes({ pages }) {
       <Route path="/callback" element={<AuthCallback />} />
       <Route
         path="/dashboard"
-        element={(
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        )}
+        element={clientWorkspace(<Dashboard />)}
       />
       <Route
         path="/intake"
-        element={(
-          <ProtectedRoute>
-            <Intake />
-          </ProtectedRoute>
-        )}
+        element={clientWorkspace(<Intake />)}
       />
       <Route
         path="/files"
-        element={(
-          <ProtectedRoute>
-            <Files />
-          </ProtectedRoute>
-        )}
+        element={clientWorkspace(<Files />)}
       />
       <Route
         path="/messages"
-        element={(
-          <ProtectedRoute>
-            <Messages />
-          </ProtectedRoute>
-        )}
+        element={clientWorkspace(<Messages />)}
       />
       <Route
         path="/messages/:threadId"
-        element={(
-          <ProtectedRoute>
-            <MessageThread />
-          </ProtectedRoute>
-        )}
+        element={clientWorkspace(<MessageThread />)}
       />
       <Route
         path="/billing"
-        element={(
-          <ProtectedRoute>
-            <Billing />
-          </ProtectedRoute>
-        )}
+        element={clientWorkspace(<Billing />)}
       />
       <Route
         path="/admin/clients"
-        element={(
-          <ProtectedRoute>
-            <AdminClients />
-          </ProtectedRoute>
-        )}
+        element={adminWorkspace(<AdminClients />)}
       />
       <Route
         path="/admin/clients/:clientId"
-        element={(
-          <ProtectedRoute>
-            <AdminClientDetail />
-          </ProtectedRoute>
-        )}
+        element={adminWorkspace(<AdminClientDetail />)}
       />
       <Route path="/account" element={<CustomerAccount />} />
       <Route path="/error" element={<ErrorPage />} />

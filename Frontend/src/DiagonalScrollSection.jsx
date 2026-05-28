@@ -34,42 +34,54 @@ const focusCards = [
   {
     number: '01',
     title: 'DYNAMIC WEBSITES',
-    detail: 'Content, motion, and data respond as visitors move.',
+    detail: 'Content, motion, and data respond as visitors move through the page.',
+    expandedDetail:
+      'Built with React and TypeScript, each section can change based on user input, scroll position, device size, or live business data.',
     hitIndex: 1,
     side: 'left',
   },
   {
     number: '02',
     title: 'LIVE SYSTEMS',
-    detail: 'Forms connect to APIs, dashboards, and alerts.',
+    detail: 'Forms connect to APIs, dashboards, alerts, and business workflows.',
+    expandedDetail:
+      'Every submission can route somewhere useful: a CRM, email sequence, database, admin panel, analytics event, or internal notification.',
     hitIndex: 2,
     side: 'right',
   },
   {
     number: '03',
     title: 'ADAPTIVE JOURNEYS',
-    detail: 'The route can shift around intent and behavior.',
+    detail: 'The experience can shift around intent, behavior, and context.',
+    expandedDetail:
+      'Instead of sending every visitor down the same path, the site can surface relevant content, calls to action, and next steps based on how people interact.',
     hitIndex: 3,
     side: 'left',
   },
   {
     number: '04',
     title: 'USEFUL INTERACTIONS',
-    detail: 'Clicks can trigger analytics and workflow updates.',
+    detail: 'Clicks can trigger analytics, automations, and workflow updates.',
+    expandedDetail:
+      'Buttons, forms, filters, calculators, and portals become part of the business system, not just decorative interface elements.',
     hitIndex: 4,
     side: 'right',
   },
   {
     number: '05',
     title: 'BUILT TO EVOLVE',
-    detail: 'The site keeps growing without feeling heavy.',
+    detail: 'The product keeps growing without feeling heavy or stitched together.',
+    expandedDetail:
+      'Reusable components, structured data, and scalable cloud architecture make it easier to add pages, features, dashboards, and integrations over time.',
     hitIndex: 5,
     side: 'left',
   },
   {
     number: '06',
     title: 'RESULTS LOOP',
-    detail: 'Leads, sales, calls, and data feed the next move.',
+    detail: 'Leads, sales, calls, and user data feed the next move.',
+    expandedDetail:
+      'Analytics and conversion data show what people actually do, so the product can keep improving after launch.',
     hitIndex: 6,
     side: 'right',
   },
@@ -276,6 +288,7 @@ export default function DiagonalScrollSection() {
         card.style.setProperty('--focus-top', `${focusTop.toFixed(1)}px`)
         card.style.setProperty('--focus-x', `${focusX.toFixed(1)}px`)
         card.style.setProperty('--focus-y', `${focusY.toFixed(1)}px`)
+        card.dataset.active = presence > 0.18 ? 'true' : 'false'
       })
 
       section.querySelectorAll('[data-pong-mobile-card]').forEach((cardNode) => {
@@ -370,6 +383,7 @@ export default function DiagonalScrollSection() {
         {focusCards.map((card) => (
           <article
             className={`pong-focus-card pong-focus-card-${card.side}`}
+            data-active="false"
             data-pong-focus-card
             data-hit-index={card.hitIndex}
             key={card.number}
@@ -381,10 +395,12 @@ export default function DiagonalScrollSection() {
               '--focus-x': '0px',
               '--focus-y': '36px',
             }}
+            tabIndex={0}
           >
             <p className="pong-focus-kicker">{card.number} /</p>
             <h3>{card.title}</h3>
-            <p>{card.detail}</p>
+            <p className="pong-focus-summary">{card.detail}</p>
+            <p className="pong-focus-detail">{card.expandedDetail}</p>
           </article>
         ))}
       </div>

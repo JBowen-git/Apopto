@@ -133,10 +133,10 @@ export default function Files() {
 
   return (
     <section className="account-page files-page" aria-labelledby="files-title">
-      <div className="account-card dashboard-shell files-shell">
-        <p className="account-eyebrow">Client portal</p>
-        <div className="dashboard-heading">
+      <div className="account-card dashboard-shell files-shell portal-page-shell">
+        <div className="portal-page-header dashboard-heading">
           <div>
+            <p className="account-eyebrow">Client portal</p>
             <h1 id="files-title">Files</h1>
             <p className="files-page-lede">
               Share project assets safely without routing file bytes through the API.
@@ -145,45 +145,49 @@ export default function Files() {
           <span className="dashboard-status-pill">{formatPortalChoice(dashboard.client.status)}</span>
         </div>
 
-        <div className="files-layout">
-          <FileGuidancePanel />
-          {canUseFiles ? (
-            <FileUploadPanel
-              errorMessage={errorMessage(uploadMutation.error)}
-              onUpload={uploadMutation.mutateAsync}
-              projects={dashboard.projects}
-              statusMessage={uploadMutation.isPending
-                ? 'Uploading directly to S3, then confirming the file metadata.'
-                : undefined}
-              uploading={uploadMutation.isPending}
-            />
-          ) : (
-            <section className="account-status-panel files-unavailable-panel">
-              <span className="dashboard-panel-label">File access</span>
-              <h2>Uploads are not open for this status.</h2>
-              <p>{unavailableMessage(dashboard)}</p>
-              <Link className="account-secondary-action dashboard-card-link" to="/dashboard">
-                Back to dashboard
-              </Link>
-            </section>
-          )}
-        </div>
+        <div className="portal-workspace-two-column files-layout">
+          <div className="portal-workspace-panel-stack portal-workspace-scroll">
+            <FileGuidancePanel />
+            {canUseFiles ? (
+              <FileUploadPanel
+                errorMessage={errorMessage(uploadMutation.error)}
+                onUpload={uploadMutation.mutateAsync}
+                projects={dashboard.projects}
+                statusMessage={uploadMutation.isPending
+                  ? 'Uploading directly to S3, then confirming the file metadata.'
+                  : undefined}
+                uploading={uploadMutation.isPending}
+              />
+            ) : (
+              <section className="account-status-panel files-unavailable-panel">
+                <span className="dashboard-panel-label">File access</span>
+                <h2>Uploads are not open for this status.</h2>
+                <p>{unavailableMessage(dashboard)}</p>
+                <Link className="account-secondary-action dashboard-card-link" to="/dashboard">
+                  Back to dashboard
+                </Link>
+              </section>
+            )}
+          </div>
 
-        {canListFiles ? (
-          <FileList
-            deletingFileId={deleteMutation.variables ?? null}
-            downloadingFileId={downloadMutation.variables ?? null}
-            errorMessage={
-              errorMessage(filesQuery.error)
-              ?? errorMessage(downloadMutation.error)
-              ?? errorMessage(deleteMutation.error)
-            }
-            files={filesQuery.data?.files ?? []}
-            loading={filesQuery.isLoading}
-            onDelete={(fileId) => deleteMutation.mutate(fileId)}
-            onDownload={(fileId) => downloadMutation.mutate(fileId)}
-          />
-        ) : null}
+          <div className="portal-workspace-scroll">
+            {canListFiles ? (
+              <FileList
+                deletingFileId={deleteMutation.variables ?? null}
+                downloadingFileId={downloadMutation.variables ?? null}
+                errorMessage={
+                  errorMessage(filesQuery.error)
+                  ?? errorMessage(downloadMutation.error)
+                  ?? errorMessage(deleteMutation.error)
+                }
+                files={filesQuery.data?.files ?? []}
+                loading={filesQuery.isLoading}
+                onDelete={(fileId) => deleteMutation.mutate(fileId)}
+                onDownload={(fileId) => downloadMutation.mutate(fileId)}
+              />
+            ) : null}
+          </div>
+        </div>
       </div>
     </section>
   );

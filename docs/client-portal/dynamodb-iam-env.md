@@ -21,11 +21,12 @@ MAX_UPLOAD_BYTES
 SES_FROM_EMAIL
 SES_NOTIFICATION_TO_EMAIL
 PORTAL_BASE_URL
-STRIPE_SECRET_KEY
+STRIPE_SECRET_KEY_PARAMETER_NAME
 ```
 
-Optional secrets should be absent when the integration is disabled. Do not
-commit real values.
+Optional integration configuration should be absent when the integration is
+disabled. Stripe secret values live in manually managed SSM SecureString
+parameters and are fetched by the billing Lambda at runtime.
 
 ## Handler Groups
 

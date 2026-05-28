@@ -12,9 +12,7 @@ export default function Home() {
         <div className="hero-content">
           <HeroShineText text="Apopto" />
           <p className="hero-tagline">
-            Programmed to evolve.
-            <br />
-            Designed to impress.
+            Websites Engineered <span className="keep-together">for Growth</span>
           </p>
           <span className="accent-line" aria-hidden="true" />
           <p className="lede">
@@ -49,11 +47,13 @@ export default function Home() {
         <FlyInBox className="home-showcase-header" threshold={0.18}>
           <p className="home-intro-eyebrow">Launch sequence</p>
           <h2 id="home-showcase-title">
-            From first impression to working system.
+            <span className="home-showcase-title-line">From first impression to</span>
+            {' '}
+            <span className="home-showcase-title-line">dynamic system</span>
           </h2>
           <p>
-            Apopto shapes each page as a route through message, proof, action, and room
-            for the digital product to keep growing.
+            Apopto turns your site into a responsive, data-driven system built with
+            modern React, TypeScript, and AWS architecture designed to scale.
           </p>
         </FlyInBox>
         <DiagonalScrollSection />
@@ -61,16 +61,19 @@ export default function Home() {
       <section className="home-pong-cover-section" aria-labelledby="home-pong-cover-title">
         <div className="home-pong-cover-inner">
           <p className="home-intro-eyebrow">Next level</p>
-          <h2 id="home-pong-cover-title">Motion is only the opening move.</h2>
+          <h2 id="home-pong-cover-title">
+            Every move
+            <br />
+            changes the system.
+          </h2>
           <p>
-            Apopto turns polished interfaces into connected systems: lead capture,
-            dashboards, automations, and launch paths that keep working after the first
-            visit.
+            User behavior, forms, analytics, and automations feed into connected
+            workflows designed to evolve over time.
           </p>
           <div className="home-pong-cover-points" aria-label="Post-launch capabilities">
-            <span>Forms to workflows</span>
-            <span>Dashboards to decisions</span>
-            <span>Launches to iteration</span>
+            <span>Interactions to insight</span>
+            <span>Motion to response</span>
+            <span>Visits to conversion</span>
           </div>
         </div>
       </section>

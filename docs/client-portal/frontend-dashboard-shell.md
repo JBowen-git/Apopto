@@ -26,6 +26,17 @@ central tokenized API client so requests include:
 Authorization: Bearer <access-token>
 ```
 
+## Workspace Shell Goal
+
+Protected client and admin routes should move toward a dedicated workspace
+shell inspired by the Xavier ecommerce admin design. The goal is documented in
+`protected-workspace-shell-goal.md`.
+
+At a high level, protected routes should eventually use a separate workspace
+navigation bar with a top-left home button, avoid the public marketing
+header/footer, and lock desktop pages to the viewport while allowing internal
+panel scrolling.
+
 ## Dashboard Behavior
 
 `/dashboard` calls:

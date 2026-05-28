@@ -7,6 +7,25 @@ type AdminClientListProps = {
   clients: AdminClientSummary[];
 };
 
+function clientName(client: AdminClientSummary) {
+  return client.businessName || client.contactName || 'New Client';
+}
+
+function clientInitials(client: AdminClientSummary) {
+  const initials = clientName(client)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
+  return initials || 'NC';
+}
+
+function clientContact(client: AdminClientSummary) {
+  return client.contactEmail ?? client.phone ?? client.primaryContactUserId;
+}
+
 export default function AdminClientList({ clients }: AdminClientListProps) {
   if (clients.length === 0) {
     return (
@@ -21,8 +40,9 @@ export default function AdminClientList({ clients }: AdminClientListProps) {
   return (
     <section className="admin-client-list" aria-label="Admin client list">
       <div className="admin-list-heading" aria-hidden="true">
-        <span>Client</span>
-        <span>Status</span>
+        <span>Profile</span>
+        <span>Lifecycle</span>
+        <span>Contact</span>
         <span>Updated</span>
       </div>
       {clients.map((client) => (
@@ -31,11 +51,23 @@ export default function AdminClientList({ clients }: AdminClientListProps) {
           key={client.clientId}
           to={`/admin/clients/${encodeURIComponent(client.clientId)}`}
         >
-          <span className="admin-client-primary">
-            <strong>{client.businessName || 'New Client'}</strong>
-            <small>{client.contactEmail ?? client.contactName ?? client.clientId}</small>
+          <span className="admin-client-profile">
+            <span className="admin-client-avatar" aria-hidden="true">
+              {clientInitials(client)}
+            </span>
+            <span className="admin-client-primary">
+              <strong>{clientName(client)}</strong>
+              <small>{client.industry ?? 'Industry not set'} / {client.clientId}</small>
+            </span>
           </span>
-          <AdminStatusBadge status={client.status} />
+          <span className="admin-client-stage">
+            <AdminStatusBadge status={client.status} />
+            <small>Primary user {client.primaryContactUserId}</small>
+          </span>
+          <span className="admin-client-contact">
+            <strong>{client.contactName ?? 'Contact not set'}</strong>
+            <small>{clientContact(client)}</small>
+          </span>
           <span className="admin-client-updated">{formatAdminDateTime(client.updatedAt)}</span>
         </Link>
       ))}

@@ -47,7 +47,10 @@ Those workflows then run `scripts/cicd/package_release_artifacts.sh` once in the
 - TypeScript backend Lambda zip when enabled
 - site-renderer Lambda zip
 
-The package step still does not require Auth0, Stripe, SES, or browser-upload secrets. It only needs normal build dependencies and, if configured, SSM/AWS role access for deploy-time environment export.
+The package step still does not require Auth0, Stripe, SES, or browser-upload
+secrets. It only needs normal build dependencies. Deployment can optionally use
+SSM/AWS role access to validate required runtime parameters, but Stripe secret
+values should not be exported into Terraform variables.
 
 ## Local Commands
 

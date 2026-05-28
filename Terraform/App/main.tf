@@ -41,6 +41,8 @@ locals {
 
 data "aws_caller_identity" "current" {}
 
+data "aws_partition" "current" {}
+
 data "aws_cloudfront_cache_policy" "caching_optimized" {
   name = "Managed-CachingOptimized"
 }
@@ -412,8 +414,8 @@ resource "aws_lambda_function" "billing" {
         CLIENT_PORTAL_TABLE  = aws_dynamodb_table.client_portal.name
         PORTAL_HANDLER_GROUP = "billing"
       },
-      trimspace(var.stripe_secret_key) != "" ? {
-        STRIPE_SECRET_KEY = trimspace(var.stripe_secret_key)
+      local.client_portal_stripe_secret_key_parameter_name != "" ? {
+        STRIPE_SECRET_KEY_PARAMETER_NAME = local.client_portal_stripe_secret_key_parameter_name
       } : {},
     )
   }
@@ -421,6 +423,7 @@ resource "aws_lambda_function" "billing" {
   depends_on = [
     aws_cloudwatch_log_group.billing_lambda,
     aws_iam_role_policy.billing_dynamodb,
+    aws_iam_role_policy.billing_ssm,
     aws_iam_role_policy_attachment.billing_lambda_basic,
   ]
 

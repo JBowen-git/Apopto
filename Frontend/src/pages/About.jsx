@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { aboutPicturePlaceholders, aboutPrinciples } from '../data/about.js'
+import { aboutPrinciples, aboutProfileImage } from '../data/about.js'
 
 export default function About() {
   const aboutPageRef = useRef(null)
@@ -81,51 +81,76 @@ export default function About() {
         <div className="about-copy">
           <h1>About Apopto</h1>
           <p>
-            Apopto is a technology and website-building company focused on helping
-            businesses create modern, professional, and effective online experiences.
+            Apopto is an engineering-focused web development company that helps
+            businesses build websites and web applications designed to grow with them.
+          </p>
+          <p>
+            Strong digital products are built through clear communication, practical
+            systems, and thoughtful collaboration. The goal is not to force every
+            business into the same structure. The goal is to understand what the business
+            needs, what its customers need, and what kind of digital system can support
+            both.
           </p>
           <p>
             Led by Jake Bowen, Apopto takes a personal, hands-on approach to every
-            project. Strong websites are built through strong communication, which is why
-            every client relationship is centered on clarity, transparency, and
-            collaboration from start to finish. Clients are kept informed, ideas are
-            discussed openly, and each decision is made with the goals of the business in
-            mind.
+            project. Clients work directly with the person building the system, with an
+            emphasis on trust, transparency, and clear communication from start to finish.
           </p>
           <p>
-            At Apopto, clients are not treated like templates. Every business has its own
-            personality, challenges, audience, and vision, and every website should
-            reflect that. Instead of relying on one-size-fits-all solutions, Apopto
-            creates custom websites designed around the specific needs, style, and purpose
-            of each business.
+            Apopto does not treat businesses like templates, and it does not build
+            websites that feel like templates either. Every business has its own offer,
+            audience, workflow, and way of earning trust. A strong website should reflect
+            that.
           </p>
           <p>
-            Creativity is at the heart of the process. Whether building a business
-            website, landing page, portfolio, or custom digital solution, Apopto focuses
-            on creating websites that feel original, look sharp, and make a strong
-            impression. Design and technology work together to create an online presence
-            that is both visually engaging and easy to use.
+            Many modern websites have started to feel the same: generic layouts,
+            overloaded pages, aggressive conversion tactics, and features added because
+            they are trendy rather than useful. In the push for more keywords, more
+            buttons, more popups, and more automation, it is easy for a site to lose
+            clarity, performance, and brand identity.
           </p>
           <p>
-            Apopto uses modern technologies like React and AWS to build websites that are
-            clean, responsive, scalable, secure, and ready to grow with the business. The
-            focus is always on performance, reliability, clarity, and trust.
+            Apopto takes a different approach.
+          </p>
+          <p>
+            Design matters, but design should serve the business and the visitor. A
+            website should be visually engaging without being overwhelming. It should feel
+            recognizable without becoming cluttered. It should guide people clearly
+            without pressuring them into action before they are ready.
+          </p>
+          <p>
+            Engineering matters too. Behind the interface, a website should be fast,
+            reliable, responsive, and structured for future growth. Apopto builds on a
+            modern React and AWS foundation, creating sites that can support forms,
+            dashboards, data flows, automations, integrations, and new features as the
+            business evolves.
+          </p>
+          <p>
+            Core growth features should not feel mysterious or locked behind arbitrary
+            tiers. Apopto aims to give clients clear explanations, practical
+            documentation, and a better understanding of the systems behind their site,
+            from SEO and performance to data, infrastructure, and long-term
+            maintainability.
           </p>
           <p>
             The goal is simple: build websites that communicate clearly, work smoothly,
-            and help businesses stand out online.
+            and help businesses grow.
           </p>
           <p>
-            Apopto builds websites that help businesses evolve.
+            Apopto builds digital systems that are polished on the surface, solid
+            underneath, and ready to evolve.
           </p>
         </div>
 
-        <div className="about-picture-placeholders" aria-hidden="true">
-          {aboutPicturePlaceholders.map((placeholder) => (
-            <div className="about-picture-box" key={placeholder.title}>
-              <img src={placeholder.image} alt="" />
-            </div>
-          ))}
+        <div className="about-profile-media">
+          <figure className="about-profile-card">
+            <img
+              src={aboutProfileImage.image}
+              alt={aboutProfileImage.alt}
+              decoding="async"
+              loading="lazy"
+            />
+          </figure>
         </div>
       </div>
     </section>

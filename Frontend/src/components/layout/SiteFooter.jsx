@@ -27,7 +27,7 @@ export default function SiteFooter() {
         </nav>
 
         <div className="site-footer-cta">
-          <p>Ready to shape the next launch?</p>
+          <p>Checking future availability?</p>
           <Link className="footer-cta-link" to="/start-a-project">
             Start a Project
             <span aria-hidden="true">-&gt;</span>
@@ -36,8 +36,9 @@ export default function SiteFooter() {
       </div>
 
       <div className="site-footer-bottom">
-        <span>Programmed to evolve.</span>
-        <span>Designed to impress.</span>
+        <span>
+          Websites Engineered <span className="keep-together">for Growth</span>
+        </span>
       </div>
     </footer>
   )

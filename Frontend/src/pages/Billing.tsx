@@ -95,10 +95,10 @@ export default function Billing() {
 
   return (
     <section className="account-page billing-page" aria-labelledby="billing-title">
-      <div className="account-card dashboard-shell billing-shell">
-        <p className="account-eyebrow">Client portal</p>
-        <div className="dashboard-heading">
+      <div className="account-card dashboard-shell billing-shell portal-page-shell">
+        <div className="portal-page-header dashboard-heading">
           <div>
+            <p className="account-eyebrow">Client portal</p>
             <h1 id="billing-title">Billing</h1>
             <p className="billing-page-lede">
               Review invoice metadata and open Stripe-hosted billing tools when available.
@@ -117,18 +117,22 @@ export default function Billing() {
             </Link>
           </section>
         ) : (
-          <div className="billing-layout">
-            <InvoiceList
-              errorMessage={errorMessage(billingQuery.error)}
-              invoices={billingQuery.data?.invoices ?? []}
-              loading={billingQuery.isLoading}
-            />
-            <StripePortalPanel
-              errorMessage={errorMessage(portalMutation.error)}
-              onOpenPortal={() => portalMutation.mutate()}
-              opening={portalMutation.isPending}
-              stripeUnconfigured={stripeUnconfigured}
-            />
+          <div className="portal-workspace-two-column billing-layout">
+            <div className="portal-workspace-scroll">
+              <InvoiceList
+                errorMessage={errorMessage(billingQuery.error)}
+                invoices={billingQuery.data?.invoices ?? []}
+                loading={billingQuery.isLoading}
+              />
+            </div>
+            <div className="portal-workspace-scroll">
+              <StripePortalPanel
+                errorMessage={errorMessage(portalMutation.error)}
+                onOpenPortal={() => portalMutation.mutate()}
+                opening={portalMutation.isPending}
+                stripeUnconfigured={stripeUnconfigured}
+              />
+            </div>
           </div>
         )}
       </div>

@@ -23,16 +23,22 @@ import {
   type ApiGatewayLikeResponse,
   type ResponseRequestContext,
 } from '../shared/response.js';
+import {
+  resolveRuntimeParameter,
+  type RuntimeParameterResolver,
+} from '../shared/parameterStore.js';
 
 export type BillingHandlerEnvironment = {
   CLIENT_PORTAL_TABLE?: string;
   STRIPE_SECRET_KEY?: string;
+  STRIPE_SECRET_KEY_PARAMETER_NAME?: string;
 };
 
 export type BillingHandlerDependencies = {
   createStripePortalSession?: StripePortalSessionCreator;
   environment?: BillingHandlerEnvironment;
   repository?: BillingRepository;
+  resolveRuntimeParameter?: RuntimeParameterResolver;
 };
 
 const notImplementedHandler = createNotImplementedHandler('billing', billingRoutes);
@@ -77,9 +83,30 @@ function getRequiredEnvironment(environment: BillingHandlerEnvironment) {
   }
 
   return {
-    stripeSecretKey: environment.STRIPE_SECRET_KEY?.trim(),
+    stripeSecretKey: environment.STRIPE_SECRET_KEY?.trim() || undefined,
+    stripeSecretKeyParameterName: environment.STRIPE_SECRET_KEY_PARAMETER_NAME?.trim() || undefined,
     tableName,
   };
+}
+
+async function resolveStripeSecretKey({
+  directValue,
+  parameterName,
+  resolver,
+}: {
+  directValue?: string;
+  parameterName?: string;
+  resolver: RuntimeParameterResolver;
+}) {
+  if (directValue) {
+    return directValue;
+  }
+
+  if (!parameterName) {
+    return undefined;
+  }
+
+  return resolver(parameterName);
 }
 
 function scopeFailureResponse(
@@ -130,7 +157,11 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
 
     try {
       const environment = dependencies.environment ?? process.env;
-      const { stripeSecretKey, tableName } = getRequiredEnvironment(environment);
+      const {
+        stripeSecretKey,
+        stripeSecretKeyParameterName,
+        tableName,
+      } = getRequiredEnvironment(environment);
       const repository = dependencies.repository ?? defaultRepository(tableName);
       const claims = parseAuth0Claims(event);
       const routeScopeFailure = scopeFailureResponse(routeKey, claims, responseContext);
@@ -152,12 +183,18 @@ export function createBillingHandler(dependencies: BillingHandlerDependencies = 
         return jsonResponse(200, result.response, responseContext);
       }
 
+      const resolvedStripeSecretKey = await resolveStripeSecretKey({
+        directValue: stripeSecretKey,
+        parameterName: stripeSecretKeyParameterName,
+        resolver: dependencies.resolveRuntimeParameter ?? resolveRuntimeParameter,
+      });
+
       const result = await createStripePortalSession({
         auth0Sub: claims.sub,
         body: parseJsonBody(event),
         createStripePortalSession: dependencies.createStripePortalSession,
         repository,
-        stripeSecretKey,
+        stripeSecretKey: resolvedStripeSecretKey,
       });
 
       if (!result.ok) {

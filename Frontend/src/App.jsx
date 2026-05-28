@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import Layout from './components/layout/Layout.jsx'
 import RouteLoadingFallback from './components/routing/RouteLoadingFallback.jsx'
+import ScrollToTop from './components/routing/ScrollToTop.jsx'
 import AppRoutes from './routes/AppRoutes.jsx'
 
 const About = lazy(() => import('./pages/About.jsx'))
@@ -50,6 +51,7 @@ const pages = {
 export default function App() {
   return (
     <Layout>
+      <ScrollToTop />
       <Suspense fallback={<RouteLoadingFallback />}>
         <AppRoutes pages={pages} />
       </Suspense>

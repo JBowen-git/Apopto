@@ -4,6 +4,14 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { insightArticles, insightCategories } from '../../data/insights.js'
 import { toArticleId } from '../../utils/toArticleId.js'
 
+function getArticleId(article) {
+  return typeof article === 'string' ? toArticleId(article) : article.id
+}
+
+function getArticleTitle(article) {
+  return typeof article === 'string' ? article : article.title
+}
+
 export default function InsightsNav() {
   const { pathname } = useLocation()
   const isMobileInsights = useMediaQuery('(max-width: 980px)')
@@ -121,15 +129,16 @@ export default function InsightsNav() {
                           {subcategory.name}
                         </ListSubheader>
                         <div className="insights-example-article-list">
-                          {subcategory.articles.map((articleTitle) => {
-                            const articleId = toArticleId(articleTitle)
+                          {subcategory.articles.map((article) => {
+                            const articleId = getArticleId(article)
+                            const articleTitle = getArticleTitle(article)
                             const isSelected = articleId === currentArticle.id
 
                             return (
                               <ListItemButton
                                 className="insights-example-article"
                                 component={NavLink}
-                                key={articleTitle}
+                                key={articleId}
                                 onClick={closeMobileInsights}
                                 selected={isSelected}
                                 to={`/insights/${articleId}`}

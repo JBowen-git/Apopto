@@ -164,11 +164,26 @@ variable "ses_notification_to_email" {
   }
 }
 
-variable "stripe_secret_key" {
-  description = "Optional Stripe secret key used by the billing Lambda to create customer portal sessions. Leave empty to return the 501 scaffold fallback."
+variable "stripe_secret_key_parameter_name" {
+  description = "Optional manually managed SSM Parameter Store SecureString name for the Stripe secret key. Leave empty to return the 501 scaffold fallback."
   type        = string
   default     = ""
-  sensitive   = true
+
+  validation {
+    condition     = trimspace(var.stripe_secret_key_parameter_name) == "" || can(regex("^/[A-Za-z0-9_.\\-/]+$", trimspace(var.stripe_secret_key_parameter_name)))
+    error_message = "stripe_secret_key_parameter_name must be empty or an absolute SSM parameter path such as /apopto/staging/stripe/secret-key."
+  }
+}
+
+variable "stripe_secret_key_kms_key_arn" {
+  description = "Optional customer-managed KMS key ARN used to encrypt the Stripe SecureString parameter. Leave empty when using the AWS-managed SSM key."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = trimspace(var.stripe_secret_key_kms_key_arn) == "" || can(regex("^arn:[A-Za-z0-9-]+:kms:[A-Za-z0-9-]+:[0-9]{12}:key/[A-Za-z0-9-]+$", trimspace(var.stripe_secret_key_kms_key_arn)))
+    error_message = "stripe_secret_key_kms_key_arn must be empty or a valid KMS key ARN."
+  }
 }
 
 variable "auth0_domain" {

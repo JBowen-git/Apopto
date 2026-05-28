@@ -28,6 +28,13 @@ locals {
     ? trimspace(var.ses_notification_to_email)
     : local.client_portal_ses_from_email
   )
+  client_portal_stripe_secret_key_parameter_name = trimspace(var.stripe_secret_key_parameter_name)
+  client_portal_stripe_secret_key_parameter_arn = (
+    local.client_portal_stripe_secret_key_parameter_name != ""
+    ? "arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${trimprefix(local.client_portal_stripe_secret_key_parameter_name, "/")}"
+    : ""
+  )
+  client_portal_stripe_secret_key_kms_key_arn = trimspace(var.stripe_secret_key_kms_key_arn)
 }
 
 resource "aws_dynamodb_table" "client_portal" {
@@ -401,6 +408,50 @@ resource "aws_iam_role_policy" "billing_dynamodb" {
   name   = "${local.resource_prefix}-billing-dynamodb"
   role   = aws_iam_role.billing_lambda.id
   policy = data.aws_iam_policy_document.billing_dynamodb.json
+}
+
+data "aws_iam_policy_document" "billing_ssm" {
+  count = local.client_portal_stripe_secret_key_parameter_name != "" ? 1 : 0
+
+  statement {
+    sid    = "ReadStripeSecretKeyParameter"
+    effect = "Allow"
+
+    actions = [
+      "ssm:GetParameter",
+    ]
+
+    resources = [local.client_portal_stripe_secret_key_parameter_arn]
+  }
+
+  dynamic "statement" {
+    for_each = local.client_portal_stripe_secret_key_kms_key_arn != "" ? [local.client_portal_stripe_secret_key_kms_key_arn] : []
+
+    content {
+      sid    = "DecryptStripeSecretKeyParameter"
+      effect = "Allow"
+
+      actions = [
+        "kms:Decrypt",
+      ]
+
+      resources = [statement.value]
+
+      condition {
+        test     = "StringEquals"
+        variable = "kms:ViaService"
+        values   = ["ssm.${var.aws_region}.amazonaws.com"]
+      }
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "billing_ssm" {
+  count = local.client_portal_stripe_secret_key_parameter_name != "" ? 1 : 0
+
+  name   = "${local.resource_prefix}-billing-ssm"
+  role   = aws_iam_role.billing_lambda.id
+  policy = data.aws_iam_policy_document.billing_ssm[0].json
 }
 
 resource "aws_iam_role" "file_scan_result_lambda" {

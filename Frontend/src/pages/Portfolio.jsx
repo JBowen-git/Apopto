@@ -33,7 +33,10 @@ export default function Portfolio() {
       >
         <div className="portfolio-story-paper-intro">
           <p className="portfolio-project-label">Portfolio approach</p>
-          <h2>Websites shaped around the people who use them.</h2>
+          <h2>
+            Every build starts with a simple question: what should this page help someone
+            understand, trust, and do?
+          </h2>
           <nav className="portfolio-quick-links" aria-label="Portfolio quick links">
             {portfolioQuickLinks.map((link) => (
               <Link key={link.to} to={link.to}>
@@ -44,42 +47,36 @@ export default function Portfolio() {
         </div>
         <div className="portfolio-story-paper-body" id="portfolio-details">
           <p>
-            Every project starts with the person on the other side of the screen: what
-            they need to understand, what they need to trust, and what action should feel
-            natural when they are ready.
+            Apopto takes an engineering-led approach to websites and web applications.
+            The goal is not to fill a page with every possible component, effect, or
+            conversion trick. The goal is to build a technically sound system that feels
+            clear, reliable, recognizable, and easy to move through.
           </p>
           <p>
-            These builds are shaped around clear messaging, strong visual hierarchy, and
-            practical paths from first impression to inquiry, purchase, booking, or launch.
+            Design still matters, but it has a job. Layout, motion, copy, and calls to
+            action should make the offer easier to understand, not louder or more
+            complicated. Sometimes the strongest choice is the simplest one: fewer
+            distractions, cleaner structure, faster pages, and a path that helps visitors
+            take the next step without feeling overwhelmed.
           </p>
           <p>
-            The result is a portfolio of websites that feel custom to the business behind
-            them, while staying structured enough to grow as the offer evolves.
+            The work here shows how a website can become more than a static brochure.
+            Some projects need lead capture, booking flows, dashboards, automations,
+            customer portals, internal tools, or AWS-backed infrastructure. Others need a
+            focused public-facing site that explains the offer clearly and earns trust
+            before asking for action.
           </p>
           <p>
-            Each page is designed to make the next step obvious without flattening the
-            brand into a template. Layout, motion, calls to action, and supporting content
-            are chosen around the offer and the people it needs to reach.
+            Each build is shaped around the business, the customer, and the system behind
+            the page. That means clear messaging, responsive layouts, reliable data
+            flows, practical components, and enough flexibility to add new campaigns,
+            pages, services, or products later.
           </p>
           <p>
-            This gives every build a practical foundation: a polished visual impression,
-            a clear content path, and room for future campaigns, pages, products, or
-            service lines.
-          </p>
-          <p>
-            Some projects need a bold first screen that immediately frames the offer.
-            Others need a quieter path with proof, comparisons, service details, and
-            supporting content that helps a visitor move at their own pace.
-          </p>
-          <p>
-            The strongest portfolio work is not just visually polished. It is practical:
-            easy to update, easy to expand, and structured so new offers or campaigns can
-            be added without rebuilding the entire site.
-          </p>
-          <p>
-            The common thread is care: care for the brand, care for the visitor, and care
-            for the business owner who needs the site to become a useful part of how they
-            sell, explain, and grow.
+            This portfolio is a mix of completed work, build breakdowns, and concept
+            directions. Together, they show a systems-first approach to webapp
+            development: polished enough to represent the brand, simple enough to use,
+            and strong enough to keep supporting growth after launch.
           </p>
         </div>
       </section>

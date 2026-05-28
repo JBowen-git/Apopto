@@ -16,17 +16,17 @@ export default function Contact() {
           <h1>What happens next?</h1>
           <p>
             Send a message with the basics and I’ll take it from there. Whether you have
-            a quick question, need help with an existing site, or want to explore a future
-            project, I’ll respond with a clear next step.
+            a quick question, need help with an existing site, or want to understand
+            future availability, I’ll respond with a clear next step.
           </p>
           <ul>
             <li>Review your message and contact preference.</li>
             <li>Reply with an answer, recommendation, or follow-up question.</li>
-            <li>Direct larger projects to the full project intake form.</li>
+            <li>Share current availability before any larger project discussion.</li>
             <li>Keep the conversation focused and easy to start.</li>
           </ul>
           <div className="contact-next-cta">
-            <h2>Know Exactly What You Want?</h2>
+            <h2>Planning Future Work?</h2>
             <Link className="button primary contact-next-button" to="/start-a-project">
               Start a Project
               <span className="button-arrow" aria-hidden="true">

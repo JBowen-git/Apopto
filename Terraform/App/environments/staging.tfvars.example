@@ -11,7 +11,8 @@ frontend_site_origin = "https://replace-with-staging-cloudfront-or-domain"
 
 ses_from_email            = ""
 ses_notification_to_email = ""
-stripe_secret_key         = ""
+stripe_secret_key_parameter_name = ""
+stripe_secret_key_kms_key_arn    = ""
 
 auth0_domain   = "replace-with-staging-auth0-domain"
 auth0_audience = "https://replace-with-staging-api-audience"

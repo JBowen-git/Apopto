@@ -42,7 +42,7 @@ Current public routes:
 - `/error`
 
 Static frontend assets live in `public/assets/` and are served from `/assets/`.
-The homepage uses `/assets/images/homepage-hero-background.png`; reference-only
+The homepage uses `/assets/images/homepage-hero-background.webp`; reference-only
 design images should stay outside `public/` so they are not deployed.
 
 ## Auth0 customer accounts

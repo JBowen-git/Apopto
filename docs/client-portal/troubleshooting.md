@@ -100,9 +100,10 @@ must not receive download URLs.
 
 ## Stripe Portal Button Says Not Configured
 
-That is expected when `STRIPE_SECRET_KEY` is absent. Billing metadata can still
-render. Add Stripe configuration later through a secure environment mechanism;
-do not commit Stripe keys.
+That is expected when `STRIPE_SECRET_KEY_PARAMETER_NAME` is absent. Billing
+metadata can still render. Add Stripe configuration by manually creating the
+SSM SecureString parameter, then set only the parameter name in Terraform.
+Do not commit Stripe keys.
 
 ## SES Messages Do Not Send
 

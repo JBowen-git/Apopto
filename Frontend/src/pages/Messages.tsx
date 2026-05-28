@@ -90,10 +90,10 @@ export default function Messages() {
 
   return (
     <section className="account-page messages-page" aria-labelledby="messages-title">
-      <div className="account-card dashboard-shell messages-shell">
-        <p className="account-eyebrow">Client portal</p>
-        <div className="dashboard-heading">
+      <div className="account-card dashboard-shell messages-shell portal-page-shell">
+        <div className="portal-page-header dashboard-heading">
           <div>
+            <p className="account-eyebrow">Client portal</p>
             <h1 id="messages-title">Messages</h1>
             <p className="messages-page-lede">
               Keep project questions, decisions, and next steps in one protected place.
@@ -109,17 +109,21 @@ export default function Messages() {
             <p>{unavailableMessage(dashboard)}</p>
           </section>
         ) : (
-          <div className="messages-layout">
-            <MessageThreadList
-              errorMessage={errorMessage(threadsQuery.error)}
-              loading={threadsQuery.isLoading}
-              threads={threadsQuery.data?.threads ?? []}
-            />
-            <NewThreadForm
-              errorMessage={errorMessage(createThreadMutation.error)}
-              onCreate={createThreadMutation.mutateAsync}
-              saving={createThreadMutation.isPending}
-            />
+          <div className="portal-workspace-two-column messages-layout">
+            <div className="portal-workspace-scroll">
+              <MessageThreadList
+                errorMessage={errorMessage(threadsQuery.error)}
+                loading={threadsQuery.isLoading}
+                threads={threadsQuery.data?.threads ?? []}
+              />
+            </div>
+            <div className="portal-workspace-scroll">
+              <NewThreadForm
+                errorMessage={errorMessage(createThreadMutation.error)}
+                onCreate={createThreadMutation.mutateAsync}
+                saving={createThreadMutation.isPending}
+              />
+            </div>
           </div>
         )}
       </div>

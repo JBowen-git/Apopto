@@ -84,6 +84,10 @@ approves that apply. CI validation must not apply Terraform.
   staging acceptance matrix.
 - `final-validation-report.md` records the latest Phase 50 validation run,
   cleanup review, and deferred work.
+- `parameter-store-secrets.md` documents manually managed SSM Parameter Store
+  secrets and the Terraform wiring that references parameter names only.
+- `protected-workspace-shell-goal.md` captures the Xavier-inspired protected
+  workspace navigation and non-scrolling desktop layout goal.
 - `troubleshooting.md` covers the most common local, Auth0, API, Terraform,
   upload, billing, and CI problems.
 
@@ -103,11 +107,11 @@ Optional backend integrations are safe to leave unset during validation:
 ```text
 SES_FROM_EMAIL=
 SES_NOTIFICATION_TO_EMAIL=
-STRIPE_SECRET_KEY=
+STRIPE_SECRET_KEY_PARAMETER_NAME=
 ```
 
-Never commit real secret values. Use untracked local tfvars files, GitHub
-Actions secrets/variables, SSM export hooks, or shell environment variables.
+Never commit real secret values. Runtime secrets belong in manually created
+SSM SecureString parameters; Terraform should receive only parameter names.
 
 ## Validation
 

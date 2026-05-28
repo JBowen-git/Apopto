@@ -96,10 +96,10 @@ export default function MessageThread() {
 
   return (
     <section className="account-page messages-page" aria-labelledby="message-thread-page-title">
-      <div className="account-card dashboard-shell messages-shell">
-        <p className="account-eyebrow">Client portal</p>
-        <div className="dashboard-heading">
+      <div className="account-card dashboard-shell messages-shell portal-page-shell">
+        <div className="portal-page-header dashboard-heading">
           <div>
+            <p className="account-eyebrow">Client portal</p>
             <h1 id="message-thread-page-title">Messages</h1>
             <p className="messages-page-lede">
               Reply with plain text or simple markdown-style notes. Raw HTML is never rendered.
@@ -118,21 +118,25 @@ export default function MessageThread() {
             </Link>
           </section>
         ) : (
-          <div className="messages-layout messages-layout-thread">
-            <MessageThreadList
-              activeThreadId={threadId}
-              errorMessage={errorMessage(threadsQuery.error)}
-              loading={threadsQuery.isLoading}
-              threads={threadsQuery.data?.threads ?? []}
-            />
-            <MessageThreadView
-              errorMessage={errorMessage(replyMutation.error) ?? errorMessage(threadMessagesQuery.error)}
-              loading={threadMessagesQuery.isLoading}
-              messages={threadMessagesQuery.data?.messages ?? []}
-              onReply={replyMutation.mutateAsync}
-              replying={replyMutation.isPending}
-              thread={threadMessagesQuery.data?.thread}
-            />
+          <div className="portal-workspace-two-column messages-layout messages-layout-thread">
+            <div className="portal-workspace-scroll">
+              <MessageThreadList
+                activeThreadId={threadId}
+                errorMessage={errorMessage(threadsQuery.error)}
+                loading={threadsQuery.isLoading}
+                threads={threadsQuery.data?.threads ?? []}
+              />
+            </div>
+            <div className="portal-workspace-scroll">
+              <MessageThreadView
+                errorMessage={errorMessage(replyMutation.error) ?? errorMessage(threadMessagesQuery.error)}
+                loading={threadMessagesQuery.isLoading}
+                messages={threadMessagesQuery.data?.messages ?? []}
+                onReply={replyMutation.mutateAsync}
+                replying={replyMutation.isPending}
+                thread={threadMessagesQuery.data?.thread}
+              />
+            </div>
           </div>
         )}
       </div>

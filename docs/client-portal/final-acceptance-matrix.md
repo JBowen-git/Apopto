@@ -222,7 +222,7 @@ Rollback:
 
 Setup:
 
-- Leave `STRIPE_SECRET_KEY` unset for staging fallback validation.
+- Leave `stripe_secret_key_parameter_name` unset for staging fallback validation.
 - Add test invoice metadata if needed.
 
 Steps:

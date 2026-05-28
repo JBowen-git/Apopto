@@ -50,6 +50,7 @@ export default function AdminClientDetail() {
     enabled: Boolean(clientId),
     queryKey: ['adminClient', clientId],
     queryFn: () => getAdminClientDetail(apiClient, clientId ?? ''),
+    staleTime: 60_000,
   });
   const statusMutation = useMutation({
     mutationFn: (status: ClientStatus) => {
@@ -77,7 +78,7 @@ export default function AdminClientDetail() {
   if (detailQuery.isLoading) {
     return (
       <LoadingState
-        message="Checking admin permissions and loading the bounded client detail."
+        message="Loading client detail."
         title="Opening client detail."
       />
     );
@@ -103,43 +104,74 @@ export default function AdminClientDetail() {
     );
   }
 
+  const stageQueuePath = `/admin/clients?status=${encodeURIComponent(detail.client.status)}`;
+  const contactLabel = detail.client.contactEmail ?? detail.client.contactName ?? 'No contact set';
+
   return (
     <section className="account-page admin-page" aria-labelledby="admin-client-title">
-      <div className="account-card dashboard-shell admin-shell">
-        <div className="admin-page-header">
+      <div className="account-card dashboard-shell admin-shell portal-page-shell portal-admin-detail-shell">
+        <div className="admin-page-header portal-page-header">
           <div>
             <p className="account-eyebrow">Internal admin</p>
             <h1 id="admin-client-title">{detail.client.businessName || 'New Client'}</h1>
+            <p className="admin-hero-copy">{contactLabel}</p>
           </div>
           <Link className="account-secondary-action dashboard-card-link" to="/admin/clients">
-            Client list
+            Command center
           </Link>
         </div>
 
-        <section className="account-status-panel admin-detail-hero">
-          <div className="dashboard-section-heading">
-            <span className="dashboard-panel-label">Lifecycle management</span>
-            <h2>Current status</h2>
-            <p>Last updated {formatAdminDateTime(detail.client.updatedAt)}</p>
+        <div className="portal-admin-detail-grid">
+          <div className="portal-workspace-panel-stack portal-workspace-scroll">
+            <nav className="admin-quick-actions admin-detail-quick-actions" aria-label="Client quick actions">
+              <Link className="admin-quick-action" to="/admin/clients">
+                <span>All profiles</span>
+                <small>Return to lifecycle command</small>
+              </Link>
+              <Link className="admin-quick-action" to={stageQueuePath}>
+                <span>Stage queue</span>
+                <small>View matching clients</small>
+              </Link>
+              {detail.client.contactEmail ? (
+                <a className="admin-quick-action" href={`mailto:${detail.client.contactEmail}`}>
+                  <span>Email contact</span>
+                  <small>{detail.client.contactEmail}</small>
+                </a>
+              ) : null}
+              <Link className="admin-quick-action admin-quick-action-muted" to="/messages">
+                <span>Messages</span>
+                <small>Open portal threads</small>
+              </Link>
+            </nav>
+
+            <section className="account-status-panel admin-detail-hero">
+              <div className="dashboard-section-heading">
+                <span className="dashboard-panel-label">Lifecycle management</span>
+                <h2>Current status</h2>
+                <p>Last updated {formatAdminDateTime(detail.client.updatedAt)}</p>
+              </div>
+              <AdminStatusBadge status={detail.client.status} />
+              <AdminStatusChanger
+                error={statusMutation.isError ? saveErrorMessage(statusMutation.error) : undefined}
+                onChangeStatus={(status) => statusMutation.mutateAsync(status).then(() => undefined)}
+                saving={statusMutation.isPending}
+                status={detail.client.status}
+              />
+            </section>
+
+            <AdminClientOverview detail={detail} />
+            <AdminIntakeSummary intake={detail.intake} />
           </div>
-          <AdminStatusBadge status={detail.client.status} />
-          <AdminStatusChanger
-            error={statusMutation.isError ? saveErrorMessage(statusMutation.error) : undefined}
-            onChangeStatus={(status) => statusMutation.mutateAsync(status).then(() => undefined)}
-            saving={statusMutation.isPending}
-            status={detail.client.status}
-          />
-        </section>
 
-        <AdminClientOverview detail={detail} />
-        <AdminIntakeSummary intake={detail.intake} />
+          <div className="portal-workspace-panel-stack portal-workspace-scroll">
+            <div className="admin-detail-grid">
+              <AdminProjectList projects={detail.projects} />
+              <AdminPeoplePanel memberships={detail.memberships} users={detail.users} />
+            </div>
 
-        <div className="admin-detail-grid">
-          <AdminProjectList projects={detail.projects} />
-          <AdminPeoplePanel memberships={detail.memberships} users={detail.users} />
+            <AdminRecentActivity auditEvents={detail.auditEvents} />
+          </div>
         </div>
-
-        <AdminRecentActivity auditEvents={detail.auditEvents} />
       </div>
     </section>
   );

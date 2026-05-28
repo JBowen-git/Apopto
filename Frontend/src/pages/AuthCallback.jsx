@@ -1,20 +1,56 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { bootstrapPortalContext } from '../api/portalBootstrap'
-import { useApiClient } from '../api/useApiClient'
 import { useApoptoAuth } from '../auth.jsx'
+import { resolvePostLoginReturnTo } from '../authToken'
+
+const authReturnToKey = 'apopto.auth.returnTo'
+
+function callbackReturnTo() {
+  if (typeof window === 'undefined') {
+    return '/dashboard'
+  }
+
+  const returnTo = window.sessionStorage.getItem(authReturnToKey)
+  window.sessionStorage.removeItem(authReturnToKey)
+
+  return typeof returnTo === 'string'
+    && returnTo.startsWith('/')
+    && !returnTo.startsWith('//')
+    && !returnTo.startsWith('/callback')
+    ? returnTo
+    : '/dashboard'
+}
 
 export default function AuthCallback() {
-  const { error, isAuthenticated, isConfigured, isLoading } = useApoptoAuth()
-  const apiClient = useApiClient()
-  const bootstrapQuery = useQuery({
-    enabled: isConfigured && !isLoading && isAuthenticated,
-    queryKey: ['me'],
-    queryFn: () => bootstrapPortalContext(apiClient),
-  })
+  const { error, getAccessToken, isAuthenticated, isConfigured, isLoading } = useApoptoAuth()
+  const [returnTo, setReturnTo] = useState(null)
 
-  if (bootstrapQuery.isSuccess) {
-    return <Navigate replace to="/dashboard" />
+  useEffect(() => {
+    if (!isConfigured || isLoading || !isAuthenticated || error) {
+      return undefined
+    }
+
+    let ignore = false
+
+    async function resolveReturnTo() {
+      const fallbackReturnTo = callbackReturnTo()
+      const token = await getAccessToken()
+      const resolvedReturnTo = resolvePostLoginReturnTo(fallbackReturnTo, token)
+
+      if (!ignore) {
+        setReturnTo(resolvedReturnTo)
+      }
+    }
+
+    void resolveReturnTo()
+
+    return () => {
+      ignore = true
+    }
+  }, [error, getAccessToken, isAuthenticated, isConfigured, isLoading])
+
+  if (returnTo) {
+    return <Navigate replace to={returnTo} />
   }
 
   return (
@@ -38,17 +74,17 @@ export default function AuthCallback() {
           </div>
         ) : null}
 
-        {isConfigured && !isLoading && isAuthenticated && bootstrapQuery.isLoading ? (
+        {isConfigured && !isLoading && isAuthenticated ? (
           <div className="account-status-panel">
-            <h2>Preparing your dashboard.</h2>
-            <p>Your portal access is being connected.</p>
+            <h2>Sign in is complete.</h2>
+            <p>Opening your secure workspace.</p>
           </div>
         ) : null}
 
-        {isConfigured && (error || bootstrapQuery.isError) ? (
+        {isConfigured && error ? (
           <div className="account-status-panel account-status-panel-error">
             <h2>Authentication needs attention.</h2>
-            <p>{error?.message ?? bootstrapQuery.error?.message ?? 'Your portal access could not be prepared.'}</p>
+            <p>{error.message}</p>
             <Link className="button secondary" to="/account">
               Return to account
             </Link>

@@ -338,6 +338,83 @@ describe('billing handler routes', () => {
     });
   });
 
+  it('loads the Stripe secret key from Parameter Store when configured by name', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      invoiceItem(1, {
+        stripeCustomerId: 'cus_client',
+      }),
+    ]);
+    const createStripePortalSession = vi.fn(async () => ({
+      url: 'https://billing.stripe.test/session',
+    }));
+    const resolveRuntimeParameter = vi.fn(async () => 'sk_test_from_ssm');
+    const handler = createBillingHandler({
+      createStripePortalSession,
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        STRIPE_SECRET_KEY_PARAMETER_NAME: '/apopto/test/stripe/secret-key',
+      },
+      repository,
+      resolveRuntimeParameter,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'POST /api/billing/stripe-portal-session',
+    }), context);
+    const body = responseBody(response);
+
+    expect(response.statusCode).toBe(200);
+    expect(body).toMatchObject({
+      url: 'https://billing.stripe.test/session',
+    });
+    expect(resolveRuntimeParameter).toHaveBeenCalledWith('/apopto/test/stripe/secret-key');
+    expect(createStripePortalSession).toHaveBeenCalledWith({
+      customerId: 'cus_client',
+      returnUrl: undefined,
+      stripeSecretKey: 'sk_test_from_ssm',
+    });
+  });
+
+  it('prefers a direct Stripe secret key over a Parameter Store name', async () => {
+    const repository = fakeRepository([
+      userItem(),
+      clientItem(),
+      membershipItem(),
+      invoiceItem(1, {
+        stripeCustomerId: 'cus_client',
+      }),
+    ]);
+    const createStripePortalSession = vi.fn(async () => ({
+      url: 'https://billing.stripe.test/session',
+    }));
+    const resolveRuntimeParameter = vi.fn(async () => 'sk_test_from_ssm');
+    const handler = createBillingHandler({
+      createStripePortalSession,
+      environment: {
+        CLIENT_PORTAL_TABLE: 'ClientPortal-test',
+        STRIPE_SECRET_KEY: 'sk_test_direct',
+        STRIPE_SECRET_KEY_PARAMETER_NAME: '/apopto/test/stripe/secret-key',
+      },
+      repository,
+      resolveRuntimeParameter,
+    });
+
+    const response = await handler(apiEvent({
+      routeKey: 'POST /api/billing/stripe-portal-session',
+    }), context);
+
+    expect(response.statusCode).toBe(200);
+    expect(resolveRuntimeParameter).not.toHaveBeenCalled();
+    expect(createStripePortalSession).toHaveBeenCalledWith({
+      customerId: 'cus_client',
+      returnUrl: undefined,
+      stripeSecretKey: 'sk_test_direct',
+    });
+  });
+
   it('ignores clientId in the request body when creating a Stripe portal session', async () => {
     const repository = fakeRepository([
       userItem(),
