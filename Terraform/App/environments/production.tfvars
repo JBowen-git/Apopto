@@ -9,8 +9,8 @@ site_renderer_lambda_zip_path = "lambda_packages/site-renderer.zip"
 
 frontend_site_origin = ""
 
-auth0_domain   = "replace-with-production-auth0-domain"
-auth0_audience = "https://replace-with-production-api-audience"
+auth0_domain   = "dev-746g37dhd2m2q4g4.us.auth0.com"
+auth0_audience = "https://apopto.net"
 
 cors_allowed_origins = [
   "http://localhost:5173",
