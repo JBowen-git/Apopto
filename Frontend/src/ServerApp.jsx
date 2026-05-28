@@ -1,4 +1,7 @@
+import { Suspense } from 'react'
 import Layout from './components/layout/Layout.jsx'
+import RouteLoadingFallback from './components/routing/RouteLoadingFallback.jsx'
+import ScrollToTop from './components/routing/ScrollToTop.jsx'
 import About from './pages/About.jsx'
 import AdminClientDetail from './pages/AdminClientDetail'
 import AdminClients from './pages/AdminClients'
@@ -16,7 +19,6 @@ import MessageThread from './pages/MessageThread'
 import Messages from './pages/Messages'
 import NotFound from './pages/NotFound.jsx'
 import Portfolio from './pages/Portfolio.jsx'
-import PortfolioDetailPage from './pages/PortfolioDetailPage.jsx'
 import Solutions from './pages/Solutions.jsx'
 import StartAProject from './pages/StartAProject.jsx'
 import AppRoutes from './routes/AppRoutes.jsx'
@@ -39,7 +41,6 @@ const pages = {
   Messages,
   NotFound,
   Portfolio,
-  PortfolioDetailPage,
   Solutions,
   StartAProject,
 }
@@ -47,7 +48,10 @@ const pages = {
 export default function ServerApp() {
   return (
     <Layout>
-      <AppRoutes pages={pages} />
+      <ScrollToTop />
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <AppRoutes pages={pages} />
+      </Suspense>
     </Layout>
   )
 }

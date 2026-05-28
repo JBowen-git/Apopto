@@ -13,7 +13,7 @@ const rendererTemplatePath = path.join(distRoot, rendererTemplateRelativePath)
 const rendererManifestPath = path.join(distRoot, 'site-renderer-manifest.json')
 const serverEntryPath = path.join(distRoot, 'server', 'entry-server.js')
 
-const siteOrigin = (process.env.PRERENDER_SITE_ORIGIN || 'https://example.com').replace(/\/+$/, '')
+const siteOrigin = (process.env.PRERENDER_SITE_ORIGIN || 'https://apopto.net').replace(/\/+$/, '')
 const routeConfig = JSON.parse(await fs.readFile(routeConfigPath, 'utf8'))
 const template = await fs.readFile(templatePath, 'utf8')
 const { render } = await import(pathToFileURL(serverEntryPath).href)
@@ -53,12 +53,15 @@ async function buildSiteRendererManifest() {
   return {
     buildId: buildHash.digest('hex'),
     generatedAt: new Date().toISOString(),
+    defaultOgImage: routeConfig.defaultOgImage || '',
     llmsDescription: routeConfig.llmsDescription || routeConfig.siteDescription || '',
+    organization: routeConfig.organization || {},
     routes: routeConfig.routes,
     serverEntryPath: 'server/entry-server.js',
     serverFiles,
     siteDescription: routeConfig.siteDescription || '',
     siteName: routeConfig.siteName || 'Apopto',
+    solutionServices: routeConfig.solutionServices || [],
     templatePath: rendererTemplateRelativePath,
   }
 }
@@ -80,14 +83,191 @@ function routeOutputPath(routePath) {
   return path.join(distRoot, routePath.replace(/^\/+/, ''), 'index.html')
 }
 
+function absoluteUrl(value) {
+  if (!value) {
+    return ''
+  }
+
+  return /^https?:\/\//i.test(value)
+    ? value
+    : new URL(value, siteOrigin).toString()
+}
+
+function routeTitle(route) {
+  return route.metaTitle || (route.title ? `${route.title} | ${routeConfig.siteName}` : routeConfig.siteName)
+}
+
+function isSitemapRoute(route) {
+  return route.sitemap !== false && !route.noindex
+}
+
+function jsonLdScript(schema) {
+  return `<script type="application/ld+json">${JSON.stringify(schema).replaceAll('<', '\\u003c')}</script>`
+}
+
+function organizationId() {
+  return `${siteOrigin}/#organization`
+}
+
+function websiteId() {
+  return `${siteOrigin}/#website`
+}
+
+function buildOrganizationSchema() {
+  const organization = routeConfig.organization || {}
+  const sameAs = Array.isArray(organization.sameAs)
+    ? organization.sameAs.filter(Boolean)
+    : []
+  const serviceTypes = Array.isArray(organization.serviceTypes)
+    ? organization.serviceTypes.filter(Boolean)
+    : []
+  const logo = absoluteUrl(organization.logo || routeConfig.defaultOgImage)
+
+  return {
+    '@type': organization.type || 'ProfessionalService',
+    '@id': organizationId(),
+    name: routeConfig.siteName,
+    url: new URL('/', siteOrigin).toString(),
+    description: organization.description || routeConfig.siteDescription || '',
+    ...(logo ? { logo, image: logo } : {}),
+    founder: {
+      '@type': 'Person',
+      name: organization.founderName || 'Jake Bowen',
+      ...(sameAs.length ? { sameAs } : {}),
+    },
+    ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
+    ...(serviceTypes.length ? { serviceType: serviceTypes } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+  }
+}
+
+function buildWebsiteSchema() {
+  return {
+    '@type': 'WebSite',
+    '@id': websiteId(),
+    name: routeConfig.siteName,
+    url: new URL('/', siteOrigin).toString(),
+    description: routeConfig.siteDescription || '',
+    publisher: {
+      '@id': organizationId(),
+    },
+  }
+}
+
+function buildBreadcrumbSchema(route) {
+  const routeUrl = new URL(route.path, siteOrigin).toString()
+
+  return {
+    '@type': 'BreadcrumbList',
+    '@id': `${routeUrl}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: new URL('/', siteOrigin).toString(),
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: route.breadcrumb || route.title || routeConfig.siteName,
+        item: routeUrl,
+      },
+    ],
+  }
+}
+
+function buildSolutionsServiceSchema(route) {
+  const organization = routeConfig.organization || {}
+  const services = Array.isArray(routeConfig.solutionServices)
+    ? routeConfig.solutionServices.filter((service) => service?.name)
+    : []
+
+  return {
+    '@type': 'Service',
+    '@id': `${new URL(route.path, siteOrigin).toString()}#service`,
+    name: route.title,
+    description: route.description || '',
+    provider: {
+      '@id': organizationId(),
+    },
+    ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
+    ...(Array.isArray(organization.serviceTypes) ? { serviceType: organization.serviceTypes } : {}),
+    ...(services.length ? {
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: 'Apopto web development services',
+        itemListElement: services.map((service, index) => ({
+          '@type': 'Offer',
+          position: index + 1,
+          itemOffered: {
+            '@type': 'Service',
+            name: service.name,
+            description: service.description || '',
+            provider: {
+              '@id': organizationId(),
+            },
+            ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
+          },
+        })),
+      },
+    } : {}),
+  }
+}
+
+function buildStructuredDataScript(route) {
+  const graph = []
+
+  if (route.path === '/' || route.path === '/about' || route.path === '/solutions') {
+    graph.push(buildOrganizationSchema())
+  }
+
+  if (route.path === '/') {
+    graph.push(buildWebsiteSchema())
+  }
+
+  if (route.path !== '/' && isSitemapRoute(route)) {
+    graph.push(buildBreadcrumbSchema(route))
+  }
+
+  if (route.path === '/solutions') {
+    graph.push(buildSolutionsServiceSchema(route))
+  }
+
+  if (graph.length === 0) {
+    return ''
+  }
+
+  return jsonLdScript({
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  })
+}
+
 function withHead(templateHtml, route, renderResult) {
-  const title = route.title ? `${route.title} | ${routeConfig.siteName}` : routeConfig.siteName
+  const title = routeTitle(route)
   const description = route.description || routeConfig.siteDescription || ''
-  const canonicalUrl = `${siteOrigin}${route.path}`
+  const canonicalUrl = new URL(route.path, siteOrigin).toString()
+  const ogImage = absoluteUrl(route.ogImage || routeConfig.defaultOgImage)
+  const structuredDataScript = buildStructuredDataScript(route)
   const headHtml = [
     `<title>${escapeHtml(title)}</title>`,
     description ? `<meta name="description" content="${escapeHtml(description)}">` : '',
     `<link rel="canonical" href="${escapeHtml(canonicalUrl)}">`,
+    `<meta property="og:title" content="${escapeHtml(route.ogTitle || title)}">`,
+    description ? `<meta property="og:description" content="${escapeHtml(route.ogDescription || description)}">` : '',
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}">`,
+    `<meta property="og:type" content="${escapeHtml(route.ogType || 'website')}">`,
+    `<meta property="og:site_name" content="${escapeHtml(routeConfig.siteName)}">`,
+    ogImage ? `<meta property="og:image" content="${escapeHtml(ogImage)}">` : '',
+    ogImage ? `<meta property="og:image:width" content="${escapeHtml(route.ogImageWidth || '1200')}">` : '',
+    ogImage ? `<meta property="og:image:height" content="${escapeHtml(route.ogImageHeight || '630')}">` : '',
+    `<meta name="twitter:card" content="${escapeHtml(route.twitterCard || 'summary_large_image')}">`,
+    `<meta name="twitter:title" content="${escapeHtml(route.twitterTitle || route.ogTitle || title)}">`,
+    description ? `<meta name="twitter:description" content="${escapeHtml(route.twitterDescription || route.ogDescription || description)}">` : '',
+    ogImage ? `<meta name="twitter:image" content="${escapeHtml(route.twitterImage ? absoluteUrl(route.twitterImage) : ogImage)}">` : '',
+    route.noindex || route.sitemap === false ? '<meta name="robots" content="noindex">' : '',
+    structuredDataScript,
     renderResult.headHtml || '',
   ]
     .filter(Boolean)
@@ -121,7 +301,13 @@ for (const route of routeConfig.routes) {
 }
 
 const sitemapEntries = routeConfig.routes
-  .map((route) => `  <url><loc>${escapeHtml(`${siteOrigin}${route.path}`)}</loc></url>`)
+  .filter(isSitemapRoute)
+  .map((route) => [
+    '  <url>',
+    `    <loc>${escapeHtml(new URL(route.path, siteOrigin).toString())}</loc>`,
+    route.lastmod ? `    <lastmod>${escapeHtml(route.lastmod)}</lastmod>` : '',
+    '  </url>',
+  ].filter(Boolean).join('\n'))
   .join('\n')
 
 await writeTextFile(
@@ -131,7 +317,7 @@ await writeTextFile(
 
 await writeTextFile(
   path.join(distRoot, 'robots.txt'),
-  `User-agent: *\nAllow: /\nDisallow: /internal/\nSitemap: ${siteOrigin}/sitemap.xml\n`,
+  `User-agent: *\nAllow: /\n\nSitemap: ${new URL('/sitemap.xml', siteOrigin).toString()}\n`,
 )
 
 await writeTextFile(

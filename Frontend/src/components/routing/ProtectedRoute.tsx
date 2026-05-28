@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useApoptoAuth } from '../../auth.jsx';
+import { useApoptoAuth } from '../../authContext.jsx';
 import ErrorState from '../app/ErrorState';
 import LoadingState from '../app/LoadingState';
 

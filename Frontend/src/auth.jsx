@@ -1,10 +1,12 @@
-import { createContext, useContext } from 'react'
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react'
+import {
+  auth0Audience,
+  auth0ClientId,
+  auth0Domain,
+  hasAuth0Config,
+} from './authConfig.js'
+import { ApoptoAuthContext, StaticApoptoAuthProvider, useApoptoAuth } from './authContext.jsx'
 
-const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN ?? ''
-const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID ?? ''
-const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE ?? ''
-const hasAuth0Config = Boolean(auth0Domain && auth0ClientId)
 const authReturnToKey = 'apopto.auth.returnTo'
 const clientAuthScopeList = [
   'openid',
@@ -62,17 +64,6 @@ function pendingReturnTo() {
   return isInternalReturnTo(value) ? value : undefined
 }
 
-const ApoptoAuthContext = createContext({
-  error: undefined,
-  isAuthenticated: false,
-  isConfigured: false,
-  isLoading: false,
-  login: () => {},
-  logout: () => {},
-  user: undefined,
-  getAccessToken: async () => undefined,
-})
-
 function Auth0Bridge({ children }) {
   const {
     error,
@@ -128,20 +119,12 @@ export function ApoptoAuthProvider({ children }) {
     const isServerWithAuthConfig = hasAuth0Config && typeof window === 'undefined'
 
     return (
-      <ApoptoAuthContext.Provider
-        value={{
-          error: undefined,
-          isAuthenticated: false,
-          isConfigured: hasAuth0Config,
-          isLoading: isServerWithAuthConfig,
-          login: () => {},
-          logout: () => {},
-          user: undefined,
-          getAccessToken: async () => undefined,
-        }}
+      <StaticApoptoAuthProvider
+        isConfigured={hasAuth0Config}
+        isLoading={isServerWithAuthConfig}
       >
         {children}
-      </ApoptoAuthContext.Provider>
+      </StaticApoptoAuthProvider>
     )
   }
 
@@ -168,6 +151,5 @@ export function ApoptoAuthProvider({ children }) {
   )
 }
 
-export function useApoptoAuth() {
-  return useContext(ApoptoAuthContext)
-}
+export { useApoptoAuth }
+export default ApoptoAuthProvider

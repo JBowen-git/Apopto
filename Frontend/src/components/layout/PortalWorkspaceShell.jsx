@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { useApoptoAuth } from '../../auth.jsx'
+import { useApoptoAuth } from '../../authContext.jsx'
 import ApoptoLogoMark from '../brand/ApoptoLogoMark.jsx'
 
 const clientNavItems = [

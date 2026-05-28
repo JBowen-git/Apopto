@@ -1,8 +1,8 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { useApoptoAuth } from '../../auth.jsx'
+import { useApoptoAuth } from '../../authContext.jsx'
 import ApoptoLogoMark from '../brand/ApoptoLogoMark.jsx'
-import InsightsNav from '../insights/InsightsNav.jsx'
 import { navItems } from '../../data/navigation.js'
+import RouteHead from '../routing/RouteHead.jsx'
 import SiteFooter from './SiteFooter.jsx'
 
 function isWorkspaceRoute(pathname) {
@@ -20,12 +20,13 @@ export default function Layout({ children }) {
   const { pathname } = useLocation()
   const { isAuthenticated, isConfigured, isLoading, logout } = useApoptoAuth()
   const isHome = pathname === '/'
-  const hasInsightsNav = pathname === '/insights' || pathname.startsWith('/insights/')
+  const hasInsightsNav = pathname === '/insights'
   const isWorkspace = isWorkspaceRoute(pathname)
   const showSignOutAction = isConfigured && !isLoading && isAuthenticated
 
   return (
     <div className={isWorkspace ? 'app-shell workspace-app-shell' : isHome ? 'app-shell home-shell' : 'app-shell'}>
+      <RouteHead />
       {!isWorkspace ? (
         <header
           className={
@@ -69,7 +70,6 @@ export default function Layout({ children }) {
         </header>
       ) : null}
       <main className={isWorkspace ? 'page-main page-main-workspace' : hasInsightsNav ? 'page-main page-main-insights' : 'page-main'}>
-        {hasInsightsNav ? <InsightsNav /> : null}
         {children}
       </main>
       {!isWorkspace ? <SiteFooter /> : null}

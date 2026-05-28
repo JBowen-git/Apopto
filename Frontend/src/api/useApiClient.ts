@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useApoptoAuth } from '../auth.jsx';
+import { useApoptoAuth } from '../authContext.jsx';
 import { createApiClient } from './client';
 
 type AuthContextWithToken = {

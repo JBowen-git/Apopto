@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router-dom';
 import { bootstrapPortalContext } from '../api/portalBootstrap';
 import { useApiClient } from '../api/useApiClient';
-import { useApoptoAuth } from '../auth.jsx';
+import { useApoptoAuth } from '../authContext.jsx';
 import { resolvePostLoginReturnTo } from '../authToken';
 import ErrorState from '../components/app/ErrorState';
 import LoadingState from '../components/app/LoadingState';

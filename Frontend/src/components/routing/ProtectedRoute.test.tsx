@@ -13,7 +13,7 @@ const authState = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../auth.jsx', () => ({
+vi.mock('../../authContext.jsx', () => ({
   useApoptoAuth: () => authState.current,
 }));
 

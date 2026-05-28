@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { useApoptoAuth } from '../auth.jsx'
+import { useApoptoAuth } from '../authContext.jsx'
 import { resolvePostLoginReturnTo } from '../authToken'
 
 const authReturnToKey = 'apopto.auth.returnTo'

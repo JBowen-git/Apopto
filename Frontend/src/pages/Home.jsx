@@ -10,6 +10,9 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="hero-content">
+          <h1 className="visually-hidden">
+            Custom Websites and Web Apps for Businesses That Need More Than a Template
+          </h1>
           <HeroShineText text="Apopto" />
           <p className="hero-tagline">
             Websites Engineered <span className="keep-together">for Growth</span>

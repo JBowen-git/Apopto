@@ -409,7 +409,7 @@ export default function DiagonalScrollSection() {
           <span>02</span>
           <span>03</span>
         </div>
-        <div className="pong-mobile-copy-layer" aria-label="Dynamic website focus notes">
+        <div className="pong-mobile-copy-layer" aria-hidden="true">
           {focusCards.map((card) => (
             <article
               className={`pong-mobile-copy pong-mobile-copy-${card.side}`}
@@ -425,9 +425,9 @@ export default function DiagonalScrollSection() {
                 '--mobile-focus-offset-y': '0px',
               }}
             >
-              <p className="pong-focus-kicker">{card.number} /</p>
-              <h3>{card.title}</h3>
-              <p>{card.detail}</p>
+              <span className="pong-mobile-copy-kicker" data-label={`${card.number} /`} />
+              <span className="pong-mobile-copy-title" data-label={card.title} />
+              <span className="pong-mobile-copy-detail" data-label={card.detail} />
             </article>
           ))}
         </div>

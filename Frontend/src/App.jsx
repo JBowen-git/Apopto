@@ -21,7 +21,6 @@ const MessageThread = lazy(() => import('./pages/MessageThread'))
 const Messages = lazy(() => import('./pages/Messages'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 const Portfolio = lazy(() => import('./pages/Portfolio.jsx'))
-const PortfolioDetailPage = lazy(() => import('./pages/PortfolioDetailPage.jsx'))
 const Solutions = lazy(() => import('./pages/Solutions.jsx'))
 const StartAProject = lazy(() => import('./pages/StartAProject.jsx'))
 
@@ -43,7 +42,6 @@ const pages = {
   Messages,
   NotFound,
   Portfolio,
-  PortfolioDetailPage,
   Solutions,
   StartAProject,
 }

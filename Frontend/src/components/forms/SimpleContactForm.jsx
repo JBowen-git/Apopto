@@ -2,6 +2,52 @@ import { useState } from 'react'
 import { Button as MuiButton, MenuItem, Paper, TextField } from '@mui/material'
 import { bestTimeOptions, preferredContactOptions, simpleContactInitialValues, simpleContactRequiredFields } from '../../data/contact.js'
 
+const formId = 'simple-contact-form'
+
+const fieldLabels = {
+  name: 'Name',
+  email: 'Email',
+  company: 'Company / Brand Name',
+  phone: 'Phone Number',
+  preferredContact: 'Preferred Contact Method',
+  bestTime: 'Best Time to Reach You',
+  message: 'Message',
+}
+
+function getFieldId(field) {
+  return `${formId}-${field}`
+}
+
+function getTextFieldSlotProps(label, { required = false, select = false } = {}) {
+  const slotProps = {
+    input: {
+      label: (
+        <span
+          aria-hidden="true"
+          className="contact-notch-spacer"
+          style={{ '--contact-notch-width': `${Math.max(label.length + (required ? 2 : 0), 4)}ch` }}
+        />
+      ),
+      required: false,
+    },
+  }
+
+  if (required) {
+    slotProps.htmlInput = {
+      'aria-required': 'true',
+      required: true,
+    }
+  }
+
+  if (required && select) {
+    slotProps.select = {
+      'aria-required': 'true',
+    }
+  }
+
+  return slotProps
+}
+
 export default function SimpleContactForm() {
   const [contactValues, setContactValues] = useState(simpleContactInitialValues)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
@@ -36,13 +82,15 @@ export default function SimpleContactForm() {
     <div className="contact-form-stage" id="contact-form">
       <Paper
         className="contact-form-paper contact-form-paper-simple"
+        aria-describedby={`${formId}-description`}
+        aria-labelledby={`${formId}-title`}
         component="form"
         elevation={0}
         onSubmit={submitContactForm}
       >
         <div className="contact-form-header">
-          <h2>Start the conversation</h2>
-          <p>Tell me the basics and I will follow up with the right next step.</p>
+          <h2 id={`${formId}-title`}>Start the conversation</h2>
+          <p id={`${formId}-description`}>Tell me the basics and I will follow up with the right next step.</p>
         </div>
 
         <div className="contact-form-grid">
@@ -50,18 +98,22 @@ export default function SimpleContactForm() {
             error={getFieldError('name')}
             fullWidth
             helperText={getFieldError('name') ? 'Name is required.' : ' '}
-            label="Name"
+            id={getFieldId('name')}
+            label={fieldLabels.name}
             onChange={updateContactValue('name')}
             required
+            slotProps={getTextFieldSlotProps(fieldLabels.name, { required: true })}
             value={contactValues.name}
           />
           <TextField
             error={getFieldError('email')}
             fullWidth
             helperText={getFieldError('email') ? 'Email is required.' : ' '}
-            label="Email"
+            id={getFieldId('email')}
+            label={fieldLabels.email}
             onChange={updateContactValue('email')}
             required
+            slotProps={getTextFieldSlotProps(fieldLabels.email, { required: true })}
             type="email"
             value={contactValues.email}
           />
@@ -69,16 +121,20 @@ export default function SimpleContactForm() {
             error={getFieldError('company')}
             fullWidth
             helperText={getFieldError('company') ? 'Company or brand name is required.' : ' '}
-            label="Company / Brand Name"
+            id={getFieldId('company')}
+            label={fieldLabels.company}
             onChange={updateContactValue('company')}
             required
+            slotProps={getTextFieldSlotProps(fieldLabels.company, { required: true })}
             value={contactValues.company}
           />
           <TextField
             fullWidth
             helperText=" "
-            label="Phone Number"
+            id={getFieldId('phone')}
+            label={fieldLabels.phone}
             onChange={updateContactValue('phone')}
+            slotProps={getTextFieldSlotProps(fieldLabels.phone)}
             type="tel"
             value={contactValues.phone}
           />
@@ -88,10 +144,12 @@ export default function SimpleContactForm() {
             helperText={
               getFieldError('preferredContact') ? 'Preferred contact method is required.' : ' '
             }
-            label="Preferred Contact Method"
+            id={getFieldId('preferredContact')}
+            label={fieldLabels.preferredContact}
             onChange={updateContactValue('preferredContact')}
             required
             select
+            slotProps={getTextFieldSlotProps(fieldLabels.preferredContact, { required: true, select: true })}
             value={contactValues.preferredContact}
           >
             {preferredContactOptions.map((option) => (
@@ -104,10 +162,12 @@ export default function SimpleContactForm() {
             error={getFieldError('bestTime')}
             fullWidth
             helperText={getFieldError('bestTime') ? 'Best time is required.' : ' '}
-            label="Best Time to Reach You"
+            id={getFieldId('bestTime')}
+            label={fieldLabels.bestTime}
             onChange={updateContactValue('bestTime')}
             required
             select
+            slotProps={getTextFieldSlotProps(fieldLabels.bestTime, { required: true, select: true })}
             value={contactValues.bestTime}
           >
             {bestTimeOptions.map((option) => (
@@ -120,10 +180,12 @@ export default function SimpleContactForm() {
             className="contact-field-wide"
             fullWidth
             helperText=" "
-            label="Message"
+            id={getFieldId('message')}
+            label={fieldLabels.message}
             minRows={5}
             multiline
             onChange={updateContactValue('message')}
+            slotProps={getTextFieldSlotProps(fieldLabels.message)}
             value={contactValues.message}
           />
         </div>

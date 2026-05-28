@@ -1,25 +1,34 @@
 import { Route, Routes } from 'react-router-dom'
+import AuthRouteBoundary from '../components/routing/AuthRouteBoundary.jsx'
 import ProtectedRoute from '../components/routing/ProtectedRoute'
+import QueryRouteBoundary from '../components/routing/QueryRouteBoundary.jsx'
 import PortalWorkspaceShell from '../components/layout/PortalWorkspaceShell'
-import { portfolioDetailPages } from '../data/portfolio.js'
 
 function clientWorkspace(children) {
   return (
-    <ProtectedRoute>
-      <PortalWorkspaceShell variant="client">
-        {children}
-      </PortalWorkspaceShell>
-    </ProtectedRoute>
+    <AuthRouteBoundary>
+      <QueryRouteBoundary>
+        <ProtectedRoute>
+          <PortalWorkspaceShell variant="client">
+            {children}
+          </PortalWorkspaceShell>
+        </ProtectedRoute>
+      </QueryRouteBoundary>
+    </AuthRouteBoundary>
   )
 }
 
 function adminWorkspace(children) {
   return (
-    <ProtectedRoute>
-      <PortalWorkspaceShell variant="admin">
-        {children}
-      </PortalWorkspaceShell>
-    </ProtectedRoute>
+    <AuthRouteBoundary>
+      <QueryRouteBoundary>
+        <ProtectedRoute>
+          <PortalWorkspaceShell variant="admin">
+            {children}
+          </PortalWorkspaceShell>
+        </ProtectedRoute>
+      </QueryRouteBoundary>
+    </AuthRouteBoundary>
   )
 }
 
@@ -42,7 +51,6 @@ export default function AppRoutes({ pages }) {
     Messages,
     NotFound,
     Portfolio,
-    PortfolioDetailPage,
     Solutions,
     StartAProject,
   } = pages
@@ -52,28 +60,18 @@ export default function AppRoutes({ pages }) {
       <Route path="/" element={<Home />} />
       <Route path="/solutions" element={<Solutions />} />
       <Route path="/portfolio" element={<Portfolio />} />
-      <Route
-        path="/portfolio/all-work"
-        element={<PortfolioDetailPage page={portfolioDetailPages.allWork} />}
-      />
-      <Route
-        path="/portfolio/build-breakdowns"
-        element={<PortfolioDetailPage page={portfolioDetailPages.buildBreakdowns} />}
-      />
-      <Route
-        path="/portfolio/concept-builds"
-        element={<PortfolioDetailPage page={portfolioDetailPages.conceptBuilds} />}
-      />
-      <Route
-        path="/portfolio/individual-project-pages"
-        element={<PortfolioDetailPage page={portfolioDetailPages.individualProjectPages} />}
-      />
       <Route path="/about" element={<About />} />
       <Route path="/insights" element={<Insights />} />
-      <Route path="/insights/:conceptId" element={<Insights />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/start-a-project" element={<StartAProject />} />
-      <Route path="/callback" element={<AuthCallback />} />
+      <Route
+        path="/callback"
+        element={(
+          <AuthRouteBoundary>
+            <AuthCallback />
+          </AuthRouteBoundary>
+        )}
+      />
       <Route
         path="/dashboard"
         element={clientWorkspace(<Dashboard />)}
@@ -106,8 +104,18 @@ export default function AppRoutes({ pages }) {
         path="/admin/clients/:clientId"
         element={adminWorkspace(<AdminClientDetail />)}
       />
-      <Route path="/account" element={<CustomerAccount />} />
+      <Route
+        path="/account"
+        element={(
+          <AuthRouteBoundary>
+            <QueryRouteBoundary>
+              <CustomerAccount />
+            </QueryRouteBoundary>
+          </AuthRouteBoundary>
+        )}
+      />
       <Route path="/error" element={<ErrorPage />} />
+      <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

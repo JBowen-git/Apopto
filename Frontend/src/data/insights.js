@@ -1,12 +1,3 @@
-import { toArticleId } from '../utils/toArticleId.js'
-
-function createComingSoonArticle(categoryId, subcategoryName) {
-  return {
-    id: `${categoryId}-${toArticleId(subcategoryName)}-more-to-come`,
-    title: 'More to come',
-  }
-}
-
 const insightCategoryGroups = [
   {
     id: 'design',
@@ -54,18 +45,6 @@ export const insightCategories = insightCategoryGroups.map((category) => ({
   ...category,
   subcategories: category.subcategories.map((subcategoryName) => ({
     name: subcategoryName,
-    articles: [createComingSoonArticle(category.id, subcategoryName)],
+    articles: [],
   })),
 }))
-
-export const insightArticles = insightCategories.flatMap((category) =>
-  category.subcategories.flatMap((subcategory) =>
-    subcategory.articles.map((article) => {
-      return {
-        id: article.id,
-        term: article.title,
-        categoryId: category.id,
-      }
-    }),
-  ),
-)

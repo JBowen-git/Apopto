@@ -2,12 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
-import { ApoptoAuthProvider } from './auth.jsx'
+import { StaticApoptoAuthProvider } from './authContext.jsx'
 import './index.css'
-import AppQueryProvider from './providers/AppQueryProvider'
-import { verifySharedPackageImport } from './sharedPackageSmoke'
 
-verifySharedPackageImport()
+if (import.meta.env.DEV) {
+  void import('./sharedPackageSmoke').then(({ verifySharedPackageImport }) => {
+    verifySharedPackageImport()
+  })
+}
 
 const rootElement = document.getElementById('root')
 
@@ -17,13 +19,11 @@ if (!rootElement) {
 
 const app = (
   <StrictMode>
-    <ApoptoAuthProvider>
-      <AppQueryProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </AppQueryProvider>
-    </ApoptoAuthProvider>
+    <StaticApoptoAuthProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StaticApoptoAuthProvider>
   </StrictMode>
 )
 

@@ -88,7 +88,7 @@ fi
 if [ "${RUN_CLOUDFRONT_INVALIDATION}" = "true" ]; then
   DISTRIBUTION_ID="$(terraform -chdir="${APP_STACK_PATH}" output -raw cloudfront_distribution_id)"
   if [ -n "${DISTRIBUTION_ID}" ]; then
-    IFS=' ' read -r -a INVALIDATION_PATHS <<<"${CLOUDFRONT_INVALIDATION_PATHS:-/ /index.html /sitemap.xml /robots.txt /llms.txt /assets/* /about /about/* /contact /contact/*}"
+    IFS=' ' read -r -a INVALIDATION_PATHS <<<"${CLOUDFRONT_INVALIDATION_PATHS:-/ /index.html /404 /404/* /sitemap.xml /robots.txt /llms.txt /assets/* /about /about/* /portfolio /portfolio/* /insights /insights/* /contact /contact/*}"
 
     aws cloudfront create-invalidation \
       --distribution-id "${DISTRIBUTION_ID}" \

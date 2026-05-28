@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
 import PortfolioClusterImage from '../components/portfolio/PortfolioClusterImage.jsx'
-import { livePortfolioPreview, portfolioProjects, portfolioQuickLinks } from '../data/portfolio.js'
+import { livePortfolioPreview, portfolioProjects } from '../data/portfolio.js'
 
 export default function Portfolio() {
   return (
@@ -37,13 +36,6 @@ export default function Portfolio() {
             Every build starts with a simple question: what should this page help someone
             understand, trust, and do?
           </h2>
-          <nav className="portfolio-quick-links" aria-label="Portfolio quick links">
-            {portfolioQuickLinks.map((link) => (
-              <Link key={link.to} to={link.to}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
         </div>
         <div className="portfolio-story-paper-body" id="portfolio-details">
           <p>

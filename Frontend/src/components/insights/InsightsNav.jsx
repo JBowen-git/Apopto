@@ -1,43 +1,19 @@
 import { useEffect, useState } from 'react'
-import { Accordion, AccordionDetails, AccordionSummary, Divider, Drawer, List, ListItemButton, ListSubheader, useMediaQuery } from '@mui/material'
-import { NavLink, useLocation } from 'react-router-dom'
-import { insightArticles, insightCategories } from '../../data/insights.js'
-import { toArticleId } from '../../utils/toArticleId.js'
-
-function getArticleId(article) {
-  return typeof article === 'string' ? toArticleId(article) : article.id
-}
-
-function getArticleTitle(article) {
-  return typeof article === 'string' ? article : article.title
-}
+import { Accordion, AccordionDetails, AccordionSummary, Divider, Drawer, List, ListSubheader, useMediaQuery } from '@mui/material'
+import { useLocation } from 'react-router-dom'
+import { insightCategories } from '../../data/insights.js'
 
 export default function InsightsNav() {
   const { pathname } = useLocation()
   const isMobileInsights = useMediaQuery('(max-width: 980px)')
   const [isMobileInsightsOpen, setMobileInsightsOpen] = useState(false)
-  const currentArticleId = pathname.startsWith('/insights/')
-    ? pathname.split('/').filter(Boolean).at(-1)
-    : insightArticles[0].id
-  const currentArticle =
-    insightArticles.find((article) => article.id === currentArticleId) ?? insightArticles[0]
-  const [expandedCategory, setExpandedCategory] = useState(currentArticle.categoryId)
-
-  useEffect(() => {
-    setExpandedCategory(currentArticle.categoryId)
-  }, [currentArticle.categoryId])
+  const [expandedCategory, setExpandedCategory] = useState(insightCategories[0]?.id ?? false)
 
   useEffect(() => {
     if (isMobileInsights) {
       setMobileInsightsOpen(false)
     }
   }, [isMobileInsights, pathname])
-
-  const closeMobileInsights = () => {
-    if (isMobileInsights) {
-      setMobileInsightsOpen(false)
-    }
-  }
 
   return (
     <>
@@ -83,10 +59,10 @@ export default function InsightsNav() {
         }}
         variant={isMobileInsights ? 'temporary' : 'permanent'}
       >
-        <nav className="insights-index" id="insights-drawer-nav" aria-label="Insights articles">
+        <nav className="insights-index" id="insights-drawer-nav" aria-label="Insights topics">
           <div className="insights-drawer-heading">
             <span>Insights</span>
-            <strong>Articles</strong>
+            <strong>Topics</strong>
             <button
               aria-label="Close insights menu"
               className="insights-drawer-close"
@@ -117,7 +93,7 @@ export default function InsightsNav() {
                 </span>
               </AccordionSummary>
               <AccordionDetails className="insights-category-details">
-                <List className="insights-category-list" disablePadding>
+                <List className="insights-category-list" component="div" disablePadding>
                   {category.subcategories.map((subcategory) => {
                     return (
                       <div className="insights-subcategory-group" key={subcategory.name}>
@@ -129,24 +105,9 @@ export default function InsightsNav() {
                           {subcategory.name}
                         </ListSubheader>
                         <div className="insights-example-article-list">
-                          {subcategory.articles.map((article) => {
-                            const articleId = getArticleId(article)
-                            const articleTitle = getArticleTitle(article)
-                            const isSelected = articleId === currentArticle.id
-
-                            return (
-                              <ListItemButton
-                                className="insights-example-article"
-                                component={NavLink}
-                                key={articleId}
-                                onClick={closeMobileInsights}
-                                selected={isSelected}
-                                to={`/insights/${articleId}`}
-                              >
-                                {articleTitle}
-                              </ListItemButton>
-                            )
-                          })}
+                          <span className="insights-example-article insights-coming-soon-note">
+                            More to come
+                          </span>
                         </div>
                       </div>
                     )

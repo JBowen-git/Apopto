@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Navigate } from 'react-router-dom'
 import { bootstrapPortalContext } from '../api/portalBootstrap'
 import { useApiClient } from '../api/useApiClient'
-import { useApoptoAuth } from '../auth.jsx'
+import { useApoptoAuth } from '../authContext.jsx'
 import { resolvePostLoginReturnTo } from '../authToken'
 
 export default function CustomerAccount() {

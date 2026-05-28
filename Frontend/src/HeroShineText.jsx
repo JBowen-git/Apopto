@@ -3,7 +3,7 @@ export default function HeroShineText({ text = 'Apopto', className = '' }) {
   const classNames = ['hero-shine-title', className].filter(Boolean).join(' ')
 
   return (
-    <h1 className={classNames} aria-label={text}>
+    <div className={classNames} aria-hidden="true">
       <span className="hero-shine-word" aria-hidden="true">
         {letters.map((letter, index) => (
           <span
@@ -16,6 +16,6 @@ export default function HeroShineText({ text = 'Apopto', className = '' }) {
         ))}
       </span>
       <span className="hero-shine-sweep" aria-hidden="true" />
-    </h1>
+    </div>
   )
 }

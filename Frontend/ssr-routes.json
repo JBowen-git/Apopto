@@ -1,76 +1,122 @@
 {
   "siteName": "Apopto",
-  "siteDescription": "Apopto builds intelligent websites and digital solutions that transform ideas into seamless user experiences.",
+  "siteDescription": "Apopto builds fast, search-ready custom websites, web apps, client portals, ecommerce systems, dashboards, and automations for growing businesses.",
+  "defaultOgImage": "/og/apopto-home.jpg",
+  "organization": {
+    "type": "ProfessionalService",
+    "description": "Apopto builds custom websites, web apps, client portals, ecommerce systems, dashboards, and automations for growing businesses.",
+    "founderName": "Jake Bowen",
+    "areaServed": "United States",
+    "logo": "/og/apopto-home.jpg",
+    "sameAs": [
+      "https://www.linkedin.com/in/jacob-bowen-a484aa294/"
+    ],
+    "serviceTypes": [
+      "Custom website development",
+      "Web application development",
+      "Client portal development",
+      "Ecommerce website development",
+      "Website SEO setup",
+      "Business workflow automation"
+    ]
+  },
+  "solutionServices": [
+    {
+      "name": "Custom Website Development",
+      "description": "Search-ready business websites with clear messaging, fast mobile pages, contact forms, and room to add features later."
+    },
+    {
+      "name": "Business Website and Client Portal Development",
+      "description": "Business websites with secure client portals, dashboards, project updates, billing workflows, and customer management tools."
+    },
+    {
+      "name": "Ecommerce Website Development",
+      "description": "Online stores with product catalogs, checkout, Stripe payments, shipping workflows, inventory tools, and admin dashboards."
+    }
+  ],
   "routes": [
     {
       "path": "/",
-      "title": "Home",
-      "description": "Websites Engineered for Growth. Apopto builds intelligent websites and digital solutions."
+      "breadcrumb": "Home",
+      "title": "Custom Websites & Web Apps for Growing Businesses",
+      "description": "Apopto builds fast, search-ready custom websites, web apps, client portals, ecommerce systems, dashboards, and automations for growing businesses.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-home.jpg"
     },
     {
       "path": "/solutions",
-      "title": "Solutions",
-      "description": "SEO-focused websites, client portals, and ecommerce sites built to help businesses get found, earn trust, and turn visitors into customers."
+      "breadcrumb": "Solutions",
+      "title": "Website, Portal & Ecommerce Development Services",
+      "description": "Explore Apopto's custom website, business portal, and ecommerce development services.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-solutions.jpg"
     },
     {
       "path": "/portfolio",
-      "title": "Portfolio",
-      "description": "Selected Apopto work, launch snapshots, and featured project outcomes."
-    },
-    {
-      "path": "/portfolio/all-work",
-      "title": "All Work",
-      "description": "The full Apopto portfolio archive is coming soon."
-    },
-    {
-      "path": "/portfolio/build-breakdowns",
-      "title": "Build Breakdowns",
-      "description": "Apopto build breakdowns are coming soon."
-    },
-    {
-      "path": "/portfolio/concept-builds",
-      "title": "Concept Builds",
-      "description": "Apopto concept builds are coming soon."
-    },
-    {
-      "path": "/portfolio/individual-project-pages",
-      "title": "Individual Project Pages",
-      "description": "Individual Apopto project pages are coming soon."
+      "breadcrumb": "Portfolio",
+      "title": "Website Portfolio & Build Breakdowns",
+      "description": "Review Apopto's website portfolio, launch snapshots, build breakdowns, and systems-first approach to web development.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-portfolio.jpg"
     },
     {
       "path": "/about",
-      "title": "About",
-      "description": "Learn about Apopto's engineering-focused approach to websites, web applications, SEO, performance, and long-term growth."
+      "breadcrumb": "About",
+      "metaTitle": "About Apopto | Engineering-Led Web Development by Jake Bowen",
+      "title": "About Apopto",
+      "description": "Learn about Apopto, Jake Bowen's engineering-led approach to custom web development, SEO, performance, and scalable digital systems.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-about.jpg"
     },
     {
       "path": "/insights",
-      "title": "Insights",
-      "description": "Insights topics and upcoming articles about websites, ecommerce, SEO, and cloud delivery."
+      "breadcrumb": "Insights",
+      "title": "Web Design, SEO & Web App Insights",
+      "description": "Explore Apopto insights topics covering web design, SEO, performance, ecommerce, React web apps, cloud hosting, and business automation.",
+      "noindex": true,
+      "sitemap": false,
+      "ogImage": "/og/apopto-insights.jpg"
     },
     {
       "path": "/contact",
-      "title": "Contact",
-      "description": "Contact Apopto to talk through a website, ecommerce, or cloud launch."
+      "breadcrumb": "Contact",
+      "metaTitle": "Contact Apopto | Web Development Questions & Support",
+      "title": "Contact Apopto",
+      "description": "Contact Apopto for web development questions, project support, website planning, SEO, client portals, ecommerce systems, and custom web apps.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-contact.jpg"
     },
     {
       "path": "/start-a-project",
-      "title": "Start a Project",
-      "description": "Start a project with Apopto by sharing goals, scope, timeline, and launch needs."
+      "breadcrumb": "Project Availability",
+      "title": "Project Availability",
+      "description": "Check future project availability and share goals, scope, timeline, and launch needs for a custom website, portal, ecommerce site, or web app.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-start-a-project.jpg"
     },
     {
       "path": "/callback",
       "title": "Callback",
-      "description": "Auth0 sign-in callback route for Apopto customer accounts."
+      "description": "Auth0 sign-in callback route for Apopto customer accounts.",
+      "sitemap": false
     },
     {
       "path": "/account",
       "title": "Customer Account",
-      "description": "Customer login and account access for Apopto projects."
+      "description": "Customer login and account access for Apopto projects.",
+      "sitemap": false
     },
     {
       "path": "/error",
       "title": "Error",
-      "description": "A friendly fallback route for unavailable content or application errors."
+      "description": "A friendly fallback route for unavailable content or application errors.",
+      "sitemap": false
+    },
+    {
+      "path": "/404",
+      "title": "Page Not Found",
+      "description": "The requested Apopto page could not be found.",
+      "sitemap": false
     }
   ],
   "llmsDescription": "This website contains public Apopto company information, service pages, project examples, insights, and contact details."

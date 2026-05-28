@@ -70,14 +70,191 @@ function escapeXml(value) {
     .replaceAll("'", '&apos;')
 }
 
+function absoluteUrl(value, siteOrigin) {
+  if (!value) {
+    return ''
+  }
+
+  return /^https?:\/\//i.test(value)
+    ? value
+    : new URL(value, siteOrigin).toString()
+}
+
+function routeTitle(route, manifest) {
+  return route.metaTitle || (route.title ? `${route.title} | ${manifest.siteName}` : manifest.siteName)
+}
+
+function isSitemapRoute(route) {
+  return route.sitemap !== false && !route.noindex
+}
+
+function jsonLdScript(schema) {
+  return `<script type="application/ld+json">${JSON.stringify(schema).replaceAll('<', '\\u003c')}</script>`
+}
+
+function organizationId(siteOrigin) {
+  return `${siteOrigin}/#organization`
+}
+
+function websiteId(siteOrigin) {
+  return `${siteOrigin}/#website`
+}
+
+function buildOrganizationSchema(manifest, siteOrigin) {
+  const organization = manifest.organization || {}
+  const sameAs = Array.isArray(organization.sameAs)
+    ? organization.sameAs.filter(Boolean)
+    : []
+  const serviceTypes = Array.isArray(organization.serviceTypes)
+    ? organization.serviceTypes.filter(Boolean)
+    : []
+  const logo = absoluteUrl(organization.logo || manifest.defaultOgImage, siteOrigin)
+
+  return {
+    '@type': organization.type || 'ProfessionalService',
+    '@id': organizationId(siteOrigin),
+    name: manifest.siteName,
+    url: new URL('/', siteOrigin).toString(),
+    description: organization.description || manifest.siteDescription || '',
+    ...(logo ? { logo, image: logo } : {}),
+    founder: {
+      '@type': 'Person',
+      name: organization.founderName || 'Jake Bowen',
+      ...(sameAs.length ? { sameAs } : {}),
+    },
+    ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
+    ...(serviceTypes.length ? { serviceType: serviceTypes } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+  }
+}
+
+function buildWebsiteSchema(manifest, siteOrigin) {
+  return {
+    '@type': 'WebSite',
+    '@id': websiteId(siteOrigin),
+    name: manifest.siteName,
+    url: new URL('/', siteOrigin).toString(),
+    description: manifest.siteDescription || '',
+    publisher: {
+      '@id': organizationId(siteOrigin),
+    },
+  }
+}
+
+function buildBreadcrumbSchema(route, manifest, siteOrigin) {
+  const routeUrl = new URL(route.path, siteOrigin).toString()
+
+  return {
+    '@type': 'BreadcrumbList',
+    '@id': `${routeUrl}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: new URL('/', siteOrigin).toString(),
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: route.breadcrumb || route.title || manifest.siteName,
+        item: routeUrl,
+      },
+    ],
+  }
+}
+
+function buildSolutionsServiceSchema(route, manifest, siteOrigin) {
+  const organization = manifest.organization || {}
+  const services = Array.isArray(manifest.solutionServices)
+    ? manifest.solutionServices.filter((service) => service?.name)
+    : []
+
+  return {
+    '@type': 'Service',
+    '@id': `${new URL(route.path, siteOrigin).toString()}#service`,
+    name: route.title,
+    description: route.description || '',
+    provider: {
+      '@id': organizationId(siteOrigin),
+    },
+    ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
+    ...(Array.isArray(organization.serviceTypes) ? { serviceType: organization.serviceTypes } : {}),
+    ...(services.length ? {
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: 'Apopto web development services',
+        itemListElement: services.map((service, index) => ({
+          '@type': 'Offer',
+          position: index + 1,
+          itemOffered: {
+            '@type': 'Service',
+            name: service.name,
+            description: service.description || '',
+            provider: {
+              '@id': organizationId(siteOrigin),
+            },
+            ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
+          },
+        })),
+      },
+    } : {}),
+  }
+}
+
+function buildStructuredDataScript(route, manifest, siteOrigin) {
+  const graph = []
+
+  if (route.path === '/' || route.path === '/about' || route.path === '/solutions') {
+    graph.push(buildOrganizationSchema(manifest, siteOrigin))
+  }
+
+  if (route.path === '/') {
+    graph.push(buildWebsiteSchema(manifest, siteOrigin))
+  }
+
+  if (route.path !== '/' && isSitemapRoute(route)) {
+    graph.push(buildBreadcrumbSchema(route, manifest, siteOrigin))
+  }
+
+  if (route.path === '/solutions') {
+    graph.push(buildSolutionsServiceSchema(route, manifest, siteOrigin))
+  }
+
+  if (graph.length === 0) {
+    return ''
+  }
+
+  return jsonLdScript({
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  })
+}
+
 function withHead(templateHtml, route, manifest, renderResult, siteOrigin) {
-  const title = route.title ? `${route.title} | ${manifest.siteName}` : manifest.siteName
+  const title = routeTitle(route, manifest)
   const description = route.description || manifest.siteDescription || ''
-  const canonicalUrl = `${siteOrigin}${route.path}`
+  const canonicalUrl = new URL(route.path, siteOrigin).toString()
+  const ogImage = absoluteUrl(route.ogImage || manifest.defaultOgImage, siteOrigin)
+  const structuredDataScript = buildStructuredDataScript(route, manifest, siteOrigin)
   const headHtml = [
     `<title>${escapeHtml(title)}</title>`,
     description ? `<meta name="description" content="${escapeHtml(description)}">` : '',
     `<link rel="canonical" href="${escapeHtml(canonicalUrl)}">`,
+    `<meta property="og:title" content="${escapeHtml(route.ogTitle || title)}">`,
+    description ? `<meta property="og:description" content="${escapeHtml(route.ogDescription || description)}">` : '',
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}">`,
+    `<meta property="og:type" content="${escapeHtml(route.ogType || 'website')}">`,
+    `<meta property="og:site_name" content="${escapeHtml(manifest.siteName)}">`,
+    ogImage ? `<meta property="og:image" content="${escapeHtml(ogImage)}">` : '',
+    ogImage ? `<meta property="og:image:width" content="${escapeHtml(route.ogImageWidth || '1200')}">` : '',
+    ogImage ? `<meta property="og:image:height" content="${escapeHtml(route.ogImageHeight || '630')}">` : '',
+    `<meta name="twitter:card" content="${escapeHtml(route.twitterCard || 'summary_large_image')}">`,
+    `<meta name="twitter:title" content="${escapeHtml(route.twitterTitle || route.ogTitle || title)}">`,
+    description ? `<meta name="twitter:description" content="${escapeHtml(route.twitterDescription || route.ogDescription || description)}">` : '',
+    ogImage ? `<meta name="twitter:image" content="${escapeHtml(route.twitterImage ? absoluteUrl(route.twitterImage, siteOrigin) : ogImage)}">` : '',
+    route.noindex || route.sitemap === false ? '<meta name="robots" content="noindex">' : '',
+    structuredDataScript,
     renderResult.headHtml || '',
   ]
     .filter(Boolean)
@@ -97,11 +274,14 @@ function injectRenderedMarkup(template, route, manifest, renderResult, siteOrigi
 }
 
 function buildSitemapXml(siteOrigin, routes) {
-  const urls = routes.map((route) => [
-    '  <url>',
-    `    <loc>${escapeXml(new URL(route.path, siteOrigin).toString())}</loc>`,
-    '  </url>',
-  ].join('\n'))
+  const urls = routes
+    .filter(isSitemapRoute)
+    .map((route) => [
+      '  <url>',
+      `    <loc>${escapeXml(new URL(route.path, siteOrigin).toString())}</loc>`,
+      route.lastmod ? `    <lastmod>${escapeXml(route.lastmod)}</lastmod>` : '',
+      '  </url>',
+    ].filter(Boolean).join('\n'))
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -116,7 +296,6 @@ function buildRobotsTxt(siteOrigin) {
   return [
     'User-agent: *',
     'Allow: /',
-    'Disallow: /internal/',
     '',
     `Sitemap: ${new URL('/sitemap.xml', siteOrigin).toString()}`,
     '',
@@ -341,7 +520,7 @@ async function renderSite(config, expectedBuildId) {
     },
   )
 
-  await invalidateSite(config, rendererBundle.manifest.routes)
+  await invalidateSite(config, rendererBundle.manifest.routes, staleKeys)
 
   return {
     buildId: rendererBundle.buildId,
@@ -351,7 +530,20 @@ async function renderSite(config, expectedBuildId) {
   }
 }
 
-async function invalidateSite(config, routes) {
+function invalidationPathsForStaleKey(key) {
+  if (key === 'index.html') {
+    return ['/', '/index.html']
+  }
+
+  if (key.endsWith('/index.html')) {
+    const routePath = `/${key.slice(0, -'/index.html'.length)}`
+    return [routePath, `${routePath}/*`]
+  }
+
+  return [`/${key}`]
+}
+
+async function invalidateSite(config, routes, staleKeys = []) {
   if (!config.cloudFrontDistributionId) {
     return false
   }
@@ -359,8 +551,10 @@ async function invalidateSite(config, routes) {
   const routePaths = routes.flatMap((route) => (
     route.path === '/' ? ['/', '/index.html'] : [route.path, `${route.path}/*`]
   ))
+  const stalePaths = staleKeys.flatMap(invalidationPathsForStaleKey)
   const invalidationPaths = [...new Set([
     ...routePaths,
+    ...stalePaths,
     '/sitemap.xml',
     '/robots.txt',
     '/llms.txt',

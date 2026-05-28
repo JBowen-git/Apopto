@@ -1,13 +1,15 @@
-import { isApiClientError } from '../../api/client';
-
 type ErrorStateProps = {
   error?: unknown;
   message?: string;
   title?: string;
 };
 
+function isApiClientErrorLike(error: unknown): error is Error & { requestId?: string } {
+  return error instanceof Error && error.name === 'ApiClientError';
+}
+
 function messageFromError(error: unknown) {
-  if (isApiClientError(error)) {
+  if (isApiClientErrorLike(error)) {
     return error.message;
   }
 
@@ -19,7 +21,7 @@ function messageFromError(error: unknown) {
 }
 
 function requestIdFromError(error: unknown) {
-  return isApiClientError(error) ? error.requestId : undefined;
+  return isApiClientErrorLike(error) ? error.requestId : undefined;
 }
 
 export default function ErrorState({
