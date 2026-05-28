@@ -16,6 +16,17 @@ locals {
   auth0_domain      = trimspace(var.auth0_domain)
   auth0_issuer      = "https://${local.auth0_domain}/"
 
+  cloudfront_aliases = distinct([
+    for alias in var.cloudfront_aliases :
+    lower(trimspace(alias))
+    if trimspace(alias) != ""
+  ])
+  cloudfront_acm_certificate_arn = (
+    trimspace(var.cloudfront_acm_certificate_arn) != ""
+    ? trimspace(var.cloudfront_acm_certificate_arn)
+    : try(data.aws_acm_certificate.cloudfront[0].arn, "")
+  )
+
   site_asset_directory = "${path.module}/${var.site_asset_root}"
   site_asset_files     = fileset(local.site_asset_directory, "**")
 
@@ -42,6 +53,14 @@ locals {
 data "aws_caller_identity" "current" {}
 
 data "aws_partition" "current" {}
+
+data "aws_acm_certificate" "cloudfront" {
+  count       = trimspace(var.cloudfront_acm_certificate_arn) == "" && trimspace(var.cloudfront_acm_certificate_domain) != "" ? 1 : 0
+  provider    = aws.global
+  domain      = trimspace(var.cloudfront_acm_certificate_domain)
+  statuses    = ["ISSUED"]
+  most_recent = true
+}
 
 data "aws_cloudfront_cache_policy" "caching_optimized" {
   name = "Managed-CachingOptimized"
@@ -175,12 +194,70 @@ resource "aws_iam_role_policy_attachment" "health_lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role" "contact_lambda" {
+  name               = "${local.resource_prefix}-contact-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = {
+    Name = "${local.resource_prefix}-contact-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "contact_lambda_basic" {
+  role       = aws_iam_role.contact_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "contact_ses" {
+  count = local.client_portal_ses_from_email != "" ? 1 : 0
+
+  statement {
+    sid    = "SendPublicContactFormNotifications"
+    effect = "Allow"
+
+    actions = [
+      "ses:SendEmail",
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ses:FromAddress"
+      values   = [local.client_portal_ses_from_email]
+    }
+
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "ses:Recipients"
+      values   = [local.client_portal_ses_notification_to_email]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "contact_ses" {
+  count = local.client_portal_ses_from_email != "" ? 1 : 0
+
+  name   = "${local.resource_prefix}-contact-ses"
+  role   = aws_iam_role.contact_lambda.id
+  policy = data.aws_iam_policy_document.contact_ses[0].json
+}
+
 resource "aws_cloudwatch_log_group" "health_lambda" {
   name              = "/aws/lambda/${local.resource_prefix}-health"
   retention_in_days = var.lambda_log_retention_days
 
   tags = {
     Name = "${local.resource_prefix}-health-logs"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "contact_lambda" {
+  name              = "/aws/lambda/${local.resource_prefix}-contact"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name = "${local.resource_prefix}-contact-logs"
   }
 }
 
@@ -262,6 +339,41 @@ resource "aws_lambda_function" "health" {
 
   tags = {
     Name = "${local.resource_prefix}-health"
+  }
+}
+
+resource "aws_lambda_function" "contact" {
+  function_name    = "${local.resource_prefix}-contact"
+  description      = "${local.resource_prefix} public contact form API Lambda."
+  role             = aws_iam_role.contact_lambda.arn
+  handler          = "handlers/contact.handler"
+  runtime          = var.lambda_runtime
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  memory_size      = var.lambda_memory_size
+  timeout          = var.lambda_timeout
+
+  environment {
+    variables = merge(
+      {
+        APP_ENVIRONMENT = var.deployment_environment
+      },
+      local.client_portal_ses_from_email != "" ? {
+        SES_FROM_EMAIL            = local.client_portal_ses_from_email
+        SES_NOTIFICATION_TO_EMAIL = local.client_portal_ses_notification_to_email
+        SES_REGION                = local.client_portal_ses_region
+      } : {},
+    )
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.contact_lambda,
+    aws_iam_role_policy.contact_ses,
+    aws_iam_role_policy_attachment.contact_lambda_basic,
+  ]
+
+  tags = {
+    Name = "${local.resource_prefix}-contact"
   }
 }
 
@@ -380,6 +492,7 @@ resource "aws_lambda_function" "messages" {
       local.client_portal_ses_from_email != "" ? {
         SES_FROM_EMAIL            = local.client_portal_ses_from_email
         SES_NOTIFICATION_TO_EMAIL = local.client_portal_ses_notification_to_email
+        SES_REGION                = local.client_portal_ses_region
       } : {},
     )
   }
@@ -537,6 +650,13 @@ resource "aws_apigatewayv2_integration" "health" {
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_integration" "contact" {
+  api_id                 = aws_apigatewayv2_api.app.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.contact.invoke_arn
+  payload_format_version = "2.0"
+}
+
 resource "aws_apigatewayv2_integration" "auth_placeholder" {
   api_id                 = aws_apigatewayv2_api.app.id
   integration_type       = "AWS_PROXY"
@@ -576,6 +696,12 @@ resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.app.id
   route_key = "GET /api/health"
   target    = "integrations/${aws_apigatewayv2_integration.health.id}"
+}
+
+resource "aws_apigatewayv2_route" "contact_post" {
+  api_id    = aws_apigatewayv2_api.app.id
+  route_key = "POST /api/contact"
+  target    = "integrations/${aws_apigatewayv2_integration.contact.id}"
 }
 
 resource "aws_apigatewayv2_route" "auth_placeholder" {
@@ -790,6 +916,14 @@ resource "aws_lambda_permission" "allow_api_gateway_health" {
   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "allow_api_gateway_contact" {
+  statement_id  = "AllowExecutionFromApiGatewayContact"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.contact.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+}
+
 resource "aws_lambda_permission" "allow_api_gateway_auth_placeholder" {
   statement_id  = "AllowExecutionFromApiGatewayAuthPlaceholder"
   action        = "lambda:InvokeFunction"
@@ -851,6 +985,7 @@ resource "aws_cloudfront_distribution" "website" {
   is_ipv6_enabled     = true
   comment             = "CloudFront distribution serving ${local.resource_prefix} frontend and API."
   default_root_object = "index.html"
+  aliases             = local.cloudfront_aliases
   # CloudFront Free pricing plans reject explicit price class settings.
   http_version = "http2"
 
@@ -905,13 +1040,26 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = local.cloudfront_acm_certificate_arn == "" ? true : null
+    acm_certificate_arn            = local.cloudfront_acm_certificate_arn != "" ? local.cloudfront_acm_certificate_arn : null
+    minimum_protocol_version       = local.cloudfront_acm_certificate_arn != "" ? var.cloudfront_minimum_protocol_version : null
+    ssl_support_method             = local.cloudfront_acm_certificate_arn != "" ? var.cloudfront_ssl_support_method : null
   }
 
   lifecycle {
     # CloudFront's flat-rate pricing plan attaches and requires a Web ACL.
     # Leave that association in place when Terraform updates the distribution.
     ignore_changes = [web_acl_id]
+
+    precondition {
+      condition     = length(local.cloudfront_aliases) == 0 || local.cloudfront_acm_certificate_arn != ""
+      error_message = "cloudfront_aliases requires cloudfront_acm_certificate_arn or cloudfront_acm_certificate_domain so Terraform does not remove the custom CloudFront certificate."
+    }
+
+    precondition {
+      condition     = local.cloudfront_acm_certificate_arn == "" || length(local.cloudfront_aliases) > 0
+      error_message = "A custom CloudFront ACM certificate should be configured with at least one cloudfront_aliases entry."
+    }
   }
 
   tags = {

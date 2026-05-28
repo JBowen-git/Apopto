@@ -11,6 +11,7 @@ export type MessageNotificationEnvironment = {
   PORTAL_BASE_URL?: string;
   SES_FROM_EMAIL?: string;
   SES_NOTIFICATION_TO_EMAIL?: string;
+  SES_REGION?: string;
   SES_TO_EMAIL?: string;
 };
 
@@ -119,7 +120,9 @@ export function buildMessageNotificationEmail({
 }
 
 export function createSesMessageEmailSender(): SendMessageEmail {
-  const sesClient = new SESClient({});
+  const sesClient = new SESClient({
+    region: cleanValue(process.env.SES_REGION) || undefined,
+  });
 
   return async ({ fromEmail, subject, textBody, toEmail }) => {
     const commandInput: SendEmailCommandInput = {

@@ -161,6 +161,8 @@ data "aws_iam_policy_document" "app_deploy" {
     effect = "Allow"
 
     actions = [
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
       "apigateway:*",
       "cloudfront:*",
       "events:DeleteRule",

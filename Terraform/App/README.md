@@ -67,9 +67,34 @@ parameter names only, such as `stripe_secret_key_parameter_name`, and grants
 the runtime Lambda permission to read the parameter. See
 `../../docs/client-portal/parameter-store-secrets.md`.
 
+Public contact form and portal message email notifications use SES. Set
+`ses_from_email` to a verified sender address and `ses_notification_to_email`
+to the inbox that should receive submissions. Set `ses_region` when the SES
+identity is verified outside the app region. If the AWS account is still in the
+SES sandbox, both addresses must be verified.
+
 The `/api/*` CloudFront behavior uses a dedicated origin request policy for
 Auth0 and CORS headers. See
 `../../docs/client-portal/cloudfront-api-hardening.md`.
+
+## CloudFront Custom Domains
+
+CloudFront aliases and certificates are Terraform-managed. When a distribution
+already has a manually attached ACM certificate, add the hostname to
+`cloudfront_aliases` and either set `cloudfront_acm_certificate_domain` so
+Terraform looks up the most recent `ISSUED` certificate in `us-east-1`, or set
+`cloudfront_acm_certificate_arn` to pin an exact certificate ARN.
+
+Production uses:
+
+```hcl
+cloudfront_aliases                = ["apopto.net"]
+cloudfront_acm_certificate_domain = "apopto.net"
+```
+
+CloudFront only accepts ACM certificates from `us-east-1`. Re-apply the
+bootstrap stack before planning if the deploy role does not yet have
+`acm:ListCertificates` and `acm:DescribeCertificate`.
 
 The deployment scripts set `TF_VAR_site_asset_root=.artifacts/site` and
 `TF_VAR_site_renderer_asset_root=.artifacts/site-renderer` after building the

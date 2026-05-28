@@ -23,15 +23,18 @@
   "solutionServices": [
     {
       "name": "Custom Website Development",
-      "description": "Search-ready business websites with clear messaging, fast mobile pages, contact forms, and room to add features later."
+      "description": "Search-ready business websites with clear messaging, fast mobile pages, contact forms, and room to add features later.",
+      "url": "/solutions/custom-website"
     },
     {
       "name": "Business Website and Client Portal Development",
-      "description": "Business websites with secure client portals, dashboards, project updates, billing workflows, and customer management tools."
+      "description": "Business websites with secure client portals, dashboards, project updates, billing workflows, and customer management tools.",
+      "url": "/solutions/business-website-portal"
     },
     {
       "name": "Ecommerce Website Development",
-      "description": "Online stores with product catalogs, checkout, Stripe payments, shipping workflows, inventory tools, and admin dashboards."
+      "description": "Online stores with product catalogs, checkout, Stripe payments, shipping workflows, inventory tools, and admin dashboards.",
+      "url": "/solutions/ecommerce-website"
     }
   ],
   "routes": [
@@ -50,6 +53,62 @@
       "description": "Explore Apopto's custom website, business portal, and ecommerce development services.",
       "lastmod": "2026-05-28",
       "ogImage": "/og/apopto-solutions.jpg"
+    },
+    {
+      "path": "/solutions/custom-website",
+      "breadcrumb": "Custom Website",
+      "breadcrumbParent": {
+        "name": "Solutions",
+        "path": "/solutions"
+      },
+      "title": "Custom Website Development",
+      "description": "Custom website development for businesses that need search-ready pages, fast mobile performance, clear messaging, lead capture, and room to grow.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-solutions.jpg",
+      "serviceName": "Custom Website Development",
+      "serviceType": [
+        "Custom website development",
+        "Website SEO setup",
+        "Lead generation website development"
+      ]
+    },
+    {
+      "path": "/solutions/business-website-portal",
+      "breadcrumb": "Business Website + Portal",
+      "breadcrumbParent": {
+        "name": "Solutions",
+        "path": "/solutions"
+      },
+      "title": "Business Website & Client Portal Development",
+      "description": "Business website and client portal development for teams that need lead capture, client accounts, admin dashboards, billing support, files, and messages.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-solutions.jpg",
+      "serviceName": "Business Website and Client Portal Development",
+      "serviceType": [
+        "Business website development",
+        "Client portal development",
+        "Admin dashboard development",
+        "Business workflow automation"
+      ]
+    },
+    {
+      "path": "/solutions/ecommerce-website",
+      "breadcrumb": "Ecommerce Website",
+      "breadcrumbParent": {
+        "name": "Solutions",
+        "path": "/solutions"
+      },
+      "title": "Ecommerce Website Development",
+      "description": "Ecommerce website development for businesses that need product catalogs, search-ready product pages, checkout, Stripe payments, shipping, labels, and admin tools.",
+      "lastmod": "2026-05-28",
+      "ogImage": "/og/apopto-solutions.jpg",
+      "serviceName": "Ecommerce Website Development",
+      "serviceType": [
+        "Ecommerce website development",
+        "Product catalog development",
+        "Stripe checkout integration",
+        "Shipping workflow integration"
+      ]
     },
     {
       "path": "/portfolio",

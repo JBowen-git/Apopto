@@ -9,8 +9,15 @@ site_renderer_lambda_zip_path = "lambda_packages/site-renderer.zip"
 
 frontend_site_origin = "https://replace-with-production-domain"
 
+cloudfront_aliases                = ["replace-with-production-domain"]
+cloudfront_acm_certificate_domain = "replace-with-production-domain"
+# Use this instead of cloudfront_acm_certificate_domain when you need to pin an
+# exact issued ACM certificate from us-east-1.
+# cloudfront_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+
 ses_from_email            = ""
 ses_notification_to_email = ""
+ses_region                = ""
 stripe_secret_key_parameter_name = ""
 stripe_secret_key_kms_key_arn    = ""
 

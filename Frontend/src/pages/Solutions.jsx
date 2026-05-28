@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import SolutionPlaceholderImage from '../components/solutions/SolutionPlaceholderImage.jsx'
 import { solutionProducts, solutionsAnimationStorageKey } from '../data/solutions.js'
 
@@ -57,6 +58,10 @@ export default function Solutions() {
               <p className="solution-card-summary">{product.summary}</p>
               <p>{product.description}</p>
               <p className="solution-card-best">{product.bestFor}</p>
+              <div className="solution-card-price" aria-label={`${product.title} starting price`}>
+                <span>Starting At</span>
+                <strong>{product.pricing.startingAt}</strong>
+              </div>
               <ul className="solution-card-features">
                 {product.includes ? (
                   <li className="solution-card-includes">{product.includes}</li>
@@ -65,6 +70,10 @@ export default function Solutions() {
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
+              <Link className="solution-card-learn-more" to={product.path}>
+                Learn more
+                <span aria-hidden="true">-&gt;</span>
+              </Link>
             </div>
           </article>
         ))}

@@ -143,7 +143,7 @@ variable "frontend_site_origin" {
 }
 
 variable "ses_from_email" {
-  description = "Optional verified SES sender address for portal message notifications. Leave empty to disable email sending."
+  description = "Optional verified SES sender address for portal message and public contact form notifications. Leave empty to disable email sending."
   type        = string
   default     = ""
 
@@ -154,13 +154,24 @@ variable "ses_from_email" {
 }
 
 variable "ses_notification_to_email" {
-  description = "Optional recipient address for portal message notifications. Defaults to ses_from_email when omitted."
+  description = "Optional recipient address for portal message and public contact form notifications. Defaults to ses_from_email when omitted."
   type        = string
   default     = ""
 
   validation {
     condition     = trimspace(var.ses_notification_to_email) == "" || can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", trimspace(var.ses_notification_to_email)))
     error_message = "ses_notification_to_email must be empty or a valid email address."
+  }
+}
+
+variable "ses_region" {
+  description = "AWS SES region used for email notifications. Defaults to aws_region when empty."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = trimspace(var.ses_region) == "" || can(regex("^[a-z]{2}-[a-z]+-[0-9]+$", trimspace(var.ses_region)))
+    error_message = "ses_region must be empty or an AWS region such as us-east-1."
   }
 }
 
@@ -507,6 +518,78 @@ variable "cloudfront_price_class" {
   validation {
     condition     = contains(["PriceClass_100", "PriceClass_200", "PriceClass_All"], var.cloudfront_price_class)
     error_message = "cloudfront_price_class must be PriceClass_100, PriceClass_200, or PriceClass_All."
+  }
+}
+
+variable "cloudfront_aliases" {
+  description = "Custom domain aliases attached to the CloudFront distribution, for example apopto.net or www.apopto.net. Requires an ACM certificate in us-east-1."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for alias in var.cloudfront_aliases :
+      can(regex("^(\\*\\.)?([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$", trimspace(alias)))
+    ])
+    error_message = "cloudfront_aliases must contain DNS hostnames without protocol, path, or trailing slash."
+  }
+}
+
+variable "cloudfront_acm_certificate_arn" {
+  description = "Optional ACM certificate ARN in us-east-1 for CloudFront aliases. Leave empty to look up cloudfront_acm_certificate_domain or to use the default CloudFront certificate."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      trimspace(var.cloudfront_acm_certificate_arn) == ""
+      || can(regex("^arn:[A-Za-z0-9-]+:acm:us-east-1:[0-9]{12}:certificate/[A-Za-z0-9-]+$", trimspace(var.cloudfront_acm_certificate_arn)))
+    )
+    error_message = "cloudfront_acm_certificate_arn must be empty or an ACM certificate ARN from us-east-1."
+  }
+}
+
+variable "cloudfront_acm_certificate_domain" {
+  description = "Optional domain name used to look up the most recent ISSUED ACM certificate in us-east-1 for CloudFront. Ignored when cloudfront_acm_certificate_arn is set."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      trimspace(var.cloudfront_acm_certificate_domain) == ""
+      || can(regex("^(\\*\\.)?([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}$", trimspace(var.cloudfront_acm_certificate_domain)))
+    )
+    error_message = "cloudfront_acm_certificate_domain must be empty or a DNS hostname without protocol, path, or trailing slash."
+  }
+}
+
+variable "cloudfront_minimum_protocol_version" {
+  description = "Minimum TLS protocol version for the CloudFront custom certificate."
+  type        = string
+  default     = "TLSv1.2_2021"
+
+  validation {
+    condition = contains([
+      "SSLv3",
+      "TLSv1",
+      "TLSv1_2016",
+      "TLSv1.1_2016",
+      "TLSv1.2_2018",
+      "TLSv1.2_2019",
+      "TLSv1.2_2021",
+    ], var.cloudfront_minimum_protocol_version)
+    error_message = "cloudfront_minimum_protocol_version must be a CloudFront-supported protocol policy."
+  }
+}
+
+variable "cloudfront_ssl_support_method" {
+  description = "SSL support method for the CloudFront custom certificate."
+  type        = string
+  default     = "sni-only"
+
+  validation {
+    condition     = contains(["sni-only", "vip", "static-ip"], var.cloudfront_ssl_support_method)
+    error_message = "cloudfront_ssl_support_method must be sni-only, vip, or static-ip."
   }
 }
 

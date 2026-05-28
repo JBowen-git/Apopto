@@ -143,24 +143,35 @@ function buildWebsiteSchema(manifest, siteOrigin) {
 
 function buildBreadcrumbSchema(route, manifest, siteOrigin) {
   const routeUrl = new URL(route.path, siteOrigin).toString()
+  const itemListElement = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: new URL('/', siteOrigin).toString(),
+    },
+  ]
+
+  if (route.breadcrumbParent?.name && route.breadcrumbParent?.path) {
+    itemListElement.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: route.breadcrumbParent.name,
+      item: new URL(route.breadcrumbParent.path, siteOrigin).toString(),
+    })
+  }
+
+  itemListElement.push({
+    '@type': 'ListItem',
+    position: itemListElement.length + 1,
+    name: route.breadcrumb || route.title || manifest.siteName,
+    item: routeUrl,
+  })
 
   return {
     '@type': 'BreadcrumbList',
     '@id': `${routeUrl}#breadcrumb`,
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: new URL('/', siteOrigin).toString(),
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: route.breadcrumb || route.title || manifest.siteName,
-        item: routeUrl,
-      },
-    ],
+    itemListElement,
   }
 }
 
@@ -170,17 +181,22 @@ function buildSolutionsServiceSchema(route, manifest, siteOrigin) {
     ? manifest.solutionServices.filter((service) => service?.name)
     : []
 
-  return {
+  const serviceSchema = {
     '@type': 'Service',
     '@id': `${new URL(route.path, siteOrigin).toString()}#service`,
-    name: route.title,
+    name: route.serviceName || route.title,
     description: route.description || '',
     provider: {
       '@id': organizationId(siteOrigin),
     },
     ...(organization.areaServed ? { areaServed: organization.areaServed } : {}),
-    ...(Array.isArray(organization.serviceTypes) ? { serviceType: organization.serviceTypes } : {}),
-    ...(services.length ? {
+    ...(Array.isArray(route.serviceType) ? { serviceType: route.serviceType } : {}),
+    ...(!Array.isArray(route.serviceType) && Array.isArray(organization.serviceTypes) ? { serviceType: organization.serviceTypes } : {}),
+  }
+
+  if (route.path === '/solutions' && services.length) {
+    return {
+      ...serviceSchema,
       hasOfferCatalog: {
         '@type': 'OfferCatalog',
         name: 'Apopto web development services',
@@ -191,6 +207,7 @@ function buildSolutionsServiceSchema(route, manifest, siteOrigin) {
             '@type': 'Service',
             name: service.name,
             description: service.description || '',
+            ...(service.url ? { url: new URL(service.url, siteOrigin).toString() } : {}),
             provider: {
               '@id': organizationId(siteOrigin),
             },
@@ -198,14 +215,16 @@ function buildSolutionsServiceSchema(route, manifest, siteOrigin) {
           },
         })),
       },
-    } : {}),
+    }
   }
+
+  return serviceSchema
 }
 
 function buildStructuredDataScript(route, manifest, siteOrigin) {
   const graph = []
 
-  if (route.path === '/' || route.path === '/about' || route.path === '/solutions') {
+  if (route.path === '/' || route.path === '/about' || route.path.startsWith('/solutions')) {
     graph.push(buildOrganizationSchema(manifest, siteOrigin))
   }
 
@@ -217,7 +236,7 @@ function buildStructuredDataScript(route, manifest, siteOrigin) {
     graph.push(buildBreadcrumbSchema(route, manifest, siteOrigin))
   }
 
-  if (route.path === '/solutions') {
+  if (route.path.startsWith('/solutions')) {
     graph.push(buildSolutionsServiceSchema(route, manifest, siteOrigin))
   }
 

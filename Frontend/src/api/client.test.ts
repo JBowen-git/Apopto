@@ -60,6 +60,37 @@ describe('createApiClient', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('supports unauthenticated public requests', async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify({
+      ok: true,
+    }), {
+      headers: {
+        'content-type': 'application/json',
+      },
+      status: 202,
+    }));
+    const client = createApiClient({
+      baseUrl: 'https://api.apopto.test',
+      getAccessToken: async () => undefined,
+    });
+
+    await expect(client.post('/api/contact', {
+      email: 'owner@example.com',
+    }, {
+      authenticated: false,
+    })).resolves.toEqual({
+      ok: true,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const headers = init.headers as Headers;
+
+    expect(url).toBe('https://api.apopto.test/api/contact');
+    expect(init.method).toBe('POST');
+    expect(headers.has('authorization')).toBe(false);
+    expect(headers.get('content-type')).toBe('application/json');
+  });
+
   it('preserves structured API error codes and request IDs', async () => {
     stubFetch(new Response(JSON.stringify({
       details: {

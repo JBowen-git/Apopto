@@ -13,6 +13,16 @@ output "cloudfront_distribution_domain_name" {
   value       = aws_cloudfront_distribution.website.domain_name
 }
 
+output "cloudfront_aliases" {
+  description = "Custom aliases attached to the CloudFront distribution."
+  value       = aws_cloudfront_distribution.website.aliases
+}
+
+output "cloudfront_acm_certificate_arn" {
+  description = "ACM certificate ARN attached to CloudFront, when a custom certificate is configured."
+  value       = local.cloudfront_acm_certificate_arn != "" ? local.cloudfront_acm_certificate_arn : null
+}
+
 output "cloudfront_waf_rate_limit_web_acl_arn" {
   description = "Optional CloudFront-scope WAF Web ACL ARN when cloudfront_waf_rate_limiting_enabled is true."
   value       = try(aws_wafv2_web_acl.cloudfront_api_rate_limit[0].arn, null)

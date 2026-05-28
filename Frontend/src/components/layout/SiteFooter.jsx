@@ -27,7 +27,6 @@ export default function SiteFooter() {
         </nav>
 
         <div className="site-footer-cta">
-          <p>Checking future availability?</p>
           <Link className="footer-cta-link" to="/start-a-project">
             Start a Project
             <span aria-hidden="true">-&gt;</span>

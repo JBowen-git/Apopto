@@ -12,6 +12,10 @@ The production workflow follows the Xavier pattern: GitHub assumes the staging
 site deploy role first, then the scripts assume the production app deploy role
 through `APP_DEPLOY_ROLE_ARN`.
 
+The deploy policy also grants read-only ACM access so the app stack can adopt an
+existing `us-east-1` certificate for CloudFront aliases without detaching it on
+future applies.
+
 ## First Apply
 
 Copy the example variables, edit them, then apply with local state:

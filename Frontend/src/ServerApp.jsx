@@ -19,6 +19,7 @@ import MessageThread from './pages/MessageThread'
 import Messages from './pages/Messages'
 import NotFound from './pages/NotFound.jsx'
 import Portfolio from './pages/Portfolio.jsx'
+import SolutionDetailPage from './pages/SolutionDetailPage.jsx'
 import Solutions from './pages/Solutions.jsx'
 import StartAProject from './pages/StartAProject.jsx'
 import AppRoutes from './routes/AppRoutes.jsx'
@@ -41,6 +42,7 @@ const pages = {
   Messages,
   NotFound,
   Portfolio,
+  SolutionDetailPage,
   Solutions,
   StartAProject,
 }

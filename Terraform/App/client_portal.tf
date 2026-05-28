@@ -28,6 +28,7 @@ locals {
     ? trimspace(var.ses_notification_to_email)
     : local.client_portal_ses_from_email
   )
+  client_portal_ses_region                       = trimspace(var.ses_region) != "" ? trimspace(var.ses_region) : var.aws_region
   client_portal_stripe_secret_key_parameter_name = trimspace(var.stripe_secret_key_parameter_name)
   client_portal_stripe_secret_key_parameter_arn = (
     local.client_portal_stripe_secret_key_parameter_name != ""

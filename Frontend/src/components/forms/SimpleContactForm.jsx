@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Button as MuiButton, MenuItem, Paper, TextField } from '@mui/material'
+import { createApiClient, isApiClientError } from '../../api/client'
 import { bestTimeOptions, preferredContactOptions, simpleContactInitialValues, simpleContactRequiredFields } from '../../data/contact.js'
 
 const formId = 'simple-contact-form'
+const contactApiClient = createApiClient()
 
 const fieldLabels = {
   name: 'Name',
@@ -51,10 +53,13 @@ function getTextFieldSlotProps(label, { required = false, select = false } = {})
 export default function SimpleContactForm() {
   const [contactValues, setContactValues] = useState(simpleContactInitialValues)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
+  const [isSubmitting, setSubmitting] = useState(false)
   const [isSubmitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const updateContactValue = (field) => (event) => {
     setSubmitted(false)
+    setSubmitError('')
     setContactValues((currentValues) => ({
       ...currentValues,
       [field]: event.target.value,
@@ -67,15 +72,32 @@ export default function SimpleContactForm() {
   const canSubmitContactForm = () =>
     simpleContactRequiredFields.every((field) => contactValues[field].trim())
 
-  const submitContactForm = (event) => {
+  const submitContactForm = async (event) => {
     event.preventDefault()
     setHasAttemptedSubmit(true)
+    setSubmitError('')
 
     if (!canSubmitContactForm()) {
       return
     }
 
-    setSubmitted(true)
+    setSubmitting(true)
+
+    try {
+      await contactApiClient.post('/api/contact', contactValues, { authenticated: false })
+      setContactValues(simpleContactInitialValues)
+      setHasAttemptedSubmit(false)
+      setSubmitted(true)
+    } catch (error) {
+      setSubmitted(false)
+      setSubmitError(
+        isApiClientError(error)
+          ? error.message
+          : 'The message could not be sent. Please try again.',
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -193,16 +215,23 @@ export default function SimpleContactForm() {
         <div className="contact-form-actions">
           <MuiButton
             className="contact-form-action contact-form-action-primary"
+            disabled={isSubmitting}
             type="submit"
             variant="contained"
           >
-            Submit
+            {isSubmitting ? 'Sending...' : 'Submit'}
           </MuiButton>
         </div>
 
         {isSubmitted ? (
           <p className="contact-form-confirmation">
-            Your contact details are ready for review.
+            Your message has been sent. I will follow up soon.
+          </p>
+        ) : null}
+
+        {submitError ? (
+          <p className="contact-form-confirmation contact-form-error">
+            {submitError}
           </p>
         ) : null}
       </Paper>

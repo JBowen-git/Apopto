@@ -1,5 +1,6 @@
 export type HandlerGroupName =
   | 'health'
+  | 'contact'
   | 'identityIntake'
   | 'files'
   | 'messages'
@@ -27,6 +28,16 @@ export const healthRoutes = [
     owner: 'health',
     operation: 'healthCheck',
     phase: 9,
+  },
+] as const satisfies readonly ApiRouteDefinition[];
+
+export const contactRoutes = [
+  {
+    method: 'POST',
+    path: '/api/contact',
+    owner: 'contact',
+    operation: 'sendContactMessage',
+    phase: 43,
   },
 ] as const satisfies readonly ApiRouteDefinition[];
 
@@ -194,6 +205,7 @@ export const adminRoutes = [
 
 export const allPortalRoutes = [
   ...healthRoutes,
+  ...contactRoutes,
   ...identityIntakeRoutes,
   ...fileRoutes,
   ...messageRoutes,

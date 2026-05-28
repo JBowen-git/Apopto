@@ -12,6 +12,13 @@ export {
   type BillingHandlerDependencies,
 } from './handlers/billing.js';
 export {
+  buildContactNotificationEmail,
+  createContactHandler,
+  createSesContactEmailSender,
+  handler as contactHandler,
+  type ContactHandlerDependencies,
+} from './handlers/contact.js';
+export {
   createFilesHandler,
   handler as filesHandler,
   type FilesHandlerDependencies,

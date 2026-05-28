@@ -32,10 +32,7 @@ export default function Portfolio() {
       >
         <div className="portfolio-story-paper-intro">
           <p className="portfolio-project-label">Portfolio approach</p>
-          <h2>
-            Every build starts with a simple question: what should this page help someone
-            understand, trust, and do?
-          </h2>
+          <h2>Built for clarity, trust, and action.</h2>
         </div>
         <div className="portfolio-story-paper-body" id="portfolio-details">
           <p>
