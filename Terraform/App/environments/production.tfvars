@@ -9,8 +9,8 @@ site_renderer_lambda_zip_path = "lambda_packages/site-renderer.zip"
 
 frontend_site_origin = "https://apopto.net"
 
-cloudfront_aliases                = ["apopto.net"]
-cloudfront_acm_certificate_domain = "apopto.net"
+cloudfront_aliases             = ["apopto.net"]
+cloudfront_acm_certificate_arn = "arn:aws:acm:us-east-1:543035741420:certificate/697095f2-bdb6-4632-a15c-35017aa722dc"
 
 auth0_domain   = "dev-746g37dhd2m2q4g4.us.auth0.com"
 auth0_audience = "https://apopto.net"
