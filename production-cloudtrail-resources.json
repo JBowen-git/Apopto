@@ -1,0 +1,11 @@
+[
+  {
+    "name": "ironwallengraving-audit",
+    "type": "cloudtrail",
+    "description": "Multi-region CloudTrail trail for AWS account audit history. It includes global service events, validates log files, and writes audit logs to the production log bucket.",
+    "bucket": {
+      "name": "ironwallengraving-logs-285065163498",
+      "prefix": "cloudtrail/"
+    }
+  }
+]

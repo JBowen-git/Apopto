@@ -1,0 +1,2002 @@
+[
+  {
+    "name": "ironwallengraving-products",
+    "type": "dynamodb_table",
+    "description": "Production product catalog table. Stores sellable product/color variant records, pricing, stock snapshot fields, catalog visibility, SEO slugs, image metadata, and product family grouping data.",
+    "fields": {
+      "ProductId": {
+        "type": "string",
+        "description": "Primary key for a product record. This key is capitalized because the DynamoDB table hash key is defined as ProductId."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Constant marker value of product used by the catalog listing GSI."
+      },
+      "name": {
+        "type": "string",
+        "description": "Customer-facing product name."
+      },
+      "slug": {
+        "type": "string",
+        "description": "URL-friendly unique product slug used for product detail lookups."
+      },
+      "description": {
+        "type": "string",
+        "description": "Customer-facing product description."
+      },
+      "category": {
+        "type": "string",
+        "description": "Optional product category used for organization and filtering."
+      },
+      "tags": {
+        "type": "list<string>",
+        "description": "Optional list of catalog tags assigned to the product."
+      },
+      "price": {
+        "type": "number",
+        "description": "Effective customer price currently shown and charged for the product."
+      },
+      "basePrice": {
+        "type": "number",
+        "description": "Regular product price before any sale price is applied."
+      },
+      "salePrice": {
+        "type": "number",
+        "description": "Optional sale price used when the product is on sale."
+      },
+      "isOnSale": {
+        "type": "boolean",
+        "description": "Whether sale pricing should be used for this product."
+      },
+      "percentOff": {
+        "type": "number",
+        "description": "Computed discount percentage shown for sale products."
+      },
+      "cost": {
+        "type": "number",
+        "description": "Optional internal product cost used for owner/admin reporting."
+      },
+      "shipping": {
+        "type": "map",
+        "description": "Optional product-level shipping dimensions and weight.",
+        "fields": {
+          "weightOz": {
+            "type": "number",
+            "description": "Product shipping weight in ounces."
+          },
+          "lengthIn": {
+            "type": "number",
+            "description": "Product package length contribution in inches."
+          },
+          "widthIn": {
+            "type": "number",
+            "description": "Product package width contribution in inches."
+          },
+          "heightIn": {
+            "type": "number",
+            "description": "Product package height contribution in inches."
+          }
+        }
+      },
+      "stockQuantity": {
+        "type": "number",
+        "description": "Current on-hand inventory quantity for the product."
+      },
+      "inStock": {
+        "type": "boolean",
+        "description": "Whether the product is currently considered available to buy."
+      },
+      "featured": {
+        "type": "boolean",
+        "description": "Whether the product should be highlighted in featured catalog surfaces."
+      },
+      "isHidden": {
+        "type": "boolean",
+        "description": "Whether the product should be hidden from public catalog views."
+      },
+      "publishAt": {
+        "type": "string",
+        "description": "Optional ISO-8601 timestamp after which the product may be publicly visible."
+      },
+      "sku": {
+        "type": "string",
+        "description": "Optional stock keeping unit for fulfillment and owner reference."
+      },
+      "mainImageKey": {
+        "type": "string",
+        "description": "S3 object key for the primary product image."
+      },
+      "images": {
+        "type": "list<map>",
+        "description": "Stored product image metadata and generated variants.",
+        "fields": {
+          "key": {
+            "type": "string",
+            "description": "S3 object key for the original image."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original or display file name for the image."
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Image MIME type."
+          },
+          "altText": {
+            "type": "string",
+            "description": "Optional accessibility alt text for the image."
+          },
+          "variants": {
+            "type": "list<map>",
+            "description": "Generated image variants for responsive display.",
+            "fields": {
+              "key": {
+                "type": "string",
+                "description": "S3 object key for the generated variant."
+              },
+              "fileName": {
+                "type": "string",
+                "description": "File name for the generated variant."
+              },
+              "contentType": {
+                "type": "string",
+                "description": "MIME type for the generated variant."
+              },
+              "width": {
+                "type": "number",
+                "description": "Variant width in pixels."
+              },
+              "height": {
+                "type": "number",
+                "description": "Variant height in pixels."
+              }
+            }
+          }
+        }
+      },
+      "viewCount": {
+        "type": "number",
+        "description": "Count of recorded product views."
+      },
+      "unitsSold": {
+        "type": "number",
+        "description": "Total units sold for this product."
+      },
+      "grossRevenue": {
+        "type": "number",
+        "description": "Total gross revenue attributed to this product."
+      },
+      "lastSoldAt": {
+        "type": "string",
+        "description": "Optional ISO-8601 timestamp for the most recent sale."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the product record was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the product record was last updated."
+      },
+      "familyId": {
+        "type": "string",
+        "description": "Stable product family identifier used to group color variants."
+      },
+      "familySlug": {
+        "type": "string",
+        "description": "URL-friendly family slug shared by related product variants."
+      },
+      "colorKey": {
+        "type": "string",
+        "description": "Stable machine key for this product color variant."
+      },
+      "colorLabel": {
+        "type": "string",
+        "description": "Customer-facing color label for this product variant."
+      },
+      "colorSlug": {
+        "type": "string",
+        "description": "URL-friendly color slug for this product variant."
+      },
+      "isDefaultColor": {
+        "type": "boolean",
+        "description": "Whether this variant is the default color shown for the product family."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "ProductId",
+        "sort_key": null,
+        "description": "Direct lookup of one product record by product id."
+      },
+      {
+        "name": "slug-index",
+        "type": "global_secondary_index",
+        "partition_key": "slug",
+        "sort_key": null,
+        "projection": "ALL",
+        "description": "Lookup a product by its public URL slug."
+      },
+      {
+        "name": "recordType-updatedAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "recordType",
+        "sort_key": "updatedAt",
+        "projection": "ALL",
+        "description": "Query product records for catalog/admin listings ordered by update time."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-posts",
+    "type": "dynamodb_table",
+    "description": "Production content table for site posts. Stores post metadata, public visibility controls, feature flags, post images, and content bodies.",
+    "fields": {
+      "postId": {
+        "type": "string",
+        "description": "Primary key for a post record."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Constant marker value of post used by the all-posts listing GSI."
+      },
+      "title": {
+        "type": "string",
+        "description": "Customer-facing post title."
+      },
+      "slug": {
+        "type": "string",
+        "description": "URL-friendly post slug."
+      },
+      "content": {
+        "type": "string",
+        "description": "Post body content."
+      },
+      "postType": {
+        "type": "string",
+        "description": "Post classification used by the post-type listing GSI."
+      },
+      "category": {
+        "type": "string",
+        "description": "Optional category label for the post."
+      },
+      "isHidden": {
+        "type": "boolean",
+        "description": "Whether the post should be hidden from public post listings."
+      },
+      "featured": {
+        "type": "boolean",
+        "description": "Whether the post should be highlighted in featured content surfaces."
+      },
+      "featureExpiresAt": {
+        "type": "string",
+        "description": "Optional ISO-8601 timestamp after which the featured flag should no longer be treated as active."
+      },
+      "mainImageKey": {
+        "type": "string",
+        "description": "S3 object key for the primary post image."
+      },
+      "images": {
+        "type": "list<map>",
+        "description": "Stored post image metadata and generated variants.",
+        "fields": {
+          "key": {
+            "type": "string",
+            "description": "S3 object key for the original image."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original or display file name for the image."
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Image MIME type."
+          },
+          "altText": {
+            "type": "string",
+            "description": "Optional accessibility alt text for the image."
+          },
+          "variants": {
+            "type": "list<map>",
+            "description": "Generated image variants for responsive display.",
+            "fields": {
+              "key": {
+                "type": "string",
+                "description": "S3 object key for the generated variant."
+              },
+              "fileName": {
+                "type": "string",
+                "description": "File name for the generated variant."
+              },
+              "contentType": {
+                "type": "string",
+                "description": "MIME type for the generated variant."
+              },
+              "width": {
+                "type": "number",
+                "description": "Variant width in pixels."
+              },
+              "height": {
+                "type": "number",
+                "description": "Variant height in pixels."
+              }
+            }
+          }
+        }
+      },
+      "viewCount": {
+        "type": "number",
+        "description": "Count of recorded post views."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the post was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the post was last updated."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "postId",
+        "sort_key": null,
+        "description": "Direct lookup of one post by post id."
+      },
+      {
+        "name": "recordType-createdAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "recordType",
+        "sort_key": "createdAt",
+        "projection": "ALL",
+        "description": "Query all posts newest-first without scanning the table."
+      },
+      {
+        "name": "postType-createdAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "postType",
+        "sort_key": "createdAt",
+        "projection": "ALL",
+        "description": "Query posts of a specific post type newest-first."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-carts",
+    "type": "dynamodb_table",
+    "description": "Production checkout cart table. Stores in-progress carts, checkout pricing snapshots, shipping quotes, payment linkage, inventory reservation pointers, and cart TTL cleanup metadata.",
+    "fields": {
+      "cartId": {
+        "type": "string",
+        "description": "Primary key for the cart."
+      },
+      "source": {
+        "type": "string",
+        "description": "Optional source label indicating where the cart originated."
+      },
+      "customerEmail": {
+        "type": "string",
+        "description": "Customer email attached during checkout."
+      },
+      "items": {
+        "type": "list<map>",
+        "description": "Raw cart lines requested by the customer.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id for the line item."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity requested for the product."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Optional denormalized product name captured with the cart line."
+          },
+          "familySlug": {
+            "type": "string",
+            "description": "Optional product family slug captured with the cart line."
+          },
+          "colorKey": {
+            "type": "string",
+            "description": "Optional product color key captured with the cart line."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label captured with the cart line."
+          },
+          "colorSlug": {
+            "type": "string",
+            "description": "Optional product color slug captured with the cart line."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional SKU captured with the cart line."
+          }
+        }
+      },
+      "pricedItems": {
+        "type": "list<map>",
+        "description": "Validated priced item snapshot used for checkout totals.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id for the priced line item."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Product name at the time pricing was calculated."
+          },
+          "productSlug": {
+            "type": "string",
+            "description": "Product slug at the time pricing was calculated."
+          },
+          "familySlug": {
+            "type": "string",
+            "description": "Optional product family slug."
+          },
+          "colorKey": {
+            "type": "string",
+            "description": "Optional product color key."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label."
+          },
+          "colorSlug": {
+            "type": "string",
+            "description": "Optional product color slug."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional product SKU."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity priced for this line."
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Unit price used for this checkout snapshot."
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "Total price for this line."
+          }
+        }
+      },
+      "itemCount": {
+        "type": "number",
+        "description": "Total quantity of items in the cart."
+      },
+      "subtotal": {
+        "type": "number",
+        "description": "Cart merchandise subtotal before shipping and tax."
+      },
+      "status": {
+        "type": "string",
+        "description": "Checkout lifecycle status for the cart."
+      },
+      "paymentStatus": {
+        "type": "string",
+        "description": "Payment status associated with the cart."
+      },
+      "paymentProvider": {
+        "type": "string",
+        "description": "Payment provider used for the cart, such as stripe."
+      },
+      "paymentReferenceId": {
+        "type": "string",
+        "description": "Provider payment reference id used to correlate checkout events."
+      },
+      "orderId": {
+        "type": "string",
+        "description": "Order id created from this cart once checkout completes."
+      },
+      "shippingMethod": {
+        "type": "string",
+        "description": "Selected shipping method summary."
+      },
+      "shippingAddress": {
+        "type": "map",
+        "description": "Customer shipping address snapshot.",
+        "fields": {
+          "fullName": {
+            "type": "string",
+            "description": "Recipient full name."
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Street address line 1."
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Optional street address line 2."
+          },
+          "city": {
+            "type": "string",
+            "description": "Shipping city."
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code."
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "US ZIP/postal code."
+          },
+          "country": {
+            "type": "string",
+            "description": "Shipping country code."
+          }
+        }
+      },
+      "shippingParcel": {
+        "type": "map",
+        "description": "Package dimensions and weight snapshot used for rating.",
+        "fields": {
+          "weightOz": {
+            "type": "number",
+            "description": "Parcel weight in ounces."
+          },
+          "lengthIn": {
+            "type": "number",
+            "description": "Parcel length in inches."
+          },
+          "widthIn": {
+            "type": "number",
+            "description": "Parcel width in inches."
+          },
+          "heightIn": {
+            "type": "number",
+            "description": "Parcel height in inches."
+          },
+          "massUnit": {
+            "type": "string",
+            "description": "Mass unit sent to the shipping provider."
+          },
+          "distanceUnit": {
+            "type": "string",
+            "description": "Distance unit sent to the shipping provider."
+          }
+        }
+      },
+      "shippingRates": {
+        "type": "list<map>",
+        "description": "Available customer-facing shipping rates returned during checkout.",
+        "fields": {
+          "rateId": {
+            "type": "string",
+            "description": "Provider rate id."
+          },
+          "shipmentId": {
+            "type": "string",
+            "description": "Provider shipment id used to buy the label later."
+          },
+          "provider": {
+            "type": "string",
+            "description": "Shipping provider that produced the rate."
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier name."
+          },
+          "carrierAccount": {
+            "type": "string",
+            "description": "Optional provider carrier account id."
+          },
+          "serviceLevelToken": {
+            "type": "string",
+            "description": "Provider service level token."
+          },
+          "serviceLevelName": {
+            "type": "string",
+            "description": "Customer-facing service level name."
+          },
+          "serviceLevelTerms": {
+            "type": "string",
+            "description": "Optional provider service terms."
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Optional estimated transit days."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Rate amount charged to the customer."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Rate currency code."
+          }
+        }
+      },
+      "shippingSelection": {
+        "type": "map",
+        "description": "The rate selected by the customer for checkout.",
+        "fields": {
+          "provider": {
+            "type": "string",
+            "description": "Shipping provider for the selected rate."
+          },
+          "shipmentId": {
+            "type": "string",
+            "description": "Provider shipment id for the selected rate."
+          },
+          "rateId": {
+            "type": "string",
+            "description": "Provider rate id selected by the customer."
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier for the selected rate."
+          },
+          "carrierAccount": {
+            "type": "string",
+            "description": "Optional provider carrier account id."
+          },
+          "serviceLevelToken": {
+            "type": "string",
+            "description": "Provider service level token."
+          },
+          "serviceLevelName": {
+            "type": "string",
+            "description": "Customer-facing service level name."
+          },
+          "serviceLevelTerms": {
+            "type": "string",
+            "description": "Optional provider service terms."
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Optional estimated transit days."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Selected shipping amount."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Selected shipping currency code."
+          },
+          "selectedAt": {
+            "type": "string",
+            "description": "ISO-8601 timestamp when the customer selected this rate."
+          }
+        }
+      },
+      "shippingAmount": {
+        "type": "number",
+        "description": "Selected shipping charge."
+      },
+      "taxAmount": {
+        "type": "number",
+        "description": "Calculated tax amount."
+      },
+      "totalAmount": {
+        "type": "number",
+        "description": "Total amount due including subtotal, shipping, and tax."
+      },
+      "taxCalculationId": {
+        "type": "string",
+        "description": "Optional tax provider calculation id."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the cart was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the cart was last updated."
+      },
+      "currentReservationId": {
+        "type": "string",
+        "description": "Current inventory reservation id associated with this cart."
+      },
+      "reservationVersion": {
+        "type": "number",
+        "description": "Version counter for inventory reservation attempts on this cart."
+      },
+      "paymentIntentId": {
+        "type": "string",
+        "description": "Stripe payment intent id for the checkout session."
+      },
+      "reservationExpiresAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the current inventory reservation expires."
+      },
+      "reservationReleaseAfter": {
+        "type": "string",
+        "description": "ISO-8601 timestamp after which an expired reservation may be released."
+      },
+      "reservationFingerprint": {
+        "type": "string",
+        "description": "Fingerprint tying the current pricing and reservation state together."
+      },
+      "ttlExpiresAt": {
+        "type": "number",
+        "description": "DynamoDB TTL epoch seconds for automatic cart cleanup."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "cartId",
+        "sort_key": null,
+        "description": "Direct lookup of one cart by cart id."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-orders",
+    "type": "dynamodb_table",
+    "description": "Production order table. Stores completed checkout snapshots, payment references, fulfillment state, shipping label/tracking metadata, Stripe dispute metadata, and payment-completed side-effect markers.",
+    "fields": {
+      "orderId": {
+        "type": "string",
+        "description": "Primary key for the order."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Constant marker value of order used by the admin order listing GSI."
+      },
+      "cartId": {
+        "type": "string",
+        "description": "Cart id that produced this order."
+      },
+      "customerEmail": {
+        "type": "string",
+        "description": "Customer email captured during checkout."
+      },
+      "items": {
+        "type": "list<map>",
+        "description": "Original cart items captured on the order.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id for the item."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity ordered."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Optional product name captured with the item."
+          },
+          "familySlug": {
+            "type": "string",
+            "description": "Optional product family slug captured with the item."
+          },
+          "colorKey": {
+            "type": "string",
+            "description": "Optional product color key captured with the item."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label captured with the item."
+          },
+          "colorSlug": {
+            "type": "string",
+            "description": "Optional product color slug captured with the item."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional SKU captured with the item."
+          }
+        }
+      },
+      "pricedItems": {
+        "type": "list<map>",
+        "description": "Priced checkout snapshot used to render the order and emails.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id for the priced line."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Product name at checkout completion."
+          },
+          "productSlug": {
+            "type": "string",
+            "description": "Product slug at checkout completion."
+          },
+          "familySlug": {
+            "type": "string",
+            "description": "Optional product family slug."
+          },
+          "colorKey": {
+            "type": "string",
+            "description": "Optional product color key."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label."
+          },
+          "colorSlug": {
+            "type": "string",
+            "description": "Optional product color slug."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional SKU."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity ordered."
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Unit price charged."
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "Line total charged."
+          }
+        }
+      },
+      "itemCount": {
+        "type": "number",
+        "description": "Total quantity of items in the order."
+      },
+      "subtotal": {
+        "type": "number",
+        "description": "Order merchandise subtotal."
+      },
+      "shippingAmount": {
+        "type": "number",
+        "description": "Shipping amount charged."
+      },
+      "taxAmount": {
+        "type": "number",
+        "description": "Tax amount charged."
+      },
+      "totalAmount": {
+        "type": "number",
+        "description": "Total order amount charged."
+      },
+      "shippingMethod": {
+        "type": "string",
+        "description": "Selected shipping method summary."
+      },
+      "shippingAddress": {
+        "type": "map",
+        "description": "Shipping address snapshot for the completed order.",
+        "fields": {
+          "fullName": {
+            "type": "string",
+            "description": "Recipient full name."
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Street address line 1."
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Optional street address line 2."
+          },
+          "city": {
+            "type": "string",
+            "description": "Shipping city."
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code."
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "US ZIP/postal code."
+          },
+          "country": {
+            "type": "string",
+            "description": "Shipping country code."
+          }
+        }
+      },
+      "shippingParcel": {
+        "type": "map",
+        "description": "Package dimensions and weight snapshot used for label purchase.",
+        "fields": {
+          "weightOz": {
+            "type": "number",
+            "description": "Parcel weight in ounces."
+          },
+          "lengthIn": {
+            "type": "number",
+            "description": "Parcel length in inches."
+          },
+          "widthIn": {
+            "type": "number",
+            "description": "Parcel width in inches."
+          },
+          "heightIn": {
+            "type": "number",
+            "description": "Parcel height in inches."
+          },
+          "massUnit": {
+            "type": "string",
+            "description": "Mass unit sent to the shipping provider."
+          },
+          "distanceUnit": {
+            "type": "string",
+            "description": "Distance unit sent to the shipping provider."
+          }
+        }
+      },
+      "shippingSelection": {
+        "type": "map",
+        "description": "Shipping rate selected during checkout.",
+        "fields": {
+          "provider": {
+            "type": "string",
+            "description": "Shipping provider for the selected rate."
+          },
+          "shipmentId": {
+            "type": "string",
+            "description": "Provider shipment id for the selected rate."
+          },
+          "rateId": {
+            "type": "string",
+            "description": "Provider rate id selected by the customer."
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier for the selected rate."
+          },
+          "carrierAccount": {
+            "type": "string",
+            "description": "Optional provider carrier account id."
+          },
+          "serviceLevelToken": {
+            "type": "string",
+            "description": "Provider service level token."
+          },
+          "serviceLevelName": {
+            "type": "string",
+            "description": "Customer-facing service level name."
+          },
+          "serviceLevelTerms": {
+            "type": "string",
+            "description": "Optional provider service terms."
+          },
+          "estimatedDays": {
+            "type": "number",
+            "description": "Optional estimated transit days."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Selected shipping amount."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Selected shipping currency code."
+          },
+          "selectedAt": {
+            "type": "string",
+            "description": "ISO-8601 timestamp when the customer selected this rate."
+          }
+        }
+      },
+      "paymentStatus": {
+        "type": "string",
+        "description": "Payment status for the completed order."
+      },
+      "fulfillmentStatus": {
+        "type": "string",
+        "description": "Fulfillment lifecycle status for the order."
+      },
+      "paymentProvider": {
+        "type": "string",
+        "description": "Payment provider used for the order."
+      },
+      "paymentReferenceId": {
+        "type": "string",
+        "description": "Provider payment reference id used for idempotency and payment lookup."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the order record was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the order was last updated."
+      },
+      "completedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when checkout completed."
+      },
+      "paymentCompletedEventPublishedAt": {
+        "type": "string",
+        "description": "Side-effect marker timestamp indicating the payment-completed event was published to downstream workers."
+      },
+      "shippedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the order was marked shipped."
+      },
+      "shipmentNotificationStatus": {
+        "type": "string",
+        "description": "Status of the customer shipment notification side effect."
+      },
+      "shipmentNotificationQueuedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the shipment notification was queued."
+      },
+      "shipmentNotificationSentAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the shipment notification was sent."
+      },
+      "shipmentNotificationRecipient": {
+        "type": "string",
+        "description": "Email address that received the shipment notification."
+      },
+      "shipmentNotificationIntendedRecipient": {
+        "type": "string",
+        "description": "Original intended customer email before any sandbox routing."
+      },
+      "shipmentNotificationSubject": {
+        "type": "string",
+        "description": "Subject line used for the shipment notification email."
+      },
+      "shipmentNotificationSandboxRouted": {
+        "type": "boolean",
+        "description": "Whether the shipment notification was routed to a sandbox/test recipient."
+      },
+      "shipmentNotificationLastAttemptAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp of the last shipment notification send attempt."
+      },
+      "shipmentNotificationFailureReason": {
+        "type": "string",
+        "description": "Most recent shipment notification failure reason."
+      },
+      "shipmentLabel": {
+        "type": "map",
+        "description": "Purchased shipping label metadata.",
+        "fields": {
+          "transactionId": {
+            "type": "string",
+            "description": "Provider transaction id for the purchased label."
+          },
+          "labelUrl": {
+            "type": "string",
+            "description": "URL to the purchased shipping label."
+          },
+          "labelFileType": {
+            "type": "string",
+            "description": "File type for the label document."
+          },
+          "trackingNumber": {
+            "type": "string",
+            "description": "Carrier tracking number returned with the label."
+          },
+          "trackingUrl": {
+            "type": "string",
+            "description": "Optional carrier tracking URL returned with the label."
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier for the purchased label."
+          },
+          "serviceLevelName": {
+            "type": "string",
+            "description": "Service level name for the purchased label."
+          },
+          "serviceLevelToken": {
+            "type": "string",
+            "description": "Service level token for the purchased label."
+          },
+          "purchasedAt": {
+            "type": "string",
+            "description": "ISO-8601 timestamp when the label was purchased."
+          }
+        }
+      },
+      "tracking": {
+        "type": "map",
+        "description": "Current shipment tracking snapshot.",
+        "fields": {
+          "trackingNumber": {
+            "type": "string",
+            "description": "Carrier tracking number."
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier name."
+          },
+          "status": {
+            "type": "string",
+            "description": "Latest tracking status."
+          },
+          "statusDetails": {
+            "type": "string",
+            "description": "Optional provider status details."
+          },
+          "trackingUrl": {
+            "type": "string",
+            "description": "Optional tracking URL."
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "ISO-8601 timestamp when tracking was last updated."
+          }
+        }
+      },
+      "stripePaymentIntentId": {
+        "type": "string",
+        "description": "Stripe payment intent id associated with the order."
+      },
+      "stripeChargeId": {
+        "type": "string",
+        "description": "Stripe charge id associated with the order."
+      },
+      "stripeDisputeId": {
+        "type": "string",
+        "description": "Stripe dispute id currently associated with the order."
+      },
+      "stripeDisputeStatus": {
+        "type": "string",
+        "description": "Latest Stripe dispute status recorded for the order."
+      },
+      "stripeDisputeReason": {
+        "type": "string",
+        "description": "Stripe dispute reason."
+      },
+      "stripeDisputeAmount": {
+        "type": "number",
+        "description": "Disputed amount."
+      },
+      "stripeDisputeCurrency": {
+        "type": "string",
+        "description": "Currency for the disputed amount."
+      },
+      "stripeDisputeEvidenceDueBy": {
+        "type": "string",
+        "description": "Evidence deadline supplied by Stripe for the dispute."
+      },
+      "stripeDisputeCreatedAt": {
+        "type": "string",
+        "description": "Timestamp when the Stripe dispute was created."
+      },
+      "stripeDisputeUpdatedAt": {
+        "type": "string",
+        "description": "Timestamp when the Stripe dispute details were last updated."
+      },
+      "stripeDisputeClosedAt": {
+        "type": "string",
+        "description": "Timestamp when the Stripe dispute closed."
+      },
+      "stripeDisputeFundsWithdrawnAt": {
+        "type": "string",
+        "description": "Timestamp when disputed funds were withdrawn."
+      },
+      "stripeDisputeFundsReinstatedAt": {
+        "type": "string",
+        "description": "Timestamp when disputed funds were reinstated."
+      },
+      "orderStatus": {
+        "type": "string",
+        "description": "Owner-facing order status, such as ready_for_fulfillment or inventory_exception."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "orderId",
+        "sort_key": null,
+        "description": "Direct lookup of one order by order id."
+      },
+      {
+        "name": "recordType-createdAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "recordType",
+        "sort_key": "createdAt",
+        "projection": "ALL",
+        "description": "Admin order views query newest-first orders without changing the order primary key."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-site-settings",
+    "type": "dynamodb_table",
+    "description": "Production singleton-style site settings table. Stores storefront banner settings and Shippo account/origin configuration used by checkout and fulfillment.",
+    "fields": {
+      "settingKey": {
+        "type": "string",
+        "description": "Primary key for a site settings record. The current application uses a stable singleton settings key."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the settings record was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the settings record was last updated."
+      },
+      "banner": {
+        "type": "map",
+        "description": "Public storefront banner configuration.",
+        "fields": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the storefront banner is enabled."
+          },
+          "title": {
+            "type": "string",
+            "description": "Optional banner title."
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional banner message."
+          },
+          "ctaLabel": {
+            "type": "string",
+            "description": "Optional call-to-action label."
+          },
+          "ctaHref": {
+            "type": "string",
+            "description": "Optional call-to-action URL."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Optional ISO-8601 timestamp after which the banner is no longer active."
+          }
+        }
+      },
+      "shippoOrigin": {
+        "type": "map",
+        "description": "Shipping origin address used when creating Shippo shipments.",
+        "fields": {
+          "name": {
+            "type": "string",
+            "description": "Sender/contact name for the origin address."
+          },
+          "company": {
+            "type": "string",
+            "description": "Optional sender company name."
+          },
+          "email": {
+            "type": "string",
+            "description": "Optional sender email."
+          },
+          "phone": {
+            "type": "string",
+            "description": "Optional sender phone number."
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Origin street address line 1."
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Optional origin street address line 2."
+          },
+          "city": {
+            "type": "string",
+            "description": "Origin city."
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter origin state code."
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Origin ZIP/postal code."
+          },
+          "country": {
+            "type": "string",
+            "description": "Origin country code."
+          }
+        }
+      },
+      "shippoConnection": {
+        "type": "map",
+        "description": "Shippo account connection metadata.",
+        "fields": {
+          "status": {
+            "type": "string",
+            "description": "Connection status for the Shippo account."
+          },
+          "accountId": {
+            "type": "string",
+            "description": "Optional Shippo account id."
+          },
+          "accountEmail": {
+            "type": "string",
+            "description": "Optional email address for the connected Shippo account."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Optional display name for the connected Shippo account."
+          },
+          "connectedAt": {
+            "type": "string",
+            "description": "Optional ISO-8601 timestamp when Shippo was connected."
+          }
+        }
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "settingKey",
+        "sort_key": null,
+        "description": "Direct lookup of the site settings record by setting key."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-inventory-ledger",
+    "type": "dynamodb_table",
+    "description": "Production immutable inventory movement ledger. Stores sale, reservation, release, and manual adjustment entries so stock changes can be audited and replayed.",
+    "fields": {
+      "ledgerId": {
+        "type": "string",
+        "description": "Primary key for the immutable ledger entry."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Constant marker value of inventory-movement used by the chronological ledger GSI."
+      },
+      "idempotencyKey": {
+        "type": "string",
+        "description": "Stable key used to avoid writing duplicate movement entries for the same source event."
+      },
+      "movementType": {
+        "type": "string",
+        "description": "Type of inventory movement, such as sale, reservation_hold, reservation_release, or manual_adjustment."
+      },
+      "sourceEventType": {
+        "type": "string",
+        "description": "Event or workflow that produced the movement."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the ledger entry was created."
+      },
+      "lineCount": {
+        "type": "number",
+        "description": "Number of product lines included in the movement."
+      },
+      "totalQuantityDelta": {
+        "type": "number",
+        "description": "Total inventory quantity delta across all movement lines."
+      },
+      "items": {
+        "type": "list<map>",
+        "description": "Product-level inventory movement lines.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id affected by the inventory movement."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Absolute quantity involved in the movement."
+          },
+          "quantityDelta": {
+            "type": "number",
+            "description": "Signed inventory change for this product line."
+          },
+          "entryType": {
+            "type": "string",
+            "description": "Line-level movement type."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional SKU for the affected product."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Optional product name captured for audit readability."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label captured for audit readability."
+          },
+          "stockBefore": {
+            "type": "number",
+            "description": "Optional stock quantity before a manual adjustment."
+          },
+          "stockAfter": {
+            "type": "number",
+            "description": "Optional stock quantity after a manual adjustment."
+          }
+        }
+      },
+      "orderId": {
+        "type": "string",
+        "description": "Optional order id associated with the movement."
+      },
+      "cartId": {
+        "type": "string",
+        "description": "Optional cart id associated with the movement."
+      },
+      "customerEmail": {
+        "type": "string",
+        "description": "Optional customer email for sale movements."
+      },
+      "paymentStatus": {
+        "type": "string",
+        "description": "Optional payment status captured from the source order/event."
+      },
+      "fulfillmentStatus": {
+        "type": "string",
+        "description": "Optional fulfillment status captured from the source order/event."
+      },
+      "paymentProvider": {
+        "type": "string",
+        "description": "Optional payment provider captured from the source order/event."
+      },
+      "paymentReferenceId": {
+        "type": "string",
+        "description": "Optional payment provider reference id captured from the source order/event."
+      },
+      "completedAt": {
+        "type": "string",
+        "description": "Optional ISO-8601 checkout completion timestamp for sale movements."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Optional human-readable reason for a manual adjustment."
+      },
+      "note": {
+        "type": "string",
+        "description": "Optional internal note for a manual adjustment."
+      },
+      "createdBy": {
+        "type": "string",
+        "description": "Optional actor identifier for a manual adjustment."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "ledgerId",
+        "sort_key": null,
+        "description": "Direct lookup of one immutable ledger entry by ledger id."
+      },
+      {
+        "name": "recordType-createdAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "recordType",
+        "sort_key": "createdAt",
+        "projection": "ALL",
+        "description": "Query the chronological inventory audit trail without scanning the table."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-stripe-webhook-events",
+    "type": "dynamodb_table",
+    "description": "Production Stripe webhook idempotency and audit table. Stores delivery counts, processing leases, outcomes, related payment/order identifiers, and failure details.",
+    "fields": {
+      "eventId": {
+        "type": "string",
+        "description": "Primary key using the Stripe event id."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Constant marker value of stripe-webhook-event used by the webhook audit GSI."
+      },
+      "eventType": {
+        "type": "string",
+        "description": "Stripe event type."
+      },
+      "objectType": {
+        "type": "string",
+        "description": "Stripe object type carried by the event."
+      },
+      "objectId": {
+        "type": "string",
+        "description": "Stripe object id carried by the event."
+      },
+      "paymentIntentId": {
+        "type": "string",
+        "description": "Related Stripe payment intent id when available."
+      },
+      "chargeId": {
+        "type": "string",
+        "description": "Related Stripe charge id when available."
+      },
+      "disputeId": {
+        "type": "string",
+        "description": "Related Stripe dispute id when available."
+      },
+      "cartId": {
+        "type": "string",
+        "description": "Related checkout cart id when the event can be tied back to a cart."
+      },
+      "processingStatus": {
+        "type": "string",
+        "description": "Current webhook processing status."
+      },
+      "processingOutcome": {
+        "type": "string",
+        "description": "Summary outcome written after processing succeeds."
+      },
+      "relatedOrderId": {
+        "type": "string",
+        "description": "Order id created or affected while processing the event."
+      },
+      "failureMessage": {
+        "type": "string",
+        "description": "Most recent processing failure message."
+      },
+      "deliveryCount": {
+        "type": "number",
+        "description": "Number of times this Stripe event has been received."
+      },
+      "receivedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when this event was first received."
+      },
+      "lastReceivedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when this event was most recently received."
+      },
+      "processedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when processing completed successfully."
+      },
+      "failedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when processing last failed."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the webhook event log row was last updated."
+      },
+      "processingLeaseOwner": {
+        "type": "string",
+        "description": "Worker lease owner while an event is being processed."
+      },
+      "processingLeaseExpiresAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the processing lease expires."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "eventId",
+        "sort_key": null,
+        "description": "Direct lookup and idempotency check by Stripe event id."
+      },
+      {
+        "name": "recordType-receivedAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "recordType",
+        "sort_key": "receivedAt",
+        "projection": "ALL",
+        "description": "Query a newest-first Stripe webhook audit trail for admin health views."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-payment-completed-outbox",
+    "type": "dynamodb_table",
+    "description": "Production durable outbox for payment-completed events. Stores pending/publishing/published worker records so downstream side effects can be retried safely and recovered during DR.",
+    "fields": {
+      "outboxId": {
+        "type": "string",
+        "description": "Primary key for the outbox row. Payment-completed rows are keyed from the order id."
+      },
+      "eventType": {
+        "type": "string",
+        "description": "Outbox event type, currently payment.completed."
+      },
+      "orderId": {
+        "type": "string",
+        "description": "Order id for the payment-completed event."
+      },
+      "cartId": {
+        "type": "string",
+        "description": "Cart id for the payment-completed event."
+      },
+      "payload": {
+        "type": "string",
+        "description": "Serialized payment-completed event payload consumed by downstream workers."
+      },
+      "status": {
+        "type": "string",
+        "description": "Outbox lifecycle status such as pending, publishing, published, or failed."
+      },
+      "attemptCount": {
+        "type": "number",
+        "description": "Number of publish attempts made for this outbox row."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the outbox row was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the outbox row was last updated."
+      },
+      "nextAttemptAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the row is eligible for the next publish attempt."
+      },
+      "leaseOwner": {
+        "type": "string",
+        "description": "Worker lease owner while the row is being published."
+      },
+      "leaseExpiresAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the publishing lease expires."
+      },
+      "lastAttemptAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp of the most recent publish attempt."
+      },
+      "publishedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the event was successfully published."
+      },
+      "lastFailureReason": {
+        "type": "string",
+        "description": "Most recent failure reason from publishing the outbox row."
+      },
+      "expiresAt": {
+        "type": "number",
+        "description": "DynamoDB TTL epoch seconds for cleanup of terminal outbox rows."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "outboxId",
+        "sort_key": null,
+        "description": "Direct lookup of one outbox row by outbox id."
+      },
+      {
+        "name": "OutboxDueIndex",
+        "type": "global_secondary_index",
+        "partition_key": "status",
+        "sort_key": "nextAttemptAt",
+        "projection": "ALL",
+        "description": "Query due pending work and stale publishing leases without scanning the outbox table."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-inventory-reservations",
+    "type": "dynamodb_table",
+    "description": "Production inventory reservation table. Stores cart stock holds, release schedules, worker leases, and terminal cleanup metadata used to avoid overselling and safely release abandoned holds.",
+    "fields": {
+      "reservationId": {
+        "type": "string",
+        "description": "Primary key for an inventory reservation."
+      },
+      "cartId": {
+        "type": "string",
+        "description": "Cart id that owns the reservation."
+      },
+      "reservationVersion": {
+        "type": "number",
+        "description": "Version counter for reservations created by the same cart."
+      },
+      "status": {
+        "type": "string",
+        "description": "Reservation lifecycle status such as reserved, cancel_pending, releasing, release_blocked, released, or consumed."
+      },
+      "items": {
+        "type": "list<map>",
+        "description": "Merged product quantities held by the reservation.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id held by the reservation."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity held for the product."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional SKU captured for the reserved product."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Optional product name captured for the reserved product."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label captured for the reserved product."
+          }
+        }
+      },
+      "reservationFingerprint": {
+        "type": "string",
+        "description": "Fingerprint tying the reservation to the cart/pricing state that created it."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the reservation was created."
+      },
+      "expiresAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the reservation hold expires."
+      },
+      "releaseAfter": {
+        "type": "string",
+        "description": "ISO-8601 timestamp after which an expired reservation may be released."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the reservation was last updated."
+      },
+      "nextAttemptAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the reservation is eligible for release/retry processing."
+      },
+      "paymentIntentId": {
+        "type": "string",
+        "description": "Stripe payment intent id associated with the reservation."
+      },
+      "leaseOwner": {
+        "type": "string",
+        "description": "Worker lease owner while release work is being performed."
+      },
+      "leaseExpiresAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the release lease expires."
+      },
+      "lastAttemptAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp of the most recent release attempt."
+      },
+      "releasedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the reservation was released."
+      },
+      "consumedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the reservation was consumed by a completed order."
+      },
+      "lastFailureReason": {
+        "type": "string",
+        "description": "Most recent failure reason from reservation release processing."
+      },
+      "ttlExpiresAt": {
+        "type": "number",
+        "description": "DynamoDB TTL epoch seconds for cleanup of terminal reservation rows."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "reservationId",
+        "sort_key": null,
+        "description": "Direct lookup of one inventory reservation by reservation id."
+      },
+      {
+        "name": "InventoryReservationDueIndex",
+        "type": "global_secondary_index",
+        "partition_key": "status",
+        "sort_key": "nextAttemptAt",
+        "projection": "ALL",
+        "description": "Query due reserved/cancel-pending rows and stale releasing leases without scanning the reservation table."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  },
+  {
+    "name": "ironwallengraving-owner-order-todos",
+    "type": "dynamodb_table",
+    "description": "Production owner work queue table. Stores durable owner-facing tasks created from paid orders and Stripe disputes, with enough denormalized order details to render a task list without rehydrating every order.",
+    "fields": {
+      "todoId": {
+        "type": "string",
+        "description": "Primary key for the owner to-do item."
+      },
+      "orderId": {
+        "type": "string",
+        "description": "Order id associated with the owner task."
+      },
+      "cartId": {
+        "type": "string",
+        "description": "Cart id associated with the owner task."
+      },
+      "customerEmail": {
+        "type": "string",
+        "description": "Customer email associated with the task."
+      },
+      "status": {
+        "type": "string",
+        "description": "Task status, such as open or completed."
+      },
+      "title": {
+        "type": "string",
+        "description": "Human-readable task title for the owner UI."
+      },
+      "details": {
+        "type": "string",
+        "description": "Human-readable task details for owner review."
+      },
+      "sourceEventType": {
+        "type": "string",
+        "description": "Event type or workflow that created the task."
+      },
+      "items": {
+        "type": "list<map>",
+        "description": "Order items copied onto the task for owner visibility.",
+        "fields": {
+          "productId": {
+            "type": "string",
+            "description": "Product id for the order item."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity ordered."
+          },
+          "productName": {
+            "type": "string",
+            "description": "Optional product name."
+          },
+          "familySlug": {
+            "type": "string",
+            "description": "Optional product family slug."
+          },
+          "colorKey": {
+            "type": "string",
+            "description": "Optional product color key."
+          },
+          "colorLabel": {
+            "type": "string",
+            "description": "Optional customer-facing color label."
+          },
+          "colorSlug": {
+            "type": "string",
+            "description": "Optional product color slug."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Optional product SKU."
+          }
+        }
+      },
+      "paymentStatus": {
+        "type": "string",
+        "description": "Payment status copied from the source order/event."
+      },
+      "fulfillmentStatus": {
+        "type": "string",
+        "description": "Fulfillment status copied from the source order/event."
+      },
+      "paymentProvider": {
+        "type": "string",
+        "description": "Payment provider copied from the source order/event."
+      },
+      "paymentReferenceId": {
+        "type": "string",
+        "description": "Payment provider reference id copied from the source order/event."
+      },
+      "createdAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the task was created."
+      },
+      "updatedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the task was last updated."
+      },
+      "paymentCompletedAt": {
+        "type": "string",
+        "description": "ISO-8601 timestamp when the related payment completed."
+      },
+      "completedAt": {
+        "type": "string",
+        "description": "Optional ISO-8601 timestamp when the owner task was completed."
+      }
+    },
+    "indexes": [
+      {
+        "name": "primary",
+        "type": "primary_key",
+        "partition_key": "todoId",
+        "sort_key": null,
+        "description": "Direct lookup of one owner task by todo id."
+      },
+      {
+        "name": "status-createdAt-index",
+        "type": "global_secondary_index",
+        "partition_key": "status",
+        "sort_key": "createdAt",
+        "projection": "ALL",
+        "description": "Query owner tasks by status, usually open first and newest-first."
+      }
+    ],
+    "replication": {
+      "type": "global_table",
+      "regions": [
+        "us-east-2",
+        "us-east-1"
+      ],
+      "description": "Production DynamoDB table replicated as a Global Table between the primary region and DR region. Writes in either region replicate to the other region."
+    }
+  }
+]

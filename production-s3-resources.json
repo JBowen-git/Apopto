@@ -1,0 +1,88 @@
+[
+  {
+    "name": "ironwallengraving-site",
+    "type": "s3_bucket",
+    "description": "Production private site and asset bucket. Stores Terraform-deployed frontend files under site/, product and post image prefixes under images/, and optional storefront renderer runtime assets under internal/storefront-renderer/. CloudFront reads this bucket through Origin Access Control; the bucket is not public. Production-to-DR replication can be enabled to replicate this bucket to arn:aws:s3:::ironwallengraving-dr-site after the DR bucket exists and has versioning enabled.",
+    "lifecycle": {
+      "rules": [
+        {
+          "id": "expire-derived-site-noncurrent",
+          "status": "Enabled",
+          "prefix": "site/",
+          "expiration": null,
+          "noncurrent_version_expiration": {
+            "noncurrent_days": 30
+          },
+          "description": "Keeps current site objects but expires old noncurrent versions under site/ after 30 days."
+        },
+        {
+          "id": "expire-renderer-builds",
+          "status": "Enabled",
+          "prefix": "internal/storefront-renderer/builds/",
+          "expiration": {
+            "days": 30
+          },
+          "noncurrent_version_expiration": {
+            "noncurrent_days": 30
+          },
+          "description": "Expires old storefront renderer build objects and old noncurrent versions after 30 days."
+        },
+        {
+          "id": "expire-catalog-snapshots-backstop",
+          "status": "Enabled",
+          "prefix": "site/catalog/",
+          "expiration": {
+            "days": 30
+          },
+          "noncurrent_version_expiration": null,
+          "description": "Backstop cleanup for tagged catalog snapshot objects under site/catalog/ after 30 days."
+        }
+      ]
+    },
+    "versioning": {
+      "status": "Enabled",
+      "description": "Versioning is enabled so site/assets can be replicated to DR and old object versions can be cleaned up by lifecycle rules."
+    },
+    "bucket_policy": {
+      "description": "PolicyForCloudFrontPrivateContent allows the CloudFront service principal to run s3:GetObject against arn:aws:s3:::ironwallengraving-site/* only when the request source ARN is the CloudFront distribution managed by this stack.",
+      "id": "PolicyForCloudFrontPrivateContent"
+    }
+  },
+  {
+    "name": "ironwallengraving-logs-285065163498",
+    "type": "s3_bucket",
+    "description": "Production log bucket for CloudTrail logs and optional CloudFront standard access logs. CloudTrail writes through the bucket policy. CloudFront standard logs use the bucket ACL grant for the CloudFront log delivery canonical user rather than a bucket-policy statement.",
+    "lifecycle": {
+      "rules": [
+        {
+          "id": "expire-cloudfront",
+          "status": "Enabled",
+          "prefix": "cloudfront/",
+          "expiration": {
+            "days": 30
+          },
+          "noncurrent_version_expiration": null,
+          "description": "Expires CloudFront standard access log objects after 30 days."
+        },
+        {
+          "id": "expire-cloudtrail",
+          "status": "Enabled",
+          "prefix": "cloudtrail/",
+          "expiration": {
+            "days": 30
+          },
+          "noncurrent_version_expiration": null,
+          "description": "Expires CloudTrail log objects after 30 days."
+        }
+      ]
+    },
+    "versioning": {
+      "status": "NotConfiguredByTerraform",
+      "description": "No aws_s3_bucket_versioning resource is declared for the log bucket. Unless changed manually, this bucket uses the S3 default of no versioning."
+    },
+    "bucket_policy": {
+      "description": "Allows cloudtrail.amazonaws.com to run s3:GetBucketAcl against arn:aws:s3:::ironwallengraving-logs-285065163498 and s3:PutObject into arn:aws:s3:::ironwallengraving-logs-285065163498/cloudtrail/AWSLogs/285065163498/* when written objects use the bucket-owner-full-control ACL.",
+      "id": null
+    }
+  }
+]

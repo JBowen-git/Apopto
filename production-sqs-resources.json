@@ -1,0 +1,173 @@
+[
+  {
+    "name": "ironwallengraving-item-stock-queue",
+    "type": "sqs_queue",
+    "description": "Worker queue for paid-order stock adjustment. The itemStock Lambda consumes messages from this queue and updates product stock plus the inventory ledger. This queue accepts payment-completed fanout messages and denies insecure non-TLS SQS requests.",
+    "consumer": {
+      "lambda": "itemStock"
+    },
+    "producers": [
+      {
+        "name": "payment-completed fanout",
+        "type": "event_fanout",
+        "description": "Receives paid-order events from the payment-completed fanout path."
+      },
+      {
+        "name": "orderSideEffectRecovery",
+        "type": "lambda",
+        "description": "Manual DR order recovery can requeue missing stock-adjustment work."
+      }
+    ],
+    "dead_letter_queue": {
+      "name": "ironwallengraving-item-stock-queue-dlq",
+      "type": "sqs_queue",
+      "description": "DLQ for item stock messages that fail processing after 5 receives.",
+      "retries": 5
+    }
+  },
+  {
+    "name": "ironwallengraving-customer-confirmation-queue",
+    "type": "sqs_queue",
+    "description": "Worker queue for paid-order customer confirmation emails. The customerConfirmation Lambda consumes messages from this queue and sends customer email through SES. This queue accepts payment-completed fanout messages and denies insecure non-TLS SQS requests.",
+    "consumer": {
+      "lambda": "customerConfirmation"
+    },
+    "producers": [
+      {
+        "name": "payment-completed fanout",
+        "type": "event_fanout",
+        "description": "Receives paid-order events from the payment-completed fanout path."
+      },
+      {
+        "name": "orderSideEffectRecovery",
+        "type": "lambda",
+        "description": "Manual DR order recovery can requeue missing customer-confirmation work."
+      }
+    ],
+    "dead_letter_queue": {
+      "name": "ironwallengraving-customer-confirmation-queue-dlq",
+      "type": "sqs_queue",
+      "description": "DLQ for customer confirmation messages that fail processing after 5 receives.",
+      "retries": 5
+    }
+  },
+  {
+    "name": "ironwallengraving-owner-notification-queue",
+    "type": "sqs_queue",
+    "description": "Worker queue for paid-order owner notification emails. The ownerNotification Lambda consumes messages from this queue and sends the owner notification through SES. This queue accepts payment-completed fanout messages and denies insecure non-TLS SQS requests.",
+    "consumer": {
+      "lambda": "ownerNotification"
+    },
+    "producers": [
+      {
+        "name": "payment-completed fanout",
+        "type": "event_fanout",
+        "description": "Receives paid-order events from the payment-completed fanout path."
+      },
+      {
+        "name": "orderSideEffectRecovery",
+        "type": "lambda",
+        "description": "Manual DR order recovery can requeue missing owner-notification work."
+      }
+    ],
+    "dead_letter_queue": {
+      "name": "ironwallengraving-owner-notification-queue-dlq",
+      "type": "sqs_queue",
+      "description": "DLQ for owner notification messages that fail processing after 5 receives.",
+      "retries": 5
+    }
+  },
+  {
+    "name": "ironwallengraving-owner-order-todo-queue",
+    "type": "sqs_queue",
+    "description": "Worker queue for durable owner fulfillment to-do creation. The ownerOrderTodo Lambda consumes messages from this queue and writes owner task records. This queue accepts payment-completed fanout messages and denies insecure non-TLS SQS requests.",
+    "consumer": {
+      "lambda": "ownerOrderTodo"
+    },
+    "producers": [
+      {
+        "name": "payment-completed fanout",
+        "type": "event_fanout",
+        "description": "Receives paid-order events from the payment-completed fanout path."
+      },
+      {
+        "name": "orderSideEffectRecovery",
+        "type": "lambda",
+        "description": "Manual DR order recovery can requeue missing owner-to-do work."
+      }
+    ],
+    "dead_letter_queue": {
+      "name": "ironwallengraving-owner-order-todo-queue-dlq",
+      "type": "sqs_queue",
+      "description": "DLQ for owner order to-do messages that fail processing after 5 receives.",
+      "retries": 5
+    }
+  },
+  {
+    "name": "ironwallengraving-shipment-notification-queue",
+    "type": "sqs_queue",
+    "description": "Worker queue for shipment notification emails. The shipmentNotification Lambda consumes messages from this queue after an order is marked shipped.",
+    "consumer": {
+      "lambda": "shipmentNotification"
+    },
+    "producers": [
+      {
+        "name": "adminShipOrders",
+        "type": "lambda",
+        "description": "Admin marks orders shipped and queues shipment notifications."
+      }
+    ],
+    "dead_letter_queue": {
+      "name": "ironwallengraving-shipment-notification-queue-dlq",
+      "type": "sqs_queue",
+      "description": "DLQ for shipment notification messages that fail processing after 5 receives.",
+      "retries": 5
+    }
+  },
+  {
+    "name": "ironwallengraving-storefront-html-renderer-queue",
+    "type": "sqs_queue",
+    "description": "Worker queue for publish-time storefront HTML regeneration. The storefrontHtmlRenderer Lambda consumes messages from this queue, writes prerendered site objects, and invalidates CloudFront.",
+    "consumer": {
+      "lambda": "storefrontHtmlRenderer"
+    },
+    "producers": [
+      {
+        "name": "adminPutProduct",
+        "type": "lambda",
+        "description": "Admin creates or updates product data and publishes the catalog."
+      },
+      {
+        "name": "adminDeleteProduct",
+        "type": "lambda",
+        "description": "Admin deletes product catalog data and publishes the updated catalog."
+      },
+      {
+        "name": "adminAdjustInventory",
+        "type": "lambda",
+        "description": "Admin adjusts stock and records inventory ledger changes."
+      },
+      {
+        "name": "adminPutPost",
+        "type": "lambda",
+        "description": "Admin creates or updates a community post and publishes the catalog."
+      },
+      {
+        "name": "adminDeletePost",
+        "type": "lambda",
+        "description": "Admin deletes a community post and publishes the updated catalog."
+      },
+      {
+        "name": "adminPutSite",
+        "type": "lambda",
+        "description": "Admin updates public site settings and publishes the catalog."
+      }
+    ],
+    "dead_letter_queue": {
+      "name": "ironwallengraving-storefront-html-renderer-queue-dlq",
+      "type": "sqs_queue",
+      "description": "DLQ for storefront HTML renderer messages that fail processing after 5 receives.",
+      "retries": 5
+    }
+  }
+]

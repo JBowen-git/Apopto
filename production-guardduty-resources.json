@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Amazon GuardDuty",
+    "type": "guardduty_detector",
+    "description": "Regional GuardDuty detector enabled for threat detection in the production AWS account and region."
+  }
+]

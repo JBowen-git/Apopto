@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Amazon CloudWatch Alarms",
+    "type": "cloudwatch_alarms",
+    "description": "Production operational alarms for API health, paid-order fanout, inventory reservation release, critical worker DLQs, owner task backlog, and CloudFront availability.",
+    "notification_topics": [
+      {
+        "name": "ironwallengraving-alarms",
+        "type": "sns_topic",
+        "description": "Regional production alarm notifications."
+      },
+      {
+        "name": "ironwallengraving-alarms-global",
+        "type": "sns_topic",
+        "description": "Global CloudFront alarm notifications."
+      }
+    ],
+    "alarms": [
+      {
+        "name": "ironwallengraving-api-5xx",
+        "monitors": "HTTP API Gateway",
+        "description": "Sustained API 5xx responses that can block checkout, admin, or storefront data flows."
+      },
+      {
+        "name": "ironwallengraving-payment-completed-outbox-publish-failures",
+        "monitors": "paymentCompletedOutboxDrainer",
+        "description": "Payment-completed outbox publishing is repeatedly failing, delaying paid-order fanout."
+      },
+      {
+        "name": "ironwallengraving-payment-completed-outbox-failed-rows",
+        "monitors": "paymentCompletedOutboxDrainer",
+        "description": "A paid-order fanout row reached terminal failure and needs manual attention."
+      },
+      {
+        "name": "ironwallengraving-inventory-reservation-release-blocked",
+        "monitors": "inventoryReservationDrainer",
+        "description": "Inventory reservation release is blocked, which can keep sellable stock unavailable."
+      },
+      {
+        "name": "ironwallengraving-itemStock-dlq-depth",
+        "monitors": "ironwallengraving-item-stock-queue-dlq",
+        "description": "Critical item stock worker messages have failed all retries."
+      },
+      {
+        "name": "ironwallengraving-customerConfirmation-dlq-depth",
+        "monitors": "ironwallengraving-customer-confirmation-queue-dlq",
+        "description": "Critical customer confirmation messages have failed all retries."
+      },
+      {
+        "name": "ironwallengraving-ownerOrderTodo-dlq-depth",
+        "monitors": "ironwallengraving-owner-order-todo-queue-dlq",
+        "description": "Critical owner to-do messages have failed all retries."
+      },
+      {
+        "name": "ironwallengraving-owner-order-todo-age",
+        "monitors": "ironwallengraving-owner-order-todo-queue",
+        "description": "Paid-order owner task creation is backed up long enough to affect fulfillment visibility."
+      },
+      {
+        "name": "ironwallengraving-cloudfront-5xx",
+        "monitors": "ironwallengraving.com",
+        "description": "Sustained CloudFront 5xx rate high enough to indicate public storefront availability trouble."
+      }
+    ]
+  }
+]

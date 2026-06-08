@@ -51,6 +51,7 @@ export default function AppRoutes({ pages }) {
     Messages,
     NotFound,
     Portfolio,
+    PortfolioCaseStudy,
     SolutionDetailPage,
     Solutions,
     StartAProject,
@@ -62,6 +63,7 @@ export default function AppRoutes({ pages }) {
       <Route path="/solutions" element={<Solutions />} />
       <Route path="/solutions/:serviceSlug" element={<SolutionDetailPage />} />
       <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/portfolio/case-study" element={<PortfolioCaseStudy />} />
       <Route path="/about" element={<About />} />
       <Route path="/insights" element={<Insights />} />
       <Route path="/contact" element={<Contact />} />

@@ -1,0 +1,48 @@
+[
+  {
+    "name": "Amazon SES",
+    "type": "ses_email_service",
+    "description": "Production email delivery dependency used by worker Lambdas to send order-related emails. SES identities are not created by Terraform in this repo, so the sender identity must be verified outside this stack in the active AWS region.",
+    "sender": {
+      "email": "orders@ironwallengraving.com",
+      "description": "Verified sender address used as the SES Source and Reply-To address."
+    },
+    "producers": [
+      {
+        "name": "customerConfirmation",
+        "type": "lambda",
+        "description": "Sends paid-order confirmation emails to customers."
+      },
+      {
+        "name": "ownerNotification",
+        "type": "lambda",
+        "description": "Sends paid-order notification emails to the store owner."
+      },
+      {
+        "name": "shipmentNotification",
+        "type": "lambda",
+        "description": "Sends shipment notification emails to customers after an order is marked shipped."
+      }
+    ],
+    "email_flows": [
+      {
+        "name": "Customer order confirmation",
+        "producer": "customerConfirmation",
+        "recipient": "Customer email from the paid order, or CUSTOMER_CONFIRMATION_EMAIL when a sandbox/test override is configured.",
+        "description": "Confirms that payment was recorded for the order and stores delivery markers on the order record."
+      },
+      {
+        "name": "Owner order notification",
+        "producer": "ownerNotification",
+        "recipient": "OWNER_NOTIFICATION_EMAIL",
+        "description": "Notifies the store owner that a paid order entered the fulfillment pipeline and stores delivery markers on the order record."
+      },
+      {
+        "name": "Customer shipment notification",
+        "producer": "shipmentNotification",
+        "recipient": "Customer email from the order, or CUSTOMER_CONFIRMATION_EMAIL when a sandbox/test override is configured.",
+        "description": "Sends tracking/shipment details after fulfillment and stores delivery markers on the order record."
+      }
+    ]
+  }
+]

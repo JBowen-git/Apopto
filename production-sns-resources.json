@@ -1,0 +1,85 @@
+[
+  {
+    "name": "ironwallengraving-payment-completed",
+    "type": "sns_topic",
+    "description": "Business event fanout topic for paid orders. When checkout payment completion is confirmed, this topic fans the payment-completed event out to independent downstream order-processing queues.",
+    "publishers": [
+      {
+        "name": "stripeWebhook",
+        "type": "lambda",
+        "description": "Processes Stripe payment webhooks and can publish payment-completed events."
+      },
+      {
+        "name": "paymentCompletedOutboxDrainer",
+        "type": "lambda",
+        "description": "Publishes durable payment-completed outbox rows to the fanout topic."
+      }
+    ],
+    "subscribers": [
+      {
+        "name": "ironwallengraving-item-stock-queue",
+        "type": "sqs_queue",
+        "protocol": "sqs",
+        "description": "Receives paid-order events for stock adjustment."
+      },
+      {
+        "name": "ironwallengraving-customer-confirmation-queue",
+        "type": "sqs_queue",
+        "protocol": "sqs",
+        "description": "Receives paid-order events for customer confirmation email."
+      },
+      {
+        "name": "ironwallengraving-owner-notification-queue",
+        "type": "sqs_queue",
+        "protocol": "sqs",
+        "description": "Receives paid-order events for owner notification email."
+      },
+      {
+        "name": "ironwallengraving-owner-order-todo-queue",
+        "type": "sqs_queue",
+        "protocol": "sqs",
+        "description": "Receives paid-order events for owner fulfillment to-do creation."
+      }
+    ]
+  },
+  {
+    "name": "ironwallengraving-alarms",
+    "type": "sns_topic",
+    "description": "Regional production alarm notification topic. CloudWatch alarms in the primary region publish operational alerts here.",
+    "publishers": [
+      {
+        "name": "CloudWatch regional alarms",
+        "type": "cloudwatch_alarms",
+        "description": "Publishes API, outbox, inventory reservation, DLQ, and owner to-do queue alerts."
+      }
+    ],
+    "subscribers": [
+      {
+        "name": "alarm email recipient",
+        "type": "email",
+        "protocol": "email",
+        "description": "Email subscription configured from the alarm_email runtime setting."
+      }
+    ]
+  },
+  {
+    "name": "ironwallengraving-alarms-global",
+    "type": "sns_topic",
+    "description": "Global production alarm notification topic in us-east-1. CloudFront/WAF-scope alarms publish here because CloudFront metrics and WAF resources are global/us-east-1 scoped.",
+    "publishers": [
+      {
+        "name": "CloudWatch global alarms",
+        "type": "cloudwatch_alarms",
+        "description": "Publishes global edge alerts such as CloudFront 5xx alarms."
+      }
+    ],
+    "subscribers": [
+      {
+        "name": "alarm email recipient",
+        "type": "email",
+        "protocol": "email",
+        "description": "Email subscription configured from the alarm_email runtime setting."
+      }
+    ]
+  }
+]

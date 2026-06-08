@@ -1,0 +1,22 @@
+[
+  {
+    "name": "ironwallengraving-paymentCompletedOutboxDrainer-schedule",
+    "type": "eventbridge_schedule",
+    "description": "Scheduled background trigger that runs the paymentCompletedOutboxDrainer Lambda every minute. It drains durable payment-completed outbox rows and publishes eligible events to the payment-completed SNS topic.",
+    "schedule": "rate(1 minute)",
+    "target": {
+      "name": "paymentCompletedOutboxDrainer",
+      "type": "lambda"
+    }
+  },
+  {
+    "name": "ironwallengraving-inventoryReservationDrainer-schedule",
+    "type": "eventbridge_schedule",
+    "description": "Scheduled background trigger that runs the inventoryReservationDrainer Lambda every minute. It releases expired inventory reservations and retries blocked reservation-release work.",
+    "schedule": "rate(1 minute)",
+    "target": {
+      "name": "inventoryReservationDrainer",
+      "type": "lambda"
+    }
+  }
+]

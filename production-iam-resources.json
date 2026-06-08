@@ -1,0 +1,165 @@
+[
+  {
+    "name": "PolicyForCloudFrontPrivateContent",
+    "type": "s3_bucket_policy",
+    "description": "Resource policy on the production site bucket that lets CloudFront read private site and image objects.",
+    "attached_resources": [
+      {
+        "name": "ironwallengraving-site",
+        "type": "s3_bucket"
+      }
+    ],
+    "allowed_actor": {
+      "name": "CloudFront",
+      "type": "service",
+      "service": "cloudfront.amazonaws.com"
+    },
+    "permissions": [
+      {
+        "effect": "Allow",
+        "actions": [
+          "s3:GetObject"
+        ],
+        "resources": [
+          "ironwallengraving-site/*"
+        ],
+        "condition": "Only requests from the production CloudFront distribution are allowed."
+      }
+    ]
+  },
+  {
+    "name": "ironwallengraving-logs-cloudtrail-policy",
+    "type": "s3_bucket_policy",
+    "description": "Resource policy on the production log bucket that lets CloudTrail verify bucket access and write audit logs.",
+    "attached_resources": [
+      {
+        "name": "ironwallengraving-logs-285065163498",
+        "type": "s3_bucket"
+      }
+    ],
+    "allowed_actor": {
+      "name": "CloudTrail",
+      "type": "service",
+      "service": "cloudtrail.amazonaws.com"
+    },
+    "permissions": [
+      {
+        "effect": "Allow",
+        "actions": [
+          "s3:GetBucketAcl"
+        ],
+        "resources": [
+          "ironwallengraving-logs-285065163498"
+        ]
+      },
+      {
+        "effect": "Allow",
+        "actions": [
+          "s3:PutObject"
+        ],
+        "resources": [
+          "ironwallengraving-logs-285065163498/cloudtrail/AWSLogs/285065163498/*"
+        ],
+        "condition": "CloudTrail must write objects with the bucket-owner-full-control ACL."
+      }
+    ]
+  },
+  {
+    "name": "ironwallengraving-payment-completed-sqs-policy",
+    "type": "sqs_queue_policy",
+    "description": "Resource policy on the paid-order worker queues that lets the payment-completed fanout topic deliver messages.",
+    "attached_resources": [
+      {
+        "name": "ironwallengraving-item-stock-queue",
+        "type": "sqs_queue"
+      },
+      {
+        "name": "ironwallengraving-customer-confirmation-queue",
+        "type": "sqs_queue"
+      },
+      {
+        "name": "ironwallengraving-owner-notification-queue",
+        "type": "sqs_queue"
+      },
+      {
+        "name": "ironwallengraving-owner-order-todo-queue",
+        "type": "sqs_queue"
+      }
+    ],
+    "allowed_actor": {
+      "name": "Amazon SNS",
+      "type": "service",
+      "service": "sns.amazonaws.com"
+    },
+    "permissions": [
+      {
+        "effect": "Allow",
+        "actions": [
+          "sqs:SendMessage"
+        ],
+        "resources": [
+          "ironwallengraving-item-stock-queue",
+          "ironwallengraving-customer-confirmation-queue",
+          "ironwallengraving-owner-notification-queue",
+          "ironwallengraving-owner-order-todo-queue"
+        ],
+        "condition": "Only messages from the ironwallengraving-payment-completed SNS topic are allowed."
+      },
+      {
+        "effect": "Deny",
+        "actions": [
+          "sqs:*"
+        ],
+        "resources": [
+          "ironwallengraving-item-stock-queue",
+          "ironwallengraving-customer-confirmation-queue",
+          "ironwallengraving-owner-notification-queue",
+          "ironwallengraving-owner-order-todo-queue"
+        ],
+        "condition": "Deny insecure non-TLS SQS requests."
+      }
+    ]
+  },
+  {
+    "name": "ironwallengraving-lambda-invoke-permissions",
+    "type": "lambda_resource_policy",
+    "description": "Lambda resource permissions that allow API Gateway and EventBridge to invoke production Lambda functions.",
+    "attached_resources": [
+      {
+        "name": "ironwallengraving-*",
+        "type": "lambda"
+      }
+    ],
+    "allowed_actor": {
+      "name": "API Gateway and EventBridge",
+      "type": "aws_services",
+      "services": [
+        "apigateway.amazonaws.com",
+        "events.amazonaws.com"
+      ]
+    },
+    "permissions": [
+      {
+        "effect": "Allow",
+        "actions": [
+          "lambda:InvokeFunction"
+        ],
+        "resources": [
+          "HTTP-facing production Lambda functions"
+        ],
+        "condition": "Allowed for invocations from the production HTTP API Gateway."
+      },
+      {
+        "effect": "Allow",
+        "actions": [
+          "lambda:InvokeFunction"
+        ],
+        "resources": [
+          "paymentCompletedOutboxDrainer",
+          "inventoryReservationDrainer"
+        ],
+        "condition": "Allowed for invocations from the production EventBridge schedules."
+      }
+    ]
+  }
+]

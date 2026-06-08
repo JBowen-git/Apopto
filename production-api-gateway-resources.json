@@ -1,0 +1,178 @@
+[
+  {
+    "name": "ironwallengraving-http-api",
+    "type": "http_api_gateway",
+    "description": "Production HTTP API Gateway for storefront data, checkout, admin operations, and external webhooks. CloudFront forwards /api/* traffic to this API, and each route invokes a Lambda using AWS proxy integration.",
+    "authorizer": {
+      "name": "Auth0",
+      "type": "jwt"
+    },
+    "routes": [
+      {
+        "route": "GET /api/products",
+        "target": "getProducts",
+        "authorization": "none"
+      },
+      {
+        "route": "GET /api/products/{slug}",
+        "target": "getProductBySlug",
+        "authorization": "none"
+      },
+      {
+        "route": "GET /api/posts",
+        "target": "getPosts",
+        "authorization": "none"
+      },
+      {
+        "route": "GET /api/site",
+        "target": "getSite",
+        "authorization": "none"
+      },
+      {
+        "route": "GET /api/public-config",
+        "target": "publicConfig",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/products/{slug}/view",
+        "target": "trackProductView",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/posts/{postId}/view",
+        "target": "trackPostView",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/admin/upload-url",
+        "target": "createUploadUrl",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/products",
+        "target": "adminGetProducts",
+        "authorization": "jwt"
+      },
+      {
+        "route": "PUT /api/admin/products",
+        "target": "adminPutProduct",
+        "authorization": "jwt"
+      },
+      {
+        "route": "DELETE /api/admin/products/{productId}",
+        "target": "adminDeleteProduct",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/inventory",
+        "target": "adminGetInventory",
+        "authorization": "jwt"
+      },
+      {
+        "route": "POST /api/admin/inventory/adjustments",
+        "target": "adminAdjustInventory",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/posts",
+        "target": "adminGetPosts",
+        "authorization": "jwt"
+      },
+      {
+        "route": "PUT /api/admin/posts",
+        "target": "adminPutPost",
+        "authorization": "jwt"
+      },
+      {
+        "route": "DELETE /api/admin/posts/{postId}",
+        "target": "adminDeletePost",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/orders",
+        "target": "adminGetOrders",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/stripe-webhooks",
+        "target": "adminGetStripeWebhookEvents",
+        "authorization": "jwt"
+      },
+      {
+        "route": "POST /api/admin/orders/ship",
+        "target": "adminShipOrders",
+        "authorization": "jwt"
+      },
+      {
+        "route": "POST /api/admin/orders/label",
+        "target": "adminBuyShippingLabel",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/dashboard",
+        "target": "adminGetDashboard",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/statistics",
+        "target": "adminGetStatistics",
+        "authorization": "jwt"
+      },
+      {
+        "route": "GET /api/admin/site",
+        "target": "adminGetSite",
+        "authorization": "jwt"
+      },
+      {
+        "route": "PUT /api/admin/site",
+        "target": "adminPutSite",
+        "authorization": "jwt"
+      },
+      {
+        "route": "POST /api/cart/validate",
+        "target": "cartValidate",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/checkout/start",
+        "target": "checkoutStart",
+        "authorization": "none"
+      },
+      {
+        "route": "GET /api/checkout/{cartId}",
+        "target": "checkoutGet",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/checkout/{cartId}/pricing",
+        "target": "checkoutPricing",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/checkout/{cartId}/prepare-payment",
+        "target": "checkoutPreparePayment",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/checkout/{cartId}/rates",
+        "target": "checkoutRates",
+        "authorization": "none"
+      },
+      {
+        "route": "GET /api/checkout/status/{cartId}",
+        "target": "checkoutStatus",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/shippo/webhook",
+        "target": "shippoWebhook",
+        "authorization": "none"
+      },
+      {
+        "route": "POST /api/stripe/webhook",
+        "target": "stripeWebhook",
+        "authorization": "none"
+      }
+    ]
+  }
+]

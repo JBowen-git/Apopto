@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import PortfolioClusterImage from '../components/portfolio/PortfolioClusterImage.jsx'
 import { livePortfolioPreview, portfolioProjects } from '../data/portfolio.js'
 
@@ -79,10 +80,16 @@ export default function Portfolio() {
           <p className="portfolio-project-label">Latest live site</p>
           <h2 id="portfolio-live-preview-title">{livePortfolioPreview.title}</h2>
           <p>{livePortfolioPreview.description}</p>
-          <a href={livePortfolioPreview.url} rel="noreferrer" target="_blank">
-            Visit live site
-            <span aria-hidden="true">-&gt;</span>
-          </a>
+          <div className="portfolio-live-preview-actions">
+            <a href={livePortfolioPreview.url} rel="noreferrer" target="_blank">
+              Visit live site
+              <span aria-hidden="true">-&gt;</span>
+            </a>
+            <Link className="portfolio-case-study-link" to="/portfolio/case-study">
+              View case study
+              <span aria-hidden="true">-&gt;</span>
+            </Link>
+          </div>
         </div>
         <div className="portfolio-live-preview-frame">
           <iframe

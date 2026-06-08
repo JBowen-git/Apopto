@@ -1,0 +1,25 @@
+[
+  {
+    "name": "ironwallengraving.com",
+    "type": "cloudfront_distribution",
+    "description": "Production CloudFront distribution for the public storefront. Cloudflare DNS points the production domain at this distribution. It serves the frontend from the private S3 site bucket, product/post images from the same bucket, and /api/* requests from the HTTP API origin. The distribution uses the site-directory-index CloudFront Function on viewer requests and the CloudFront-scoped WAF ACL named CreatedByCloudFront-cdf7dc89.",
+    "bucket": {
+      "name": "ironwallengraving-site",
+      "origins": [
+        {
+          "origin_id": "xavier-site-origin",
+          "path": "/site",
+          "description": "Default frontend origin. Requests are served from the site/ prefix in the bucket."
+        },
+        {
+          "origin_id": "xavier-site-images-origin",
+          "path": null,
+          "description": "Image origin for images/* requests. Product and post images are served from the bucket root-relative images/ prefix."
+        }
+      ]
+    },
+    "acm_certificate": {
+      "name": "ironwallengraving.com"
+    }
+  }
+]

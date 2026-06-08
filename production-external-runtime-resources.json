@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Cloudflare",
+    "description": "Hosts DNS for ironwallengraving.com and points production traffic at the active CloudFront distribution. During DR, Cloudflare is the manual DNS cutover point."
+  },
+  {
+    "name": "Auth0",
+    "description": "Provides JWT-based admin authentication for protected API Gateway routes and admin access inside the storefront."
+  },
+  {
+    "name": "Stripe",
+    "description": "Processes checkout payments, calculates tax, and sends payment/dispute webhooks back to the production API."
+  },
+  {
+    "name": "Shippo",
+    "description": "Provides shipping rates, label purchase, and shipment tracking webhook support for checkout and fulfillment."
+  }
+]

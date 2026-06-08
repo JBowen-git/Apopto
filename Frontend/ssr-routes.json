@@ -119,6 +119,18 @@
       "ogImage": "/og/apopto-portfolio.jpg"
     },
     {
+      "path": "/portfolio/case-study",
+      "breadcrumb": "Ironwall Engraving Case Study",
+      "breadcrumbParent": {
+        "name": "Portfolio",
+        "path": "/portfolio"
+      },
+      "title": "Ironwall Engraving Ecommerce Case Study",
+      "description": "Explore Apopto's Ironwall Engraving ecommerce case study, including AWS architecture, checkout, admin publishing, order fanout, observability, deployment, and disaster recovery workflows.",
+      "lastmod": "2026-06-06",
+      "ogImage": "/og/apopto-portfolio.jpg"
+    },
+    {
       "path": "/about",
       "breadcrumb": "About",
       "metaTitle": "About Apopto | Engineering-Led Web Development by Jake Bowen",

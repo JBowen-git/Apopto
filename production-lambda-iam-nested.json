@@ -1,0 +1,3476 @@
+[
+  {
+    "name": "adminAdjustInventory",
+    "type": "lambda",
+    "description": "Admin adjusts stock and records inventory ledger changes",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/admin/inventory/adjustments"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminAdjustInventory-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminAdjustInventory-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObjectTagging",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminBuyShippingLabel",
+    "type": "lambda",
+    "description": "Admin buys a Shippo shipping label for an order",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/admin/orders/label"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminBuyShippingLabel-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminBuyShippingLabel-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "ssm:GetParameter",
+              "resource": "arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/shippo-api-token"
+            },
+            {
+              "effect": "Allow",
+              "action": "kms:Decrypt",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminDeletePost",
+    "type": "lambda",
+    "description": "Admin deletes a community post and publishes the updated catalog",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "DELETE",
+        "path": "/api/admin/posts/{postId}"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminDeletePost-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminDeletePost-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:DeleteItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObjectTagging",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminDeleteProduct",
+    "type": "lambda",
+    "description": "Admin deletes product catalog data and publishes the updated catalog",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "DELETE",
+        "path": "/api/admin/products/{productId}"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminDeleteProduct-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminDeleteProduct-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:DeleteItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObjectTagging",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetDashboard",
+    "type": "lambda",
+    "description": "Admin dashboard summary",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/dashboard"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetDashboard-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetDashboard-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*,arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetInventory",
+    "type": "lambda",
+    "description": "Admin inventory overview and ledger data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/inventory"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetInventory-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetInventory-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger/index/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetOrders",
+    "type": "lambda",
+    "description": "Admin order list and order detail data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/orders"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetOrders-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetOrders-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetPosts",
+    "type": "lambda",
+    "description": "Admin community post list",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/posts"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetPosts-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetPosts-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetProducts",
+    "type": "lambda",
+    "description": "Admin product catalog list",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/products"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetProducts-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetProducts-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetSite",
+    "type": "lambda",
+    "description": "Admin site settings and content overview",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/site"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetSite-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetSite-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetStatistics",
+    "type": "lambda",
+    "description": "Admin sales and catalog statistics",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/statistics"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetStatistics-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetStatistics-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminGetStripeWebhookEvents",
+    "type": "lambda",
+    "description": "Admin reads recorded Stripe webhook events",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/admin/stripe-webhooks"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminGetStripeWebhookEvents-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminGetStripeWebhookEvents-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events/index/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminPutPost",
+    "type": "lambda",
+    "description": "Admin creates or updates a community post and publishes the catalog",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "PUT",
+        "path": "/api/admin/posts"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminPutPost-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminPutPost-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObjectTagging",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminPutProduct",
+    "type": "lambda",
+    "description": "Admin creates or updates product data and publishes the catalog",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "PUT",
+        "path": "/api/admin/products"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminPutProduct-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminPutProduct-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObjectTagging",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminPutSite",
+    "type": "lambda",
+    "description": "Admin updates public site settings and publishes the catalog",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "PUT",
+        "path": "/api/admin/site"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminPutSite-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminPutSite-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObjectTagging",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "adminShipOrders",
+    "type": "lambda",
+    "description": "Admin marks orders shipped and queues shipment notifications",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/admin/orders/ship"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-adminShipOrders-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-adminShipOrders-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-shipment-notification-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "cartValidate",
+    "type": "lambda",
+    "description": "Validates cart items against catalog and stock data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/cart/validate"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-cartValidate-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-cartValidate-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:BatchGetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkoutGet",
+    "type": "lambda",
+    "description": "Reads checkout cart or session data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/checkout/{cartId}"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-checkoutGet-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-checkoutGet-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkoutPreparePayment",
+    "type": "lambda",
+    "description": "Creates or updates Stripe payment intent and inventory reservation data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/checkout/{cartId}/prepare-payment"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-checkoutPreparePayment-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-checkoutPreparePayment-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:BatchGetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "ssm:GetParameter",
+              "resource": "arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/stripe-secret-key"
+            },
+            {
+              "effect": "Allow",
+              "action": "kms:Decrypt",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkoutPricing",
+    "type": "lambda",
+    "description": "Calculates checkout pricing and stores cart data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/checkout/{cartId}/pricing"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-checkoutPricing-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-checkoutPricing-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:BatchGetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "ssm:GetParameter",
+              "resource": "arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/stripe-secret-key"
+            },
+            {
+              "effect": "Allow",
+              "action": "kms:Decrypt",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkoutRates",
+    "type": "lambda",
+    "description": "Fetches shipping rates for checkout",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/checkout/{cartId}/rates"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-checkoutRates-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-checkoutRates-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:BatchGetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            },
+            {
+              "effect": "Allow",
+              "action": "ssm:GetParameter",
+              "resource": "arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/shippo-api-token"
+            },
+            {
+              "effect": "Allow",
+              "action": "kms:Decrypt",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkoutStart",
+    "type": "lambda",
+    "description": "Starts checkout and creates cart data",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/checkout/start"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-checkoutStart-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-checkoutStart-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:BatchGetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/catalog/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:ListBucket",
+              "resource": "arn:aws:s3:::ironwallengraving-site"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkoutStatus",
+    "type": "lambda",
+    "description": "Reads checkout and order status",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/checkout/status/{cartId}"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-checkoutStatus-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-checkoutStatus-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "createUploadUrl",
+    "type": "lambda",
+    "description": "Creates signed S3 upload URLs for admin images",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/admin/upload-url"
+      },
+      "api_gateway": {
+        "authorization_type": "JWT",
+        "jwt_authorizer": {
+          "enabled": true,
+          "issuer": "https://ironwallengraving.us.auth0.com/",
+          "audience": [
+            "https://ironwallengraving.com",
+            "JiICryoehPj8oX1sNoh9mKVhBKWH6GWX"
+          ]
+        }
+      },
+      "admin_check": {
+        "enabled": true,
+        "required_permission": "admin:access"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-createUploadUrl-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-createUploadUrl-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "customerConfirmation",
+    "type": "lambda",
+    "description": "Sends customer confirmation email for a paid order",
+    "trigger": {
+      "type": "sqs",
+      "queue": {
+        "name": "ironwallengraving-customer-confirmation-queue",
+        "arn": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-customer-confirmation-queue"
+      },
+      "event_source_mapping": {
+        "terraform_resource": "aws_lambda_event_source_mapping.sqs[customerConfirmation]",
+        "batch_size": 10,
+        "maximum_batching_window_in_seconds": 5,
+        "function_response_types": [
+          "ReportBatchItemFailures"
+        ],
+        "enabled": true,
+        "enabled_source": "var.enable_background_processing"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-customerConfirmation-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "AWSLambdaSQSQueueExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "sqs:ReceiveMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:DeleteMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:GetQueueAttributes",
+              "resource": "*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-customerConfirmation-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "ses:SendEmail",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "ses:SendRawEmail",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "getPosts",
+    "type": "lambda",
+    "description": "Public community posts feed",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/posts"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-getPosts-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-getPosts-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "getProductBySlug",
+    "type": "lambda",
+    "description": "Public product detail by slug",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/products/{slug}"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-getProductBySlug-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-getProductBySlug-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "getProducts",
+    "type": "lambda",
+    "description": "Public product catalog list",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/products"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-getProducts-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-getProducts-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/images/*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "getSite",
+    "type": "lambda",
+    "description": "Public site settings and content",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/site"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-getSite-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-getSite-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "inventoryReservationDrainer",
+    "type": "lambda",
+    "description": "Scheduled release of expired inventory reservations",
+    "trigger": {
+      "type": "eventbridge_schedule",
+      "schedule": {
+        "expression": "rate(1 minute)",
+        "rule_name": "ironwallengraving-inventoryReservationDrainer-schedule",
+        "state": "ENABLED",
+        "state_source": "var.enable_background_processing",
+        "target_id": "inventoryReservationDrainer"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-inventoryReservationDrainer-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-inventoryReservationDrainer-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations/index/InventoryReservationDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations/index/InventoryReservationDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations/index/InventoryReservationDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations/index/InventoryReservationDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations/index/InventoryReservationDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "ssm:GetParameter",
+              "resource": "arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/stripe-secret-key"
+            },
+            {
+              "effect": "Allow",
+              "action": "kms:Decrypt",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "itemStock",
+    "type": "lambda",
+    "description": "Adjusts stock and ledger records for paid orders",
+    "trigger": {
+      "type": "sqs",
+      "queue": {
+        "name": "ironwallengraving-item-stock-queue",
+        "arn": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-item-stock-queue"
+      },
+      "event_source_mapping": {
+        "terraform_resource": "aws_lambda_event_source_mapping.sqs[itemStock]",
+        "batch_size": 10,
+        "maximum_batching_window_in_seconds": 5,
+        "function_response_types": [
+          "ReportBatchItemFailures"
+        ],
+        "enabled": true,
+        "enabled_source": "var.enable_background_processing"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-itemStock-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "AWSLambdaSQSQueueExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "sqs:ReceiveMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:DeleteMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:GetQueueAttributes",
+              "resource": "*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-itemStock-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-ledger,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "orderSideEffectRecovery",
+    "type": "lambda",
+    "description": "Manual DR order recovery for missing paid-order side effects",
+    "trigger": {
+      "type": "manual",
+      "description": "Manual invoke / no automatic trigger"
+    },
+    "role": {
+      "name": "ironwallengraving-orderSideEffectRecovery-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-orderSideEffectRecovery-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders/index/*,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:SendMessage",
+              "resource": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-item-stock-queue,arn:aws:sqs:us-east-2:285065163498:ironwallengraving-customer-confirmation-queue,arn:aws:sqs:us-east-2:285065163498:ironwallengraving-owner-notification-queue,arn:aws:sqs:us-east-2:285065163498:ironwallengraving-owner-order-todo-queue"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "ownerNotification",
+    "type": "lambda",
+    "description": "Sends owner notification email for a paid order",
+    "trigger": {
+      "type": "sqs",
+      "queue": {
+        "name": "ironwallengraving-owner-notification-queue",
+        "arn": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-owner-notification-queue"
+      },
+      "event_source_mapping": {
+        "terraform_resource": "aws_lambda_event_source_mapping.sqs[ownerNotification]",
+        "batch_size": 10,
+        "maximum_batching_window_in_seconds": 5,
+        "function_response_types": [
+          "ReportBatchItemFailures"
+        ],
+        "enabled": true,
+        "enabled_source": "var.enable_background_processing"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-ownerNotification-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "AWSLambdaSQSQueueExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "sqs:ReceiveMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:DeleteMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:GetQueueAttributes",
+              "resource": "*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-ownerNotification-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "ses:SendEmail",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "ses:SendRawEmail",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "ownerOrderTodo",
+    "type": "lambda",
+    "description": "Creates owner fulfillment todo for a paid order",
+    "trigger": {
+      "type": "sqs",
+      "queue": {
+        "name": "ironwallengraving-owner-order-todo-queue",
+        "arn": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-owner-order-todo-queue"
+      },
+      "event_source_mapping": {
+        "terraform_resource": "aws_lambda_event_source_mapping.sqs[ownerOrderTodo]",
+        "batch_size": 10,
+        "maximum_batching_window_in_seconds": 5,
+        "function_response_types": [
+          "ReportBatchItemFailures"
+        ],
+        "enabled": true,
+        "enabled_source": "var.enable_background_processing"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-ownerOrderTodo-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "AWSLambdaSQSQueueExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "sqs:ReceiveMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:DeleteMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:GetQueueAttributes",
+              "resource": "*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-ownerOrderTodo-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "paymentCompletedOutboxDrainer",
+    "type": "lambda",
+    "description": "Scheduled publisher for due payment-completed outbox events",
+    "trigger": {
+      "type": "eventbridge_schedule",
+      "schedule": {
+        "expression": "rate(1 minute)",
+        "rule_name": "ironwallengraving-paymentCompletedOutboxDrainer-schedule",
+        "state": "ENABLED",
+        "state_source": "var.enable_background_processing",
+        "target_id": "paymentCompletedOutboxDrainer"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-paymentCompletedOutboxDrainer-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-paymentCompletedOutboxDrainer-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "sns:Publish",
+              "resource": "arn:aws:sns:us-east-2:285065163498:ironwallengraving-payment-completed"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "publicConfig",
+    "type": "lambda",
+    "description": "Public frontend runtime configuration",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "GET",
+        "path": "/api/public-config"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-publicConfig-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-publicConfig-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:DescribeTable",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-site-settings"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "shipmentNotification",
+    "type": "lambda",
+    "description": "Sends customer shipment notification email",
+    "trigger": {
+      "type": "sqs",
+      "queue": {
+        "name": "ironwallengraving-shipment-notification-queue",
+        "arn": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-shipment-notification-queue"
+      },
+      "event_source_mapping": {
+        "terraform_resource": "aws_lambda_event_source_mapping.sqs[shipmentNotification]",
+        "batch_size": 10,
+        "maximum_batching_window_in_seconds": 5,
+        "function_response_types": [
+          "ReportBatchItemFailures"
+        ],
+        "enabled": true,
+        "enabled_source": "var.enable_background_processing"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-shipmentNotification-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "AWSLambdaSQSQueueExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "sqs:ReceiveMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:DeleteMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:GetQueueAttributes",
+              "resource": "*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-shipmentNotification-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "ses:SendEmail",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "ses:SendRawEmail",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "shippoWebhook",
+    "type": "lambda",
+    "description": "Processes Shippo webhook callbacks",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/shippo/webhook"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-shippoWebhook-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-shippoWebhook-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "storefrontHtmlRenderer",
+    "type": "lambda",
+    "description": "Regenerates prerendered storefront HTML and invalidates CloudFront",
+    "trigger": {
+      "type": "sqs",
+      "queue": {
+        "name": "ironwallengraving-storefront-html-renderer-queue",
+        "arn": "arn:aws:sqs:us-east-2:285065163498:ironwallengraving-storefront-html-renderer-queue"
+      },
+      "event_source_mapping": {
+        "terraform_resource": "aws_lambda_event_source_mapping.sqs[storefrontHtmlRenderer]",
+        "batch_size": 1,
+        "maximum_batching_window_in_seconds": 0,
+        "function_response_types": [
+          "ReportBatchItemFailures"
+        ],
+        "enabled": true,
+        "enabled_source": "var.enable_background_processing"
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-storefrontHtmlRenderer-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "AWSLambdaSQSQueueExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "sqs:ReceiveMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:DeleteMessage",
+              "resource": "*"
+            },
+            {
+              "effect": "Allow",
+              "action": "sqs:GetQueueAttributes",
+              "resource": "*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-storefrontHtmlRenderer-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "s3:DeleteObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/*,arn:aws:s3:::ironwallengraving-site/internal/storefront-renderer/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:GetObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/*,arn:aws:s3:::ironwallengraving-site/internal/storefront-renderer/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "s3:PutObject",
+              "resource": "arn:aws:s3:::ironwallengraving-site/site/*,arn:aws:s3:::ironwallengraving-site/internal/storefront-renderer/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "cloudfront:CreateInvalidation",
+              "resource": "arn:aws:cloudfront::285065163498:distribution/EZWGOLUX4456E"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "stripeWebhook",
+    "type": "lambda",
+    "description": "Processes Stripe checkout and payment webhooks",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/stripe/webhook"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-stripeWebhook-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-stripeWebhook-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:BatchGetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:PutItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:TransactWriteItems",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-carts,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-orders,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-owner-order-todos,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-stripe-webhook-events,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-inventory-reservations,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-payment-completed-outbox/index/OutboxDueIndex"
+            },
+            {
+              "effect": "Allow",
+              "action": "sns:Publish",
+              "resource": "arn:aws:sns:us-east-2:285065163498:ironwallengraving-payment-completed"
+            },
+            {
+              "effect": "Allow",
+              "action": "ssm:GetParameter",
+              "resource": "arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/stripe-secret-key,arn:aws:ssm:us-east-2:285065163498:parameter/ironwallengraving/cicd/production/stripe-webhook-secret"
+            },
+            {
+              "effect": "Allow",
+              "action": "kms:Decrypt",
+              "resource": "*"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "trackPostView",
+    "type": "lambda",
+    "description": "Increments community post view count",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/posts/{postId}/view"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-trackPostView-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-trackPostView-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-posts"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "trackProductView",
+    "type": "lambda",
+    "description": "Increments product view count",
+    "trigger": {
+      "type": "http_api",
+      "route": {
+        "method": "POST",
+        "path": "/api/products/{slug}/view"
+      },
+      "api_gateway": {
+        "authorization_type": "NONE",
+        "jwt_authorizer": {
+          "enabled": false,
+          "issuer": null,
+          "audience": []
+        }
+      },
+      "admin_check": {
+        "enabled": false,
+        "required_permission": null
+      }
+    },
+    "role": {
+      "name": "ironwallengraving-trackProductView-exec-role",
+      "policies": [
+        {
+          "name": "AWSLambdaBasicExecutionRole",
+          "type": "aws_managed",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogGroup",
+              "resource": "arn:aws:logs:*:*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:CreateLogStream",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            },
+            {
+              "effect": "Allow",
+              "action": "logs:PutLogEvents",
+              "resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*:*"
+            }
+          ]
+        },
+        {
+          "name": "ironwallengraving-trackProductView-policy",
+          "type": "inline",
+          "permissions": [
+            {
+              "effect": "Allow",
+              "action": "dynamodb:GetItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:UpdateItem",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Query",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            },
+            {
+              "effect": "Allow",
+              "action": "dynamodb:Scan",
+              "resource": "arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products,arn:aws:dynamodb:us-east-2:285065163498:table/ironwallengraving-products/index/*"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

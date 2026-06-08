@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Amazon CloudWatch Logs",
+    "type": "cloudwatch_logs",
+    "description": "Collects API Gateway access logs and Lambda execution logs for the production stack.",
+    "log_groups": [
+      {
+        "name": "/aws/apigateway/ironwallengraving-http-api-access",
+        "type": "api_gateway_access_logs",
+        "retention_days": 14
+      },
+      {
+        "name": "/aws/lambda/ironwallengraving-*",
+        "type": "lambda_logs",
+        "retention_days": 14,
+        "description": "One CloudWatch log group per production Lambda function."
+      }
+    ],
+    "metric_filters": [
+      {
+        "name": "ironwallengraving-payment-completed-outbox-publish-failed",
+        "source": "/aws/lambda/ironwallengraving-paymentCompletedOutboxDrainer",
+        "description": "Counts payment-completed outbox publish failures."
+      },
+      {
+        "name": "ironwallengraving-payment-completed-outbox-terminal-failed",
+        "source": "/aws/lambda/ironwallengraving-paymentCompletedOutboxDrainer",
+        "description": "Counts payment-completed outbox rows that reached terminal failure."
+      },
+      {
+        "name": "ironwallengraving-inventory-reservation-release-blocked",
+        "source": "/aws/lambda/ironwallengraving-inventoryReservationDrainer",
+        "description": "Counts inventory reservation rows moved to release_blocked."
+      },
+      {
+        "name": "ironwallengraving-inventory-reservation-release-failed",
+        "source": "/aws/lambda/ironwallengraving-inventoryReservationDrainer",
+        "description": "Counts inventory reservation release failures."
+      }
+    ]
+  }
+]

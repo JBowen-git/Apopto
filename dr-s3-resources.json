@@ -1,0 +1,56 @@
+[
+  {
+    "name": "ironwallengraving-dr-site",
+    "type": "s3_bucket",
+    "description": "Disaster-recovery private site and asset bucket. This is a separate S3 bucket owned by the DR stack and used by the DR CloudFront distribution. It receives replicated site/assets objects from the production site bucket when production-to-DR S3 replication is enabled.",
+    "lifecycle": {
+      "rules": [
+        {
+          "id": "expire-derived-site-noncurrent",
+          "status": "Enabled",
+          "prefix": "site/",
+          "expiration": null,
+          "noncurrent_version_expiration": {
+            "noncurrent_days": 30
+          },
+          "description": "Keeps current site objects but expires old noncurrent versions under site/ after 30 days."
+        },
+        {
+          "id": "expire-renderer-builds",
+          "status": "Enabled",
+          "prefix": "internal/storefront-renderer/builds/",
+          "expiration": {
+            "days": 30
+          },
+          "noncurrent_version_expiration": {
+            "noncurrent_days": 30
+          },
+          "description": "Expires old storefront renderer build objects and old noncurrent versions after 30 days."
+        },
+        {
+          "id": "expire-catalog-snapshots-backstop",
+          "status": "Enabled",
+          "prefix": "site/catalog/",
+          "expiration": {
+            "days": 30
+          },
+          "noncurrent_version_expiration": null,
+          "description": "Backstop cleanup for tagged catalog snapshot objects under site/catalog/ after 30 days."
+        }
+      ]
+    },
+    "versioning": {
+      "status": "Enabled",
+      "description": "Versioning is enabled so the bucket can receive replicated objects from the production site bucket."
+    },
+    "bucket_policy": {
+      "description": "Allows the DR CloudFront distribution to read private DR site bucket objects.",
+      "id": "PolicyForCloudFrontPrivateContent"
+    },
+    "replication": {
+      "source_bucket": "ironwallengraving-site",
+      "direction": "production-to-dr",
+      "description": "One-way replication from the production site bucket to the DR site bucket. Existing objects still need an initial backfill or batch replication step."
+    }
+  }
+]

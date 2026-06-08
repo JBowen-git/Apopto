@@ -1,0 +1,123 @@
+[
+  {
+    "name": "AWS Account Bootstrap",
+    "type": "deployment_bootstrap",
+    "description": "One-time AWS account setup that creates the GitHub OIDC trust and deploy roles used by GitHub Actions.",
+    "outputs": [
+      "AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN",
+      "AWS_PRODUCTION_DEPLOY_ROLE_ARN",
+      "AWS_DISASTER_RECOVERY_DEPLOY_ROLE_ARN"
+    ],
+    "used_by": [
+      "Deploy Staging",
+      "Release Production"
+    ]
+  },
+  {
+    "name": "PR Checks",
+    "type": "github_actions_workflow",
+    "description": "Pull request validation workflow for main. Runs secret scanning, frontend validation, backend tests, and Terraform formatting/validation before changes are merged.",
+    "trigger": "pull_request to main",
+    "steps": [
+      "Gitleaks secret scan",
+      "Repository validation",
+      "Frontend install, lint, tests, and build",
+      "Backend tests",
+      "Terraform formatting and validation"
+    ]
+  },
+  {
+    "name": "Deploy Staging",
+    "type": "github_actions_workflow",
+    "description": "Continuous staging deployment workflow. On pushes to main or manual dispatch, it validates the repo, packages frontend and Lambda artifacts, applies the staging Terraform stack, and invalidates CloudFront.",
+    "trigger": "push to main or manual dispatch",
+    "environment": "staging",
+    "uses": [
+      "AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN",
+      "staging SSM runtime secrets",
+      "environments/staging.tfvars",
+      "backends/staging.hcl"
+    ],
+    "outputs": [
+      "Staging AWS resources",
+      "Staging frontend assets",
+      "CloudFront invalidation"
+    ]
+  },
+  {
+    "name": "Release Production",
+    "type": "github_actions_workflow",
+    "description": "Manual production-class release workflow. It can run Terraform plan or apply for either the production stack or the disaster-recovery stack.",
+    "trigger": "manual workflow dispatch",
+    "targets": [
+      {
+        "name": "production",
+        "region": "us-east-2",
+        "tfvars": "environments/production.tfvars",
+        "backend": "backends/production.hcl"
+      },
+      {
+        "name": "disaster-recovery",
+        "region": "us-east-1",
+        "tfvars": "environments/disaster-recovery.tfvars",
+        "backend": "backends/disaster-recovery.hcl"
+      }
+    ],
+    "uses": [
+      "AWS_GITHUB_ACTIONS_SITE_DEPLOY_ROLE_ARN",
+      "AWS_PRODUCTION_DEPLOY_ROLE_ARN",
+      "AWS_DISASTER_RECOVERY_DEPLOY_ROLE_ARN when configured",
+      "target-specific SSM deploy values",
+      "target-specific SSM runtime secrets"
+    ],
+    "outputs": [
+      "Terraform plan artifact for plan runs",
+      "Production AWS resources for production apply",
+      "DR AWS resources for disaster-recovery apply",
+      "CloudFront invalidation for apply runs",
+      "errored.tfstate artifact when Terraform cannot persist state"
+    ]
+  },
+  {
+    "name": "Release Artifact Packaging",
+    "type": "deployment_step",
+    "description": "Builds React frontend assets, prerenders storefront content when required, and packages Lambda artifacts for Terraform deployment.",
+    "used_by": [
+      "Deploy Staging",
+      "Release Production"
+    ],
+    "inputs": [
+      "ReactFrontend source",
+      "Lambda source",
+      "Auth0 frontend values from SSM",
+      "PRERENDER_SITE_ORIGIN"
+    ],
+    "outputs": [
+      "AwsResources/.artifacts/site",
+      "AwsResources/.artifacts/storefront-renderer",
+      "AwsResources/lambda_packages"
+    ]
+  },
+  {
+    "name": "Terraform App Stack Deploy",
+    "type": "deployment_step",
+    "description": "Initializes Terraform with the target backend, validates required runtime SSM parameters, runs plan or apply with the selected tfvars file, and optionally invalidates CloudFront after apply.",
+    "used_by": [
+      "Deploy Staging",
+      "Release Production"
+    ],
+    "inputs": [
+      "AwsResources Terraform stack",
+      "target backend config",
+      "target tfvars file",
+      "target AWS region",
+      "target SSM values",
+      "packaged frontend and Lambda artifacts"
+    ],
+    "outputs": [
+      "Terraform-managed AWS resources",
+      "Terraform plan file when requested",
+      "CloudFront invalidation when enabled"
+    ]
+  }
+]
